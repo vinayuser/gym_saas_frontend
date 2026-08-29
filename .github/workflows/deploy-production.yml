@@ -33,6 +33,7 @@ jobs:
           platforms: linux/amd64
           tags: ${{ env.IMAGE_LOCAL }}
           build-args: |
+            VITE_BASE_PATH=${{ secrets.VITE_BASE_PATH }}
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_SOCKET_URL=${{ secrets.VITE_SOCKET_URL }}
             VITE_RAZORPAY_KEY_ID=${{ secrets.VITE_RAZORPAY_KEY_ID }}

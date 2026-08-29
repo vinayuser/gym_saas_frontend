@@ -71,8 +71,10 @@ const App = () => {
     if (token) setAuthToken(token);
   }, []);
 
+  const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
+
   return (
-    <Router>
+    <Router basename={routerBasename}>
       <ToastContainer
         position="top-right"
         autoClose={5000}
