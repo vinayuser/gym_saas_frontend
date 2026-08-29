@@ -1,0 +1,45 @@
+export const ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  GYM_OWNER: 'GYM_OWNER',
+  MANAGER: 'MANAGER',
+  RECEPTIONIST: 'RECEPTIONIST',
+  TRAINER: 'TRAINER',
+  MEMBER: 'MEMBER',
+};
+
+export const ROLE_LABELS = {
+  SUPER_ADMIN: 'Super Admin',
+  GYM_OWNER: 'Gym Owner',
+  MANAGER: 'Manager',
+  RECEPTIONIST: 'Receptionist',
+  TRAINER: 'Trainer',
+  MEMBER: 'Member',
+};
+
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE: 422,
+  SERVER_ERROR: 500,
+};
+
+export const MEMBERSHIP_STATUS = {
+  ACTIVE: 'ACTIVE',
+  FROZEN: 'FROZEN',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+  PENDING: 'PENDING',
+};
+
+export const SUBSCRIPTION_PLANS = {
+  SINGLE_GYM: 'Single Gym',
+  TWO_GYMS: '2 Gyms',
+  FIVE_GYMS: '5 Gyms',
+  UNLIMITED: 'Unlimited Gyms',
+};

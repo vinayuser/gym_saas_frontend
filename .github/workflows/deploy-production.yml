@@ -1,0 +1,83 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy-gym-frontend
+  cancel-in-progress: true
+
+env:
+  IMAGE_LOCAL: gym-saas-frontend:latest
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: ${{ env.IMAGE_LOCAL }}
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            VITE_SOCKET_URL=${{ secrets.VITE_SOCKET_URL }}
+            VITE_RAZORPAY_KEY_ID=${{ secrets.VITE_RAZORPAY_KEY_ID }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy container on Oracle Cloud
+        env:
+          HOST: ${{ secrets.ORACLE_HOST }}
+          USER: ${{ secrets.ORACLE_USER }}
+          PORT: ${{ secrets.ORACLE_SSH_PORT }}
+          APP_HOME: ${{ secrets.ORACLE_APP_HOME }}
+          SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          IMAGE_LOCAL: ${{ env.IMAGE_LOCAL }}
+        run: |
+          set -euo pipefail
+
+          : "${HOST:?ORACLE_HOST secret is required}"
+          : "${USER:?ORACLE_USER secret is required}"
+          : "${SSH_KEY:?ORACLE_SSH_KEY secret is required}"
+
+          PORT="${PORT:-22}"
+          APP_HOME="${APP_HOME:-/opt/gym-saas-frontend}"
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/oracle_key
+          chmod 600 ~/.ssh/oracle_key
+          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          SSH=(ssh -i ~/.ssh/oracle_key -p "$PORT" -o StrictHostKeyChecking=accept-new)
+          SCP=(scp -i ~/.ssh/oracle_key -P "$PORT" -o StrictHostKeyChecking=accept-new)
+
+          "${SSH[@]}" "${USER}@${HOST}" "sudo mkdir -p '${APP_HOME}' && sudo chown -R '${USER}:${USER}' '${APP_HOME}'"
+          "${SCP[@]}" docker-compose.yml "${USER}@${HOST}:${APP_HOME}/docker-compose.yml"
+
+          echo "Transferring image to Oracle..."
+          docker save "${IMAGE_LOCAL}" | gzip | \
+            "${SSH[@]}" "${USER}@${HOST}" "gunzip | docker load"
+
+          "${SSH[@]}" "${USER}@${HOST}" bash -s <<EOF
+          set -euo pipefail
+          cd '${APP_HOME}'
+          export IMAGE='${IMAGE_LOCAL}'
+          docker compose up -d --remove-orphans --force-recreate
+          docker image prune -f
+          docker ps --filter name=gym-saas-
+          curl -sS -o /dev/null -w 'frontend:%{http_code}\n' http://127.0.0.1:8081/ || true
+          EOF

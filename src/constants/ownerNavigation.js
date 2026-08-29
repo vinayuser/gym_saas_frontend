@@ -1,0 +1,35 @@
+export const OWNER_NAV = [
+  { label: 'Dashboard', path: '/owner/dashboard', icon: 'dashboard' },
+  { label: 'Members', path: '/owner/members', icon: 'group' },
+  { label: 'Staff', path: '/owner/staff', icon: 'badge' },
+  { label: 'Membership Plans', path: '/owner/membership-plans', icon: 'card_membership' },
+  { label: 'Attendance', path: '/owner/attendance', icon: 'qr_code_scanner' },
+  { label: 'Events', path: '/owner/events', icon: 'event' },
+  { label: 'Leads', path: '/owner/leads', icon: 'filter_alt' },
+  {
+    label: 'Store',
+    icon: 'storefront',
+    children: [
+      { label: 'Categories', path: '/owner/store/categories', icon: 'category' },
+      { label: 'Products', path: '/owner/store/products', icon: 'inventory_2' },
+      { label: 'Orders', path: '/owner/store/orders', icon: 'shopping_cart' },
+    ],
+  },
+  {
+    label: 'Finances',
+    icon: 'payments',
+    children: [
+      { label: 'Overview', path: '/owner/finances/overview', icon: 'monitoring' },
+      { label: 'Payment Ledger', path: '/owner/finances/payments', icon: 'account_balance_wallet' },
+      { label: 'Expenses & P&L', path: '/owner/finances/expenses', icon: 'receipt_long' },
+      { label: 'General Ledger', path: '/owner/finances/ledger', icon: 'menu_book' },
+      { label: 'Reports', path: '/owner/finances/reports', icon: 'assessment' },
+    ],
+  },
+  { label: 'Trainers', path: '/owner/trainers', icon: 'sports_martial_arts' },
+  { label: 'Banners', path: '/owner/banners', icon: 'view_carousel' },
+  { label: 'Community Chat', path: '/owner/chat', icon: 'forum' },
+  { label: 'Subscription', path: '/owner/subscription', icon: 'workspace_premium' },
+  { label: 'Support', path: '/owner/support', icon: 'help' },
+  { label: 'Settings', path: '/owner/settings', icon: 'settings' },
+];

@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #131313;
+  --color-on-background: #e5e2e1;
+  --color-surface: #131313;
+  --color-on-surface: #e5e2e1;
+  --color-surface-container: #201f1f;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353534;
+  --color-secondary: #c6c6c7;
+  --color-secondary-container: #454747;
+  --color-primary-fixed: #c3f400;
+  --color-on-primary-fixed: #161e00;
+  --color-primary-container: #c3f400;
+  --color-on-primary-container: #556d00;
+  --color-outline: #8e9379;
+  --color-outline-variant: #444933;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  --color-neon: #c3f400;
+  --color-primary-fixed-dim: #abd600;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Geist", "Inter", ui-sans-serif, sans-serif;
+
+  --spacing-gutter: 24px;
+  --spacing-md: 24px;
+  --spacing-xl: 64px;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-background text-on-surface font-sans text-base;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    user-select: none;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-panel {
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mesh-gradient {
+    background:
+      radial-gradient(circle at 50% -20%, rgba(195, 244, 0, 0.12), transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(195, 244, 0, 0.05), transparent 40%);
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 15px rgba(195, 244, 0, 0.25);
+  }
+
+  .cyber-glow {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .cyber-glow:hover {
+    box-shadow: 0 0 15px rgba(195, 244, 0, 0.15);
+    border-color: rgba(195, 244, 0, 0.3);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(195, 244, 0, 0.4);
+  }
+
+  .fitsphere-input,
+  .input-cyber {
+    @apply w-full rounded-lg border border-white/10 bg-surface-container-lowest px-4 py-2.5 text-on-surface transition-colors;
+    @apply focus:border-primary-fixed focus:outline-none focus:ring-0 focus:shadow-[0_0_0_1px_#c3f400];
+  }
+
+  .fitsphere-input-icon {
+    @apply w-full rounded-lg border border-white/10 bg-surface-container-lowest py-2.5 pl-11 pr-4 text-on-surface transition-colors;
+    @apply focus:border-primary-fixed focus:outline-none focus:ring-0;
+  }
+
+  .nav-active {
+    @apply border-l-4 border-primary-fixed bg-white/5 text-primary-fixed;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2 px-6 py-2.5 text-secondary transition-all duration-200 hover:bg-white/5 hover:text-primary-fixed;
+  }
+
+  .staff-row:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+}
