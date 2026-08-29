@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '../../store/slices/authSlice';
+import { loginUser, verifyTwoFactorLogin } from '../../store/slices/authSlice';
 import { getDefaultPath } from '../../helpers/roleUtils';
 import Icon from '../../components/fitsphere/Icon';
 import GlassCard from '../../components/fitsphere/GlassCard';
@@ -17,15 +17,36 @@ const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [twoFactorToken, setTwoFactorToken] = useState(null);
+  const [otpCode, setOtpCode] = useState('');
+
+  const navigateAfterAuth = (payload) => {
+    const target = location.state?.from?.pathname || getDefaultPath(payload.user);
+    navigate(target, { replace: true });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await dispatch(loginUser(form));
     if (loginUser.fulfilled.match(result)) {
-      const target = location.state?.from?.pathname || getDefaultPath(result.payload.user);
-      navigate(target, { replace: true });
+      if (result.payload?.requiresTwoFactor) {
+        setTwoFactorToken(result.payload.twoFactorToken);
+        setOtpCode('');
+        return;
+      }
+      navigateAfterAuth(result.payload);
     }
   };
+
+  const handleTwoFactorSubmit = async (e) => {
+    e.preventDefault();
+    const result = await dispatch(verifyTwoFactorLogin({ twoFactorToken, code: otpCode }));
+    if (verifyTwoFactorLogin.fulfilled.match(result)) {
+      navigateAfterAuth(result.payload);
+    }
+  };
+
+  const showTwoFactorStep = Boolean(twoFactorToken);
 
   return (
     <main className="flex min-h-screen w-full flex-col overflow-hidden md:flex-row">
@@ -69,8 +90,14 @@ const Login = () => {
 
         <div className="w-full max-w-[440px]">
           <header className="mb-8">
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white">Welcome back</h1>
-            <p className="mt-2 text-secondary">Enter your credentials to access your dashboard</p>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+              {showTwoFactorStep ? 'Authenticator code' : 'Welcome back'}
+            </h1>
+            <p className="mt-2 text-secondary">
+              {showTwoFactorStep
+                ? 'Enter the 6-digit code from your authenticator app'
+                : 'Enter your credentials to access your dashboard'}
+            </p>
           </header>
 
           {error && (
@@ -79,86 +106,132 @@ const Login = () => {
             </div>
           )}
 
-          <div className="relative mb-6 flex items-center">
-            <div className="flex-grow border-t border-white/5" />
-            <span className="mx-4 text-xs uppercase tracking-widest text-secondary">Sign in with email</span>
-            <div className="flex-grow border-t border-white/5" />
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-secondary">
-                Email Address
-              </label>
-              <div className="relative">
-                <Icon name="mail" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="owner@demo.com"
-                  className="fitsphere-input-icon"
-                />
+          {!showTwoFactorStep ? (
+            <>
+              <div className="relative mb-6 flex items-center">
+                <div className="flex-grow border-t border-white/5" />
+                <span className="mx-4 text-xs uppercase tracking-widest text-secondary">Sign in with email</span>
+                <div className="flex-grow border-t border-white/5" />
               </div>
-            </div>
 
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-secondary">
-                  Password
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-secondary">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Icon name="mail" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="owner@demo.com"
+                      className="fitsphere-input-icon"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-secondary">
+                      Password
+                    </label>
+                    <button type="button" className="text-xs text-primary-fixed hover:underline">
+                      Forgot password?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Icon name="lock" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      placeholder="••••••••"
+                      className="fitsphere-input-icon pr-11"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-on-surface"
+                    >
+                      <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <label className="flex cursor-pointer items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="h-4 w-4 rounded border-white/10 bg-surface-container-lowest text-primary-fixed focus:ring-primary-fixed"
+                  />
+                  <span className="text-sm text-secondary">Remember me for 30 days</span>
                 </label>
-                <button type="button" className="text-xs text-primary-fixed hover:underline">
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative">
-                <Icon name="lock" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="fitsphere-input-icon pr-11"
-                />
+
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-on-surface"
+                  type="submit"
+                  disabled={loading}
+                  className="neon-glow mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-fixed py-3 font-bold text-on-primary-fixed transition-transform active:scale-[0.98] disabled:opacity-50"
                 >
-                  <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={20} />
+                  {loading ? (
+                    <Icon name="progress_activity" size={22} className="animate-spin" />
+                  ) : (
+                    <>
+                      Sign In to Dashboard
+                      <Icon name="arrow_forward" size={20} />
+                    </>
+                  )}
                 </button>
+              </form>
+            </>
+          ) : (
+            <form onSubmit={handleTwoFactorSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="otp" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-secondary">
+                  6-digit code
+                </label>
+                <input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  required
+                  autoFocus
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="input-cyber w-full rounded-lg px-3 py-3 text-center text-xl tracking-[0.5em]"
+                  placeholder="000000"
+                />
               </div>
-            </div>
-
-            <label className="flex cursor-pointer items-center gap-2 pt-1">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="h-4 w-4 rounded border-white/10 bg-surface-container-lowest text-primary-fixed focus:ring-primary-fixed"
-              />
-              <span className="text-sm text-secondary">Remember me for 30 days</span>
-            </label>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="neon-glow mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-fixed py-3 font-bold text-on-primary-fixed transition-transform active:scale-[0.98] disabled:opacity-50"
-            >
-              {loading ? (
-                <Icon name="progress_activity" size={22} className="animate-spin" />
-              ) : (
-                <>
-                  Sign In to Dashboard
-                  <Icon name="arrow_forward" size={20} />
-                </>
-              )}
-            </button>
-          </form>
+              <button
+                type="button"
+                onClick={() => {
+                  setTwoFactorToken(null);
+                  setOtpCode('');
+                }}
+                className="text-sm text-secondary hover:text-on-surface"
+              >
+                ← Back to sign in
+              </button>
+              <button
+                type="submit"
+                disabled={loading || otpCode.length !== 6}
+                className="neon-glow flex w-full items-center justify-center gap-2 rounded-lg bg-primary-fixed py-3 font-bold text-on-primary-fixed disabled:opacity-50"
+              >
+                {loading ? (
+                  <Icon name="progress_activity" size={22} className="animate-spin" />
+                ) : (
+                  'Verify and continue'
+                )}
+              </button>
+            </form>
+          )}
 
           <p className="mt-8 text-center text-sm text-secondary">
             Don&apos;t have an account?{' '}

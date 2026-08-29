@@ -92,11 +92,36 @@ export const OWNER_ONBOARDING_STEPS = [
 ];
 
 export const PLATFORM_ROLES = [
-  { role: 'Super Admin', desc: 'Platform operator: invites gym owners, assigns plans, lists tenants.' },
-  { role: 'Gym Owner', desc: 'Full access to their tenant: gyms, members, finances, and settings.' },
-  { role: 'Manager', desc: 'Day-to-day operations: members, attendance, leads, and staff coordination.' },
-  { role: 'Receptionist', desc: 'Front desk: check-ins, member lookup, and enquiries.' },
-  { role: 'Trainer', desc: 'Member and session support within assigned gym scope.' },
+  {
+    role: 'Super Admin',
+    icon: 'admin_panel_settings',
+    desc: 'Platform operator: invites gym owners, assigns plans, and monitors tenants.',
+  },
+  {
+    role: 'Gym Owner',
+    icon: 'storefront',
+    desc: 'Full access to their tenant: gyms, members, finances, and settings.',
+  },
+  {
+    role: 'Manager',
+    icon: 'manage_accounts',
+    desc: 'Day-to-day operations: members, attendance, leads, and staff coordination.',
+  },
+  {
+    role: 'Receptionist',
+    icon: 'support_agent',
+    desc: 'Front desk: check-ins, member lookup, and enquiries.',
+  },
+  {
+    role: 'Trainer',
+    icon: 'sports_gymnastics',
+    desc: 'Member and session support within assigned gym scope.',
+  },
+  {
+    role: 'Member',
+    icon: 'groups',
+    desc: 'Gym members with portal access for store, profile, and check-in QR.',
+  },
 ];
 
 export const PRICING_COMPARE_ROWS = [

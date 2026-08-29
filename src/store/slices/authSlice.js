@@ -22,6 +22,9 @@ export const loginUser = createAsyncThunk(
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const response = await postRequest(ENDPOINTS.AUTH.LOGIN, { email, password });
+      if (response.success && response.data?.requiresTwoFactor) {
+        return { requiresTwoFactor: true, twoFactorToken: response.data.twoFactorToken };
+      }
       if (response.success && response.data?.tokens) {
         const { accessToken, refreshToken } = response.data.tokens;
         setAuthToken(accessToken);
@@ -31,6 +34,24 @@ export const loginUser = createAsyncThunk(
       return rejectWithValue('Invalid email or password.');
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Login failed');
+    }
+  }
+);
+
+export const verifyTwoFactorLogin = createAsyncThunk(
+  'auth/verifyTwoFactorLogin',
+  async ({ twoFactorToken, code }, { rejectWithValue }) => {
+    try {
+      const response = await postRequest(ENDPOINTS.AUTH.LOGIN_2FA, { twoFactorToken, code });
+      if (response.success && response.data?.tokens) {
+        const { accessToken, refreshToken } = response.data.tokens;
+        setAuthToken(accessToken);
+        setTokens(accessToken, refreshToken);
+        return response.data;
+      }
+      return rejectWithValue('Invalid authentication code.');
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Verification failed');
     }
   }
 );
@@ -56,7 +77,7 @@ export const registerUser = createAsyncThunk(
 
 export const fetchCurrentUserProfile = createAsyncThunk(
   'auth/fetchCurrentUserProfile',
-  async (_, { rejectWithValue }) => {
+  async (_arg, { rejectWithValue }) => {
     try {
       const response = await getRequest(ENDPOINTS.AUTH.PROFILE);
       if (response.success) {
@@ -68,7 +89,8 @@ export const fetchCurrentUserProfile = createAsyncThunk(
     }
   },
   {
-    condition: (_, { getState }) => {
+    condition: (arg, { getState }) => {
+      if (arg?.force) return true;
       const { auth } = getState();
       if (auth.profileFetchStatus === 'loading') return false;
       if (auth.profileFetchStatus === 'succeeded' && auth.user) return false;
@@ -113,6 +135,10 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
+        if (action.payload?.requiresTwoFactor) {
+          state.error = null;
+          return;
+        }
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.tenant = action.payload.tenant;
@@ -121,6 +147,23 @@ const authSlice = createSlice({
         state.userRoleInfo = getUserRoleInfo(action.payload.user);
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(verifyTwoFactorLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyTwoFactorLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.tenant = action.payload.tenant;
+        state.token = action.payload.tokens.accessToken;
+        state.profileFetchStatus = 'succeeded';
+        state.userRoleInfo = getUserRoleInfo(action.payload.user);
+      })
+      .addCase(verifyTwoFactorLogin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

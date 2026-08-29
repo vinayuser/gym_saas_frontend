@@ -6,5 +6,5 @@ export const ADMIN_NAV = [
   { label: 'Support', path: '/admin/support', icon: 'support_agent' },
   { label: 'Tenants', path: '/admin/tenants', icon: 'domain' },
   { label: 'SaaS Plans', path: '/admin/plans', icon: 'workspace_premium' },
-  { label: 'Settings', path: '/admin/settings', icon: 'settings' },
+  { label: 'Settings', path: '/owner/settings', icon: 'settings' },
 ];

@@ -149,14 +149,19 @@ const About = () => (
 
     <section className="px-4 py-20 md:px-12">
       <MarketingSectionHeader title="User roles" subtitle="Role-based access across the platform." />
-      <div className="mx-auto mt-12 grid max-w-4xl gap-4">
+      <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {PLATFORM_ROLES.map((r) => (
           <div
             key={r.role}
-            className="glass-card flex flex-col gap-2 rounded-xl p-5 sm:flex-row sm:items-center sm:justify-between"
+            className="group glass-card rounded-xl p-6 transition hover:border-primary-container/40"
           >
-            <span className="font-semibold text-primary-container">{r.role}</span>
-            <span className="text-sm text-secondary sm:max-w-md sm:text-right">{r.desc}</span>
+            <Icon
+              name={r.icon}
+              size={32}
+              className="mb-4 text-primary-container transition group-hover:scale-110"
+            />
+            <h4 className="font-semibold text-on-surface">{r.role}</h4>
+            <p className="mt-2 text-sm leading-relaxed text-secondary">{r.desc}</p>
           </div>
         ))}
       </div>

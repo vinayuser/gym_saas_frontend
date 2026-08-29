@@ -93,6 +93,22 @@ const App = () => {
         <Route path="/owner" element={<OwnerLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route
+            path="dashboard/analytics"
+            element={
+              <ProtectedRoute allowedRoles={OWNER_ROLES} fallbackPath="/owner/dashboard">
+                <OwnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="dashboard/reports"
+            element={
+              <ProtectedRoute allowedRoles={OWNER_ROLES} fallbackPath="/owner/dashboard">
+                <OwnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="dashboard"
             element={
               <ProtectedRoute allowedRoles={OWNER_ROLES} fallbackPath="/owner/dashboard">
