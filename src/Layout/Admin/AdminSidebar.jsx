@@ -30,7 +30,10 @@ const AdminSidebar = () => (
             item.path === '/admin/invites' ||
             item.path === '/admin/gym-owners' ||
             item.path === '/admin/transactions' ||
-            item.path === '/admin/support'
+            item.path === '/admin/support' ||
+            item.path === '/admin/plans' ||
+            item.path === '/admin/settings' ||
+            item.path === '/admin/tenants'
           }
           className={({ isActive }) => (isActive ? 'nav-item nav-active' : 'nav-item')}
         >

@@ -69,6 +69,14 @@ const NavItem = ({ item }) => {
 
 const OwnerSidebar = () => {
   const { currentGym } = useSelector((state) => state.gym);
+  const { tenant } = useSelector((state) => state.auth);
+  const features = tenant?.features;
+
+  const navItems = OWNER_NAV.filter((item) => {
+    if (!item.feature) return true;
+    if (!features || features[item.feature] === undefined) return true;
+    return Boolean(features[item.feature]);
+  });
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[280px] flex-col border-r border-white/10 bg-surface/80 py-10 backdrop-blur-xl">
@@ -89,7 +97,7 @@ const OwnerSidebar = () => {
       </div>
 
       <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-2 pb-6">
-        {OWNER_NAV.map((item) => (
+        {navItems.map((item) => (
           <NavItem key={item.label} item={item} />
         ))}
       </nav>

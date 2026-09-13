@@ -3,12 +3,13 @@ export const OWNER_NAV = [
   { label: 'Members', path: '/owner/members', icon: 'group' },
   { label: 'Staff', path: '/owner/staff', icon: 'badge' },
   { label: 'Membership Plans', path: '/owner/membership-plans', icon: 'card_membership' },
-  { label: 'Attendance', path: '/owner/attendance', icon: 'qr_code_scanner' },
-  { label: 'Events', path: '/owner/events', icon: 'event' },
-  { label: 'Leads', path: '/owner/leads', icon: 'filter_alt' },
+  { label: 'Attendance', path: '/owner/attendance', icon: 'qr_code_scanner', feature: 'attendance' },
+  { label: 'Events', path: '/owner/events', icon: 'event', feature: 'events' },
+  { label: 'Leads', path: '/owner/leads', icon: 'filter_alt', feature: 'leads' },
   {
     label: 'Store',
     icon: 'storefront',
+    feature: 'store',
     children: [
       { label: 'Categories', path: '/owner/store/categories', icon: 'category' },
       { label: 'Products', path: '/owner/store/products', icon: 'inventory_2' },
@@ -18,6 +19,7 @@ export const OWNER_NAV = [
   {
     label: 'Finances',
     icon: 'payments',
+    feature: 'finances',
     children: [
       { label: 'Overview', path: '/owner/finances/overview', icon: 'monitoring' },
       { label: 'Payment Ledger', path: '/owner/finances/payments', icon: 'account_balance_wallet' },
@@ -26,9 +28,9 @@ export const OWNER_NAV = [
       { label: 'Reports', path: '/owner/finances/reports', icon: 'assessment' },
     ],
   },
-  { label: 'Trainers', path: '/owner/trainers', icon: 'sports_martial_arts' },
-  { label: 'Banners', path: '/owner/banners', icon: 'view_carousel' },
-  { label: 'Community Chat', path: '/owner/chat', icon: 'forum' },
+  { label: 'Trainers', path: '/owner/trainers', icon: 'sports_martial_arts', feature: 'trainers' },
+  { label: 'Banners', path: '/owner/banners', icon: 'view_carousel', feature: 'banners' },
+  { label: 'Community Chat', path: '/owner/chat', icon: 'forum', feature: 'chat' },
   { label: 'Subscription', path: '/owner/subscription', icon: 'workspace_premium' },
   { label: 'Support', path: '/owner/support', icon: 'help' },
   { label: 'Settings', path: '/owner/settings', icon: 'settings' },

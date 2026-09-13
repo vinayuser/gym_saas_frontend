@@ -44,7 +44,9 @@ import AdminLayout from './Layout/Admin/AdminLayout';
 import SuperAdminDashboard from './Pages/Admin/Dashboard/SuperAdminDashboard';
 import InviteList from './Pages/Admin/Invites/InviteList';
 import CreateInvite from './Pages/Admin/Invites/CreateInvite';
-import PlaceholderAdmin from './Pages/Admin/PlaceholderAdmin';
+import PlansList from './Pages/Admin/Plans/PlansList';
+import AdminSettings from './Pages/Admin/Settings/AdminSettings';
+import TenantsList from './Pages/Admin/Tenants/TenantsList';
 import GymOwnersList from './Pages/Admin/GymOwners/GymOwnersList';
 import TransactionsList from './Pages/Admin/Transactions/TransactionsList';
 import AdminSupport from './Pages/Admin/Support/AdminSupport';
@@ -389,36 +391,9 @@ const App = () => {
           <Route path="gym-owners" element={<GymOwnersList />} />
           <Route path="transactions" element={<TransactionsList />} />
           <Route path="support" element={<AdminSupport />} />
-          <Route
-            path="tenants"
-            element={
-              <PlaceholderAdmin
-                title="Tenants"
-                description="View and manage onboarded gym businesses. This will list tenants created from accepted invites once the API is connected."
-                icon="domain"
-              />
-            }
-          />
-          <Route
-            path="plans"
-            element={
-              <PlaceholderAdmin
-                title="SaaS Plans"
-                description="Configure subscription tiers, pricing, and feature flags platform-wide. Plans are currently defined in the invite flow mock data."
-                icon="workspace_premium"
-              />
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <PlaceholderAdmin
-                title="Platform Settings"
-                description="Email templates, branding, and global platform configuration will live here."
-                icon="settings"
-              />
-            }
-          />
+          <Route path="tenants" element={<TenantsList />} />
+          <Route path="plans" element={<PlansList />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         {/* Legacy super-admin / shared dashboard (optional deep links) */}

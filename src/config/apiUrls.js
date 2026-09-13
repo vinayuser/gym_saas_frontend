@@ -24,6 +24,11 @@ const ENDPOINTS = {
   TENANT: {
     ME: `${API_PREFIX}/tenants/me`,
   },
+  TENANTS: {
+    LIST: `${API_PREFIX}/tenants`,
+    UPDATE_STATUS: (id) => `${API_PREFIX}/tenants/${id}/status`,
+    UPDATE_FEATURES: (id) => `${API_PREFIX}/tenants/${id}/features`,
+  },
   GYMS: {
     LIST: `${API_PREFIX}/gyms`,
     DASHBOARD: (gymId) => `${API_PREFIX}/gyms/${gymId}/dashboard`,
@@ -126,9 +131,15 @@ const ENDPOINTS = {
     CREATE: `${API_PREFIX}/invites`,
     MARK_SENT: (id) => `${API_PREFIX}/invites/${id}/sent`,
     REVOKE: (id) => `${API_PREFIX}/invites/${id}/revoke`,
+    PUBLISH: (id) => `${API_PREFIX}/invites/${id}/publish`,
     PUBLIC: (token) => `${API_PREFIX}/invites/public/${token}`,
     CHECKOUT: (token) => `${API_PREFIX}/invites/public/${token}/checkout`,
     VERIFY_PAYMENT: (token) => `${API_PREFIX}/invites/public/${token}/verify-payment`,
+  },
+  SAAS_PLANS: {
+    LIST: `${API_PREFIX}/subscription-plans`,
+    BY_ID: (id) => `${API_PREFIX}/subscription-plans/${id}`,
+    UPDATE: (id) => `${API_PREFIX}/subscription-plans/${id}`,
   },
   GYM_OWNERS: {
     LIST: `${API_PREFIX}/gym-owners`,

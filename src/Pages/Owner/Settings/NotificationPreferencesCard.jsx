@@ -12,7 +12,11 @@ import {
 import { saveNotificationPreferences } from '../../../helpers/settingsApi';
 import { fetchCurrentUserProfile } from '../../../store/slices/authSlice';
 
-const NotificationPreferencesCard = () => {
+const NotificationPreferencesCard = ({
+  title = 'Notifications',
+  description = 'Choose how you want to hear from FitSphere.',
+  options = NOTIFICATION_OPTIONS,
+}) => {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const saved = normalizeNotificationPreferences(user?.notificationPreferences);
@@ -50,12 +54,12 @@ const NotificationPreferencesCard = () => {
     <GlassCard className="p-6">
       <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
         <Icon name="notifications" className="text-primary-container" />
-        Notifications
+        {title}
       </h2>
-      <p className="mb-4 text-sm text-secondary">Choose how you want to hear from FitSphere.</p>
+      <p className="mb-4 text-sm text-secondary">{description}</p>
 
       <div className="space-y-4">
-        {NOTIFICATION_OPTIONS.map((option) => (
+        {options.map((option) => (
           <div
             key={option.key}
             className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
