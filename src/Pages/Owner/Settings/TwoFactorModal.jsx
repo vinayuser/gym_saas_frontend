@@ -54,7 +54,7 @@ const TwoFactorModal = ({ open, onClose, initialEnabled = false }) => {
       if (res.success) {
         toast.success('Two-factor authentication enabled');
         setEnabled(true);
-        setStep('status');
+        setStep('disable');
         await refreshProfile();
       }
     } catch {

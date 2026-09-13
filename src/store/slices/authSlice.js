@@ -14,6 +14,7 @@ const initialState = {
   loading: false,
   profileFetchStatus: 'idle',
   error: null,
+  pendingTwoFactorToken: null,
   userRoleInfo: getUserRoleInfo(null),
 };
 
@@ -116,12 +117,17 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    clearPendingTwoFactor: (state) => {
+      state.pendingTwoFactorToken = null;
+      state.error = null;
+    },
     logout: (state) => {
       state.isAuthenticated = false;
       state.user = null;
       state.tenant = null;
       state.token = null;
       state.profileFetchStatus = 'idle';
+      state.pendingTwoFactorToken = null;
       state.userRoleInfo = getUserRoleInfo(null);
       setAuthToken(null);
       clearTokens();
@@ -132,13 +138,16 @@ const authSlice = createSlice({
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.pendingTwoFactorToken = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         if (action.payload?.requiresTwoFactor) {
           state.error = null;
+          state.pendingTwoFactorToken = action.payload.twoFactorToken || null;
           return;
         }
+        state.pendingTwoFactorToken = null;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.tenant = action.payload.tenant;
@@ -149,6 +158,7 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.pendingTwoFactorToken = null;
       })
       .addCase(verifyTwoFactorLogin.pending, (state) => {
         state.loading = true;
@@ -156,6 +166,7 @@ const authSlice = createSlice({
       })
       .addCase(verifyTwoFactorLogin.fulfilled, (state, action) => {
         state.loading = false;
+        state.pendingTwoFactorToken = null;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.tenant = action.payload.tenant;
@@ -212,10 +223,11 @@ const authSlice = createSlice({
         state.tenant = null;
         state.token = null;
         state.profileFetchStatus = 'idle';
+        state.pendingTwoFactorToken = null;
         state.userRoleInfo = getUserRoleInfo(null);
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearPendingTwoFactor } = authSlice.actions;
 export default authSlice.reducer;

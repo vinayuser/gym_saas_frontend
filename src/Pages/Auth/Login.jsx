@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, verifyTwoFactorLogin } from '../../store/slices/authSlice';
+import {
+  clearPendingTwoFactor,
+  loginUser,
+  verifyTwoFactorLogin,
+} from '../../store/slices/authSlice';
 import { getDefaultPath } from '../../helpers/roleUtils';
 import Icon from '../../components/fitsphere/Icon';
 import GlassCard from '../../components/fitsphere/GlassCard';
@@ -13,11 +17,10 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, pendingTwoFactorToken } = useSelector((state) => state.auth);
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
-  const [twoFactorToken, setTwoFactorToken] = useState(null);
   const [otpCode, setOtpCode] = useState('');
 
   const navigateAfterAuth = (payload) => {
@@ -27,26 +30,24 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOtpCode('');
     const result = await dispatch(loginUser(form));
-    if (loginUser.fulfilled.match(result)) {
-      if (result.payload?.requiresTwoFactor) {
-        setTwoFactorToken(result.payload.twoFactorToken);
-        setOtpCode('');
-        return;
-      }
+    if (loginUser.fulfilled.match(result) && !result.payload?.requiresTwoFactor) {
       navigateAfterAuth(result.payload);
     }
   };
 
   const handleTwoFactorSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(verifyTwoFactorLogin({ twoFactorToken, code: otpCode }));
+    const result = await dispatch(
+      verifyTwoFactorLogin({ twoFactorToken: pendingTwoFactorToken, code: otpCode })
+    );
     if (verifyTwoFactorLogin.fulfilled.match(result)) {
       navigateAfterAuth(result.payload);
     }
   };
 
-  const showTwoFactorStep = Boolean(twoFactorToken);
+  const showTwoFactorStep = Boolean(pendingTwoFactorToken);
 
   return (
     <main className="flex min-h-screen w-full flex-col overflow-hidden md:flex-row">
@@ -212,7 +213,7 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setTwoFactorToken(null);
+                  dispatch(clearPendingTwoFactor());
                   setOtpCode('');
                 }}
                 className="text-sm text-secondary hover:text-on-surface"
