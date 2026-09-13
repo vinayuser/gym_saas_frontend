@@ -2,7 +2,12 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import ENDPOINTS from '../../config/apiUrls';
 import { getRequest, postRequest, putRequest, deleteRequest } from '../../config/dataApi';
 import { toast } from 'react-toastify';
-import { fetchCurrentUserProfile, loginUser, logoutUser } from './authSlice';
+import {
+  fetchCurrentUserProfile,
+  loginUser,
+  logoutUser,
+  verifyTwoFactorLogin,
+} from './authSlice';
 
 const pickInitialGym = (gyms, currentGym) => {
   if (!gyms?.length) return null;
@@ -147,6 +152,10 @@ const gymSlice = createSlice({
         applyGymsFromAuth(state, action.payload?.gyms);
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        if (action.payload?.requiresTwoFactor) return;
+        applyGymsFromAuth(state, action.payload?.gyms);
+      })
+      .addCase(verifyTwoFactorLogin.fulfilled, (state, action) => {
         applyGymsFromAuth(state, action.payload?.gyms);
       })
       .addCase(logoutUser.fulfilled, (state) => {
