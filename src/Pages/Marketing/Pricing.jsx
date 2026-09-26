@@ -1,209 +1,267 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Icon from '../../components/fitsphere/Icon';
 import ENDPOINTS from '../../config/apiUrls';
 import { getRequest } from '../../config/dataApi';
-import { SAAS_PLANS } from '../../constants/saasPlans';
 import { formatCurrency } from '../../helpers/formatUtils';
 import MarketingCta from '../../components/marketing/MarketingCta';
 import MarketingSectionHeader from '../../components/marketing/MarketingSectionHeader';
 import FaqItem from '../../components/marketing/FaqAccordion';
-import { PRICING_COMPARE_ROWS, PRICING_FAQ } from '../../constants/marketingContent';
+import { PRICING_FAQ } from '../../constants/marketingContent';
+
+const FALLBACK = {
+  baseName: 'First gym',
+  basePriceMonthly: 1999,
+  basePriceYearly: 19990,
+  baseDescription: 'Members, staff, classes, finances, and your day-to-day gym tools.',
+  extraGymPriceMonthly: 999,
+  extraGymPriceYearly: 9990,
+  addons: [
+    {
+      key: 'attendance',
+      name: 'Attendance',
+      description: 'QR and front-desk check-in for that gym.',
+      pricePerGymMonthly: 1999,
+      pricePerGymYearly: 19990,
+    },
+    {
+      key: 'store',
+      name: 'Member store',
+      description: 'Sell products to members at that gym.',
+      pricePerGymMonthly: 499,
+      pricePerGymYearly: 4990,
+    },
+    {
+      key: 'day_pass',
+      name: 'Day pass',
+      description: 'Members can book one day at another gym. You set that day’s price.',
+      pricePerGymMonthly: 499,
+      pricePerGymYearly: 4990,
+    },
+  ],
+};
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const Stepper = ({ value, min, max, onChange, label }) => (
+  <div className="inline-flex items-center rounded-lg border border-white/10 bg-surface-container-lowest">
+    <button
+      type="button"
+      aria-label={`Fewer ${label}`}
+      disabled={value <= min}
+      onClick={() => onChange(clamp(value - 1, min, max))}
+      className="px-3 py-2 text-lg text-on-surface disabled:opacity-30"
+    >
+      −
+    </button>
+    <span className="min-w-8 text-center text-sm font-semibold">{value}</span>
+    <button
+      type="button"
+      aria-label={`More ${label}`}
+      disabled={value >= max}
+      onClick={() => onChange(clamp(value + 1, min, max))}
+      className="px-3 py-2 text-lg text-on-surface disabled:opacity-30"
+    >
+      +
+    </button>
+  </div>
+);
 
 const Pricing = () => {
-  const [plans, setPlans] = useState(SAAS_PLANS);
-  const [annual, setAnnual] = useState(false);
+  const [catalog, setCatalog] = useState(FALLBACK);
+  const [yearly, setYearly] = useState(false);
+  const [gymCount, setGymCount] = useState(1);
+  const [toolGyms, setToolGyms] = useState({});
+
+  const priceOf = (monthly, yearlyPrice) => (yearly ? Number(yearlyPrice) : Number(monthly));
+  const period = yearly ? 'year' : 'month';
 
   useEffect(() => {
-    getRequest(ENDPOINTS.INVITES.PLANS)
+    getRequest(ENDPOINTS.PLATFORM_BILLING.PUBLIC)
       .then((res) => {
-        const apiPlans = res.data?.plans;
-        if (apiPlans?.length) {
-          setPlans(
-            apiPlans.map((p) => ({
-              id: p.id,
-              name: p.name,
-              gymLimit: p.gymLimit,
-              priceMonthly: Number(p.priceMonthly),
-              priceYearly: Number(p.priceYearly),
-              description:
-                p.gymLimit === -1
-                  ? 'Enterprise-scale footprint with no branch cap.'
-                  : `Up to ${p.gymLimit} gym branch${p.gymLimit === 1 ? '' : 'es'}.`,
-              features: [
-                p.gymLimit === -1 ? 'Unlimited gym locations' : `${p.gymLimit} gym location(s)`,
-                'Members, plans & QR attendance',
-                'Staff, trainers, events & leads',
-                'Finances, inventory & member store',
-                'Banners, chat & owner dashboard',
-              ],
-            }))
-          );
-        }
+        if (res.data?.catalog) setCatalog(res.data.catalog);
       })
       .catch(() => {});
   }, []);
 
-  const planNames = plans.map((p) => p.name);
+  const addons = catalog.addons.filter((addon) => addon.isActive !== false);
+  const extraGyms = Math.max(0, gymCount - 1);
+
+  const setToolCount = (key, count) => {
+    setToolGyms((current) => ({ ...current, [key]: clamp(count, 0, gymCount) }));
+  };
+
+  const changeGymCount = (next) => {
+    setGymCount(next);
+    setToolGyms((current) => {
+      const trimmed = {};
+      Object.entries(current).forEach(([key, count]) => {
+        trimmed[key] = clamp(count, 0, next);
+      });
+      return trimmed;
+    });
+  };
+
+  const quote = useMemo(() => {
+    const lines = [{ label: 'First gym', amount: priceOf(catalog.basePriceMonthly, catalog.basePriceYearly) }];
+    if (extraGyms > 0) {
+      lines.push({
+        label: `Extra gym × ${extraGyms}`,
+        amount: extraGyms * priceOf(catalog.extraGymPriceMonthly, catalog.extraGymPriceYearly),
+      });
+    }
+    addons.forEach((addon) => {
+      const count = clamp(toolGyms[addon.key] || 0, 0, gymCount);
+      if (count < 1) return;
+      lines.push({
+        label: `${addon.name} × ${count} gym${count === 1 ? '' : 's'}`,
+        amount: count * priceOf(addon.pricePerGymMonthly, addon.pricePerGymYearly),
+      });
+    });
+    const total = lines.reduce((sum, line) => sum + line.amount, 0);
+    return { lines, total };
+  }, [addons, catalog, extraGyms, gymCount, toolGyms, yearly]);
 
   return (
     <>
       <section className="mesh-gradient px-4 pb-8 pt-32 text-center md:px-12">
         <span className="text-xs font-semibold uppercase tracking-widest text-primary-container">
-          Transparent SaaS
+          Simple monthly pricing
         </span>
         <h1 className="mt-3 font-display text-4xl font-bold md:text-5xl">
-          Plans built for <span className="text-primary-container">every scale</span>
+          Pay for the gyms you <span className="text-primary-container">actually run</span>
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-secondary">
-          SaaS subscription tiers by number of gym locations. Prices in INR. Owners activate only
-          through a super admin invite and Razorpay checkout—all owner portal features are included.
+          Your first gym is one price. Every extra branch costs less. Tools such as check-in and
+          the shop are optional, and you only pay for the gyms where you turn them on.
         </p>
-        <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-surface-container p-1">
+        <div className="mt-8 inline-flex items-center gap-1 rounded-full border border-white/10 bg-surface-container p-1">
           <button
             type="button"
-            onClick={() => setAnnual(false)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition ${
-              !annual ? 'bg-primary-container text-on-primary-container' : 'text-secondary'
+            onClick={() => setYearly(false)}
+            className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+              yearly ? 'text-secondary' : 'bg-primary-fixed text-on-primary-fixed'
             }`}
           >
             Monthly
           </button>
           <button
             type="button"
-            onClick={() => setAnnual(true)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition ${
-              annual ? 'bg-primary-container text-on-primary-container' : 'text-secondary'
+            onClick={() => setYearly(true)}
+            className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+              yearly ? 'bg-primary-fixed text-on-primary-fixed' : 'text-secondary'
             }`}
           >
-            Annual
-            <span className="ml-1 text-xs opacity-80">(save ~17%)</span>
+            Yearly
           </button>
         </div>
       </section>
 
-      <section className="px-4 pb-12 md:px-12">
-        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {plans.map((plan, idx) => {
-            const price = annual ? plan.priceYearly / 12 : plan.priceMonthly;
-            const displayPrice = annual ? plan.priceYearly : plan.priceMonthly;
-            return (
-              <div
-                key={plan.id || plan.name}
-                className={`flex flex-col rounded-xl border p-6 transition ${
-                  idx === 1
-                    ? 'border-primary-container bg-primary-container/5 ring-1 ring-primary-container/40'
-                    : 'border-white/10 glass-card hover:border-primary-container/40'
-                }`}
-              >
-                {idx === 1 && (
-                  <span className="mb-3 self-start rounded-full bg-primary-container px-3 py-0.5 text-xs font-bold text-on-primary-container">
-                    Most popular
-                  </span>
-                )}
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-                <p className="mt-4">
-                  <span className="text-3xl font-bold text-primary-container">
-                    {formatCurrency(Math.round(price))}
-                  </span>
-                  <span className="text-secondary">/mo</span>
-                </p>
-                {annual && (
-                  <p className="text-xs text-secondary">
-                    Billed {formatCurrency(displayPrice)} yearly
-                  </p>
-                )}
-                <p className="mt-2 text-sm text-secondary">{plan.description}</p>
-                <ul className="mt-6 flex-1 space-y-2 text-sm text-secondary">
-                  {(plan.features || []).map((f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <Icon name="check_circle" size={16} className="shrink-0 text-primary-container" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/contact"
-                  className={`mt-8 block rounded-lg py-2.5 text-center text-sm font-bold ${
-                    idx === 1
-                      ? 'bg-primary-container text-on-primary-container neon-glow'
-                      : 'border border-white/20 hover:bg-white/5'
-                  }`}
-                >
-                  {idx === plans.length - 1 ? 'Contact enterprise' : 'Get started'}
-                </Link>
-              </div>
-            );
-          })}
+      <section className="px-4 pb-6 md:px-12">
+        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+          <div className="rounded-xl border border-primary-container/40 bg-primary-container/5 p-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary-container">Your plan</p>
+            <h2 className="mt-2 font-display text-2xl font-bold">First gym</h2>
+            <p className="mt-3">
+              <span className="text-4xl font-bold text-primary-container">{formatCurrency(priceOf(catalog.basePriceMonthly, catalog.basePriceYearly))}</span>
+              <span className="text-secondary"> / {period}</span>
+            </p>
+            <p className="mt-3 text-sm text-secondary">
+              {catalog.baseDescription || 'Members, staff, classes, leads, finances, and chat.'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/10 p-6 glass-card">
+            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Same plan, another branch</p>
+            <h2 className="mt-2 font-display text-2xl font-bold">Each extra gym</h2>
+            <p className="mt-3">
+              <span className="text-4xl font-bold text-on-surface">{formatCurrency(priceOf(catalog.extraGymPriceMonthly, catalog.extraGymPriceYearly))}</span>
+              <span className="text-secondary"> / {period}</span>
+            </p>
+            <p className="mt-3 text-sm text-secondary">
+              Added to the same bill. Same login, its own members and staff. Not a different package.
+            </p>
+          </div>
         </div>
-        <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-secondary">
-          Super admins assign plans when sending gym owner invites. Need custom SLAs or white-label?
-          We&apos;ll tailor Unlimited for your network.
-        </p>
       </section>
 
-      <section className="bg-surface-container-low px-4 py-20 md:px-12">
-        <MarketingSectionHeader
-          eyebrow="Compare"
-          title="Feature breakdown"
-          subtitle="See what ships with each tier before you book a demo."
-        />
-        <div className="mx-auto mt-12 max-w-6xl overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="py-4 pr-4 font-semibold text-secondary">Feature</th>
-                {planNames.map((name) => (
-                  <th key={name} className="px-3 py-4 text-center font-semibold">
-                    {name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {PRICING_COMPARE_ROWS.map((row) => (
-                <tr key={row.feature} className="border-b border-white/5">
-                  <td className="py-4 pr-4 text-secondary">{row.feature}</td>
-                  {row.values.map((val, i) => (
-                    <td key={i} className="px-3 py-4 text-center">
-                      {typeof val === 'boolean' ? (
-                        val ? (
-                          <Icon name="check_circle" size={20} className="mx-auto text-primary-container" />
-                        ) : (
-                          <span className="text-secondary/40">—</span>
-                        )
-                      ) : (
-                        <span className={val === 'Unlimited' ? 'font-semibold text-primary-container' : ''}>
-                          {val}
+      <section className="px-4 py-12 md:px-12">
+        <div className="mx-auto grid max-w-6xl items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+          <div className="min-w-0">
+            <h2 className="font-display text-2xl font-bold">Optional tools</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-secondary">
+              These are not plans. Choose how many of your gyms should have each tool. The total updates beside the list.
+            </p>
+            <div className="mt-6 space-y-3">
+              {addons.map((addon) => {
+                const count = clamp(toolGyms[addon.key] || 0, 0, gymCount);
+                const on = count > 0;
+                return (
+                  <div key={addon.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold">{addon.name}</p>
+                        <p className="mt-1 text-sm text-secondary">{addon.description}</p>
+                        <p className="mt-2 text-sm text-primary-container">
+                          {formatCurrency(priceOf(addon.pricePerGymMonthly, addon.pricePerGymYearly))} per gym / {period}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs uppercase text-secondary">Gyms</span>
+                        <Stepper
+                          label={addon.name}
+                          value={count}
+                          min={0}
+                          max={gymCount}
+                          onChange={(next) => setToolCount(addon.key, next)}
+                        />
+                        <span className={`text-xs font-semibold ${on ? 'text-primary-container' : 'text-secondary'}`}>
+                          {on ? 'On' : 'Off'}
                         </span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="px-4 py-16 md:px-12">
-        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3">
-          {[
-            { icon: 'verified_user', title: 'Razorpay activation', text: 'First SaaS payment completes owner tenant setup.' },
-            { icon: 'cloud_upload', title: 'Cloudinary media', text: 'Upload logos and banners during invite setup.' },
-            { icon: 'apartment', title: 'Multi-tenant', text: 'Each paying owner gets an isolated tenant and gym record(s).' },
-          ].map((b) => (
-            <div key={b.title} className="glass-card rounded-xl p-6 text-center">
-              <Icon name={b.icon} size={32} className="mx-auto text-primary-container" />
-              <h4 className="mt-3 font-semibold">{b.title}</h4>
-              <p className="mt-2 text-sm text-secondary">{b.text}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          </div>
+
+          <aside className="h-fit rounded-2xl border border-white/10 bg-surface-container p-6 lg:sticky lg:top-24">
+            <h2 className="font-display text-xl font-bold">{yearly ? 'Your year' : 'Your month'}</h2>
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">How many gyms?</p>
+                <p className="text-xs text-secondary">Includes your first gym</p>
+              </div>
+              <Stepper label="gyms" value={gymCount} min={1} max={20} onChange={changeGymCount} />
+            </div>
+            <ul className="mt-6 divide-y divide-white/10 text-sm">
+              {quote.lines.map((line) => (
+                <li key={line.label} className="flex justify-between gap-4 py-2">
+                  <span className="text-secondary">{line.label}</span>
+                  <span>{formatCurrency(line.amount)}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex items-end justify-between border-t border-white/10 pt-4">
+              <span className="text-sm text-secondary">Estimated total</span>
+              <span className="font-display text-3xl font-bold text-primary-container">
+                {formatCurrency(quote.total)}
+              </span>
+            </div>
+            <p className="mt-1 text-right text-xs text-secondary">
+              per {period}, in rupees
+            </p>
+            <Link
+              to="/contact"
+              className="neon-glow mt-6 block rounded-lg bg-primary-fixed py-3 text-center text-sm font-bold text-on-primary-fixed"
+            >
+              Talk to us about this total
+            </Link>
+          </aside>
         </div>
       </section>
 
       <section className="bg-surface-container-lowest px-4 py-16 md:px-12">
-        <MarketingSectionHeader eyebrow="Pricing FAQ" title="Common questions" />
+        <MarketingSectionHeader eyebrow="Pricing questions" title="Common questions" />
         <div className="mx-auto mt-8 max-w-3xl space-y-3">
           {PRICING_FAQ.map((item) => (
             <FaqItem key={item.q} question={item.q} answer={item.a} />
@@ -211,7 +269,7 @@ const Pricing = () => {
         </div>
       </section>
 
-      <MarketingCta description="Need a custom enterprise agreement? Talk to our sales team." />
+      <MarketingCta description="Want FitSphere Pro for your gym? Tell us about your locations and we will send an invite." />
     </>
   );
 };

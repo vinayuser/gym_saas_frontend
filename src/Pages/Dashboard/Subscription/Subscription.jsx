@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getRequest } from '../../../config/dataApi';
 import ENDPOINTS from '../../../config/apiUrls';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { SUBSCRIPTION_PLANS } from '../../../constants';
 
 const Subscription = () => {
@@ -18,10 +18,10 @@ const Subscription = () => {
   const usage = tenant?.usage;
 
   return (
-    <PageLoader show={loading}>
+    <SectionLoader show={loading}>
     <div>
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Subscription</h1>
-      <p className="text-slate-500">Manage your SaaS plan and usage</p>
+      <p className="text-slate-500">Your monthly plan and gym usage</p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -78,7 +78,7 @@ const Subscription = () => {
         ))}
       </div>
     </div>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

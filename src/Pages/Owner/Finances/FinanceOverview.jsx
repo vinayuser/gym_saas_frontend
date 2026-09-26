@@ -8,7 +8,7 @@ import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
 import FinanceCategoryFilter from '../../../components/fitsphere/FinanceCategoryFilter';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { FINANCE_CATEGORY_LABELS, sourceBadgeClass } from '../../../constants/financeCategories';
 import { formatCurrency, formatDateTime } from '../../../helpers/formatUtils';
 
@@ -27,7 +27,7 @@ const FinanceOverview = () => {
   }, [currentGym?.id, category]);
 
   return (
-    <PageLoader show={loading} message="Loading finances...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-8">
           <div>
@@ -110,7 +110,7 @@ const FinanceOverview = () => {
           </GlassCard>
         </div>
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

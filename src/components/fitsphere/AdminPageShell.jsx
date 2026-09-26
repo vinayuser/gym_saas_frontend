@@ -23,7 +23,7 @@ const AdminPageShell = ({
       onSearchChange={onSearchChange}
       searchPlaceholder={searchPlaceholder}
     />
-    <main className={`custom-scrollbar flex-1 overflow-y-auto p-6 md:p-8 ${className}`}>
+    <main className={`p-6 md:p-8 ${className}`}>
       <div className="mx-auto max-w-7xl">{children}</div>
     </main>
   </>

@@ -21,6 +21,19 @@ const ENDPOINTS = {
     TWO_FACTOR_DISABLE: `${API_PREFIX}/auth/2fa/disable`,
     NOTIFICATION_PREFERENCES: `${API_PREFIX}/auth/notification-preferences`,
   },
+  NOTIFICATIONS: `${API_PREFIX}/notifications`,
+  PLATFORM_BILLING: {
+    PUBLIC: `${API_PREFIX}/platform-billing/public`,
+    CATALOG: `${API_PREFIX}/platform-billing`,
+    ADDON: (key) => `${API_PREFIX}/platform-billing/addons/${key}`,
+    MINE: `${API_PREFIX}/platform-billing/mine`,
+  },
+  ROLES: {
+    TEAM: `${API_PREFIX}/roles/platform`,
+    ROLE: (roleId) => `${API_PREFIX}/roles/platform/${roleId}`,
+    ADMINS: `${API_PREFIX}/roles/platform/admins`,
+    ADMIN: (userId) => `${API_PREFIX}/roles/platform/admins/${userId}`,
+  },
   TENANT: {
     ME: `${API_PREFIX}/tenants/me`,
   },
@@ -28,6 +41,7 @@ const ENDPOINTS = {
     LIST: `${API_PREFIX}/tenants`,
     UPDATE_STATUS: (id) => `${API_PREFIX}/tenants/${id}/status`,
     UPDATE_FEATURES: (id) => `${API_PREFIX}/tenants/${id}/features`,
+    UPDATE_ADDONS: (id, gymId) => `${API_PREFIX}/tenants/${id}/gyms/${gymId}/addons`,
   },
   GYMS: {
     LIST: `${API_PREFIX}/gyms`,
@@ -37,6 +51,7 @@ const ENDPOINTS = {
     BY_ID: (id) => `${API_PREFIX}/gyms/${id}`,
     CREATE: `${API_PREFIX}/gyms`,
     UPDATE: (id) => `${API_PREFIX}/gyms/${id}`,
+    BILLING: (id) => `${API_PREFIX}/gyms/${id}/billing`,
     DELETE: (id) => `${API_PREFIX}/gyms/${id}`,
   },
   MEMBERS: {
@@ -128,6 +143,7 @@ const ENDPOINTS = {
   INVITES: {
     PLANS: `${API_PREFIX}/invites/plans`,
     LIST: `${API_PREFIX}/invites`,
+    OVERVIEW: (id) => `${API_PREFIX}/invites/${id}/overview`,
     CREATE: `${API_PREFIX}/invites`,
     MARK_SENT: (id) => `${API_PREFIX}/invites/${id}/sent`,
     REVOKE: (id) => `${API_PREFIX}/invites/${id}/revoke`,
@@ -144,6 +160,7 @@ const ENDPOINTS = {
   GYM_OWNERS: {
     LIST: `${API_PREFIX}/gym-owners`,
     UPDATE_STATUS: (id) => `${API_PREFIX}/gym-owners/${id}/status`,
+    RESET_PASSWORD: (id) => `${API_PREFIX}/gym-owners/${id}/password`,
   },
   TRANSACTIONS: {
     LIST: `${API_PREFIX}/transactions`,

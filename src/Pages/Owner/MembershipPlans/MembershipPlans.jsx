@@ -7,7 +7,8 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import AppModal from '../../../components/fitsphere/AppModal';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 import { formatCurrency } from '../../../helpers/formatUtils';
 
 const CYCLE_LABELS = {
@@ -149,14 +150,20 @@ const MembershipPlans = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0 });
+  const limit = 10;
 
   const load = async () => {
     if (!currentGym?.id) return;
     setLoading(true);
     try {
-      const res = await getRequest(`${ENDPOINTS.PLANS.LIST(currentGym.id)}?limit=100`);
-      const items = Array.isArray(res.data) ? res.data : [];
-      setPlans(items);
+      const params = { page, limit };
+      if (filter === 'active') params.isActive = 'true';
+      if (filter === 'archived') params.isActive = 'false';
+      const res = await getRequest(ENDPOINTS.PLANS.LIST(currentGym.id), { params });
+      setPlans(Array.isArray(res.data) ? res.data : []);
+      setPagination(res.meta?.pagination || { total: 0 });
     } catch {
       toast.error('Failed to load membership plans');
     } finally {
@@ -166,14 +173,9 @@ const MembershipPlans = () => {
 
   useEffect(() => {
     load();
-  }, [currentGym?.id]);
+  }, [currentGym?.id, page, filter]);
 
-  const filteredPlans =
-    filter === 'active'
-      ? plans.filter((p) => p.isActive)
-      : filter === 'archived'
-        ? plans.filter((p) => !p.isActive)
-        : plans;
+  const filteredPlans = plans;
 
   const savePlan = async (e) => {
     e.preventDefault();
@@ -220,7 +222,7 @@ const MembershipPlans = () => {
   ];
 
   return (
-    <PageLoader show={loading && !plans.length} message="Loading plans...">
+    <SectionLoader show={loading && !plans.length}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-8">
           {/* Header */}
@@ -245,7 +247,7 @@ const MembershipPlans = () => {
 
           {/* Stats */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <StatCard label="Total Plans" value={plans.length} icon="card_membership" accent />
+            <StatCard label="Total Plans" value={pagination.total || 0} icon="card_membership" accent />
             <StatCard label="Active Plans" value={activeCount} icon="verified" />
             <StatCard label="Members on Plans" value={totalMembers} icon="groups" />
           </div>
@@ -256,7 +258,10 @@ const MembershipPlans = () => {
               <button
                 key={value}
                 type="button"
-                onClick={() => setFilter(value)}
+                onClick={() => {
+                  setFilter(value);
+                  setPage(1);
+                }}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                   filter === value
                     ? 'bg-primary-container text-on-primary-container'
@@ -382,6 +387,14 @@ const MembershipPlans = () => {
                   )}
                 </tbody>
               </table>
+              <ListPagination
+                page={page}
+                total={pagination.total || 0}
+                limit={limit}
+                loading={loading}
+                onPage={setPage}
+                noun="plans"
+              />
             </div>
           </GlassCard>
         </div>
@@ -393,7 +406,7 @@ const MembershipPlans = () => {
         onClose={() => setModal(null)}
         onSave={savePlan}
       />
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

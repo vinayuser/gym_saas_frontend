@@ -7,7 +7,7 @@ const MarketingFooter = () => (
       <div className="space-y-4">
         <p className="font-display text-lg font-bold text-primary-container">FitSphere Pro</p>
         <p className="text-sm text-secondary">
-          Multi-tenant gym management SaaS—members, staff, attendance, finances, and owner onboarding.
+          One place for members, staff, check-in, payments, and every branch you open.
         </p>
       </div>
       <div>

@@ -73,6 +73,8 @@ const OwnerSidebar = () => {
   const features = tenant?.features;
 
   const navItems = OWNER_NAV.filter((item) => {
+    if (item.feature === 'attendance' && currentGym?.commercialAddons?.attendance === false) return false;
+    if (item.feature === 'store' && currentGym?.commercialAddons?.store === false) return false;
     if (!item.feature) return true;
     if (!features || features[item.feature] === undefined) return true;
     return Boolean(features[item.feature]);

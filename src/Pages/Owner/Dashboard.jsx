@@ -6,7 +6,7 @@ import { getRequest } from '../../config/dataApi';
 import GlassCard from '../../components/fitsphere/GlassCard';
 import Icon from '../../components/fitsphere/Icon';
 import OwnerPageShell from '../../components/fitsphere/OwnerPageShell';
-import PageLoader from '../../components/Loader/PageLoader';
+import SectionLoader from '../../components/Loader/SectionLoader';
 import DashboardOverview from './Dashboard/DashboardOverview';
 import DashboardAnalytics from './Dashboard/DashboardAnalytics';
 import DashboardReports from './Dashboard/DashboardReports';
@@ -49,7 +49,9 @@ const OwnerDashboard = () => {
       Reports: ENDPOINTS.GYMS.DASHBOARD_REPORTS(currentGym.id),
     };
 
-    getRequest(endpointByTab[activeTab])
+    getRequest(endpointByTab[activeTab], {
+      params: activeTab === 'Overview' ? { period: heatmapPeriod } : undefined,
+    })
       .then((res) => {
         if (cancelled) return;
         if (activeTab === 'Overview') setOverviewData(res.data);
@@ -63,11 +65,19 @@ const OwnerDashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [currentGym?.id, activeTab]);
+  }, [currentGym?.id, activeTab, heatmapPeriod]);
 
   const handleTabChange = (tab) => {
     navigate(TAB_ROUTES[tab] || TAB_ROUTES.Overview);
   };
+
+  const quickActions = [
+    { label: 'Add member', to: '/owner/members/new', icon: 'person_add' },
+    { label: 'New enquiry', to: '/owner/leads', icon: 'filter_alt' },
+    { label: 'Create event', to: '/owner/events', icon: 'event', state: { openCreate: true } },
+    { label: 'Add trainer', to: '/owner/trainers/new', icon: 'sports_martial_arts' },
+  ];
+  const [quickOpen, setQuickOpen] = useState(false);
 
   if (!currentGym) {
     return (
@@ -85,10 +95,6 @@ const OwnerDashboard = () => {
       (activeTab === 'Analytics' && !analyticsData) ||
       (activeTab === 'Reports' && !reportsData));
 
-  if (showLoader) {
-    return <PageLoader show message={`Loading ${activeTab.toLowerCase()}...`} />;
-  }
-
   return (
     <>
       <OwnerPageShell
@@ -98,25 +104,49 @@ const OwnerDashboard = () => {
         onTabChange={handleTabChange}
         showSearch={false}
       >
-        {activeTab === 'Overview' && (
-          <DashboardOverview
-            data={overviewData}
-            heatmapPeriod={heatmapPeriod}
-            onHeatmapPeriodChange={setHeatmapPeriod}
-          />
-        )}
-        {activeTab === 'Analytics' && <DashboardAnalytics data={analyticsData} />}
-        {activeTab === 'Reports' && <DashboardReports data={reportsData} />}
+        <SectionLoader show={showLoader}>
+          {activeTab === 'Overview' && overviewData && (
+            <DashboardOverview
+              data={overviewData}
+              heatmapPeriod={heatmapPeriod}
+              onHeatmapPeriodChange={setHeatmapPeriod}
+            />
+          )}
+          {activeTab === 'Analytics' && analyticsData && <DashboardAnalytics data={analyticsData} />}
+          {activeTab === 'Reports' && reportsData && <DashboardReports data={reportsData} />}
+        </SectionLoader>
       </OwnerPageShell>
 
       {activeTab === 'Overview' ? (
-        <button
-          type="button"
-          className="neon-glow fixed bottom-10 right-10 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed shadow-2xl transition-transform hover:scale-110 active:scale-95"
-          aria-label="Quick action"
-        >
-          <Icon name="bolt" size={32} />
-        </button>
+        <div className="fixed bottom-10 right-10 z-50">
+          {quickOpen ? (
+            <div className="mb-3 w-52 overflow-hidden rounded-xl border border-white/10 bg-surface-container shadow-2xl">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={() => {
+                    setQuickOpen(false);
+                    navigate(action.to, action.state ? { state: action.state } : undefined);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm hover:bg-primary-fixed hover:text-on-primary-fixed"
+                >
+                  <Icon name={action.icon} size={18} />
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setQuickOpen((open) => !open)}
+            className="neon-glow flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed shadow-2xl transition-transform hover:scale-110 active:scale-95"
+            aria-label="Quick actions"
+            aria-expanded={quickOpen}
+          >
+            <Icon name={quickOpen ? 'close' : 'bolt'} size={32} />
+          </button>
+        </div>
       ) : null}
     </>
   );

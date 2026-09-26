@@ -37,12 +37,12 @@ export const SUPPORT_CATEGORIES = [
   },
   {
     value: 'PLAN_CHANGE',
-    label: 'Change SaaS plan',
+    label: 'Change my plan',
     defaultSubject: 'Plan change request',
     defaultMessage: messageTemplate([
       'Hello FitSphere Pro support,',
       '',
-      'I would like to change my SaaS subscription plan.',
+      'I would like to change my monthly plan.',
       '',
       'Business name: ',
       'Account email: ',
@@ -126,7 +126,7 @@ export const buildPlanChangeMessage = ({ tenantName, tenantEmail, planName, plan
   messageTemplate([
     'Hello FitSphere Pro support,',
     '',
-    'I would like to change my SaaS subscription plan.',
+    'I would like to change my monthly plan.',
     '',
     `Business: ${tenantName || '—'}`,
     `Account email: ${tenantEmail || '—'}`,

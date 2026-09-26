@@ -16,6 +16,7 @@ export const getUserRoleInfo = (user) => {
   const role = user.role;
   return {
     isSuperAdmin: role === ROLES.SUPER_ADMIN,
+    isPlatformAdmin: role === ROLES.PLATFORM_ADMIN,
     isGymOwner: role === ROLES.GYM_OWNER,
     isManager: role === ROLES.MANAGER,
     isStaff: [ROLES.MANAGER, ROLES.RECEPTIONIST, ROLES.TRAINER].includes(role),
@@ -27,9 +28,19 @@ export const getUserRoleInfo = (user) => {
 export const getDefaultPath = (user) => {
   const { isSuperAdmin, isGymOwner, isManager, isStaff } = getUserRoleInfo(user);
 
-  if (isSuperAdmin) return '/admin/dashboard';
+  if (isSuperAdmin || user.role === ROLES.PLATFORM_ADMIN) return '/admin/dashboard';
   if (isGymOwner || isManager || isStaff) return '/owner/dashboard';
   return '/owner/dashboard';
+};
+
+export const hasPlatformPermission = (user, slug) => {
+  if (!user || !slug) return false;
+  if (user.role === ROLES.SUPER_ADMIN) return true;
+  if (user.role !== ROLES.PLATFORM_ADMIN) return false;
+  const list = user.platformPermissions || [];
+  if (list.includes(slug)) return true;
+  if (slug.endsWith('.view')) return list.includes(slug.replace(/\.view$/, '.manage'));
+  return false;
 };
 
 export const canAccessRoute = (user, allowedRoles = []) => {
@@ -42,8 +53,8 @@ export const canAccessRoute = (user, allowedRoles = []) => {
 export const getNavigationMenu = (user) => {
   const roleInfo = getUserRoleInfo(user);
 
-  if (roleInfo.isSuperAdmin) {
-    return ADMIN_NAV;
+  if (roleInfo.isSuperAdmin || roleInfo.isPlatformAdmin) {
+    return ADMIN_NAV.filter((item) => hasPlatformPermission(user, item.permission));
   }
 
   return [

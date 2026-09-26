@@ -8,7 +8,7 @@ import Icon from '../../../components/fitsphere/Icon';
 import EventCalendar from '../../../components/fitsphere/EventCalendar';
 import EventFormModal from '../../../components/fitsphere/EventFormModal';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { getViewRange } from '../../../helpers/eventCalendarUtils';
 
 const Events = () => {
@@ -96,7 +96,7 @@ const Events = () => {
   }
 
   return (
-    <PageLoader show={loading} message="Loading events...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -107,7 +107,7 @@ const Events = () => {
             <button
               type="button"
               onClick={() => openCreate()}
-              className="cyber-glow flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary-container px-6 py-3 text-sm font-bold text-on-primary-container"
+              className="neon-glow flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary-fixed px-6 py-3 text-sm font-bold text-on-primary-fixed"
             >
               <Icon name="add" size={20} />
               Create Event
@@ -135,7 +135,7 @@ const Events = () => {
           onSaved={load}
         />
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

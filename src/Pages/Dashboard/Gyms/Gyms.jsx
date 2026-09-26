@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchGyms, createGym, deleteGym } from '../../../store/slices/gymSlice';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 import { ROLES } from '../../../constants';
 import { Plus, Trash2, MapPin } from 'lucide-react';
@@ -31,7 +31,7 @@ const Gyms = () => {
   };
 
   return (
-    <PageLoader show={loading && !gyms.length}>
+    <SectionLoader show={loading && !gyms.length}>
     <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER, ROLES.MANAGER]}>
       <div>
         <div className="flex items-center justify-between">
@@ -87,7 +87,7 @@ const Gyms = () => {
         </div>
       </div>
     </ProtectedRoute>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

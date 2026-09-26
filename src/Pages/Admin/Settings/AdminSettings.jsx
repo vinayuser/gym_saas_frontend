@@ -14,38 +14,26 @@ const PLATFORM_LINKS = [
   {
     to: '/admin/invites',
     icon: 'mail',
-    title: 'Gym invites',
-    description: 'Create and manage owner onboarding invites',
-  },
-  {
-    to: '/admin/gym-owners',
-    icon: 'groups',
-    title: 'Gym owners',
-    description: 'Activate or suspend onboarded tenants',
+    title: 'Businesses',
+    description: 'Invites, owners, gyms, and purchased add-ons',
   },
   {
     to: '/admin/plans',
     icon: 'workspace_premium',
-    title: 'SaaS plans',
+    title: 'Plans',
     description: 'Pricing and gym limits for subscription tiers',
   },
   {
     to: '/admin/transactions',
     icon: 'payments',
     title: 'Transactions',
-    description: 'Review SaaS payment history',
+    description: 'Review monthly payments',
   },
   {
     to: '/admin/support',
     icon: 'support_agent',
     title: 'Support',
     description: 'Handle platform support tickets',
-  },
-  {
-    to: '/admin/tenants',
-    icon: 'domain',
-    title: 'Tenants',
-    description: 'Browse onboarded gym businesses',
   },
 ];
 

@@ -6,21 +6,24 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 import { formatDateTime } from '../../../helpers/formatUtils';
 
 const Attendance = () => {
   const { currentGym } = useSelector((s) => s.gym);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     if (!currentGym?.id) return;
     setLoading(true);
-    getRequest(ENDPOINTS.ATTENDANCE.LIST(currentGym.id))
+    getRequest(ENDPOINTS.ATTENDANCE.LIST(currentGym.id), { params: { page, limit } })
       .then((res) => setData(res.data))
       .finally(() => setLoading(false));
-  }, [currentGym?.id]);
+  }, [currentGym?.id, page]);
 
   if (!currentGym) {
     return (
@@ -30,19 +33,18 @@ const Attendance = () => {
     );
   }
 
-  if (loading) return <PageLoader show message="Loading attendance..." />;
-
   const stats = data?.stats || {};
   const records = data?.records || [];
   const capacity = stats.capacity || 150;
   const inside = stats.currentlyInside || 0;
   const pct = Math.round((inside / capacity) * 100);
 
-  const hours = Array.from({ length: 16 }, (_, i) => i + 6);
-  const hourlyMap = Object.fromEntries((stats.hourly || []).map((h) => [h.hour, h.count]));
+  const trend = data?.trend || [];
+  const maxTrend = Math.max(...trend.map((item) => item.count), 1);
 
   return (
     <OwnerPageShell showSearch={false}>
+      <SectionLoader show={loading}>
       <div className="space-y-8">
         <div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">Live Attendance Dashboard</h1>
@@ -81,21 +83,26 @@ const Attendance = () => {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <GlassCard className="p-6 lg:col-span-2">
-            <h3 className="mb-4 font-semibold">Daily Attendance Trend</h3>
-            <div className="flex h-40 items-end gap-1">
-              {hours.map((h) => {
-                const count = hourlyMap[h] || 0;
-                const max = Math.max(...hours.map((hr) => hourlyMap[hr] || 0), 1);
-                return (
-                  <div key={h} className="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      className="w-full rounded-t bg-primary-container/80"
-                      style={{ height: `${(count / max) * 100}%`, minHeight: count ? 4 : 0 }}
-                    />
-                    <span className="text-[9px] text-secondary">{h}</span>
-                  </div>
-                );
-              })}
+            <h3 className="mb-4 font-semibold">Check-ins, last 14 days</h3>
+            <div className="flex h-56 items-end gap-1">
+              {trend.length === 0 ? (
+                <p className="text-sm text-secondary">No check-ins in the last 14 days.</p>
+              ) : (
+                trend.map((item) => {
+                  const height = item.count ? Math.max((item.count / maxTrend) * 100, 14) : 0;
+                  return (
+                    <div key={item.label} className="flex h-full min-w-0 flex-1 flex-col justify-end">
+                      <span className="mb-1 text-center text-[10px] font-semibold text-secondary">{item.count || ''}</span>
+                      <div
+                        className="w-full rounded-t bg-primary-container"
+                        style={{ height: `${height}%` }}
+                        title={`${item.label}: ${item.count}`}
+                      />
+                      <span className="mt-2 truncate text-center text-[10px] text-secondary">{item.label}</span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </GlassCard>
           <GlassCard className="flex flex-col items-center justify-center p-6">
@@ -113,7 +120,7 @@ const Attendance = () => {
 
         <GlassCard className="overflow-hidden p-0">
           <div className="border-b border-white/5 p-4">
-            <h3 className="font-semibold">Live Check-in Feed</h3>
+            <h3 className="font-semibold">Recent check-ins</h3>
           </div>
           <table className="w-full text-left text-sm">
             <thead>
@@ -128,7 +135,7 @@ const Attendance = () => {
               {records.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-secondary">
-                    No check-ins today yet.
+                    No check-ins in the last 30 days.
                   </td>
                 </tr>
               ) : (
@@ -150,8 +157,17 @@ const Attendance = () => {
               )}
             </tbody>
           </table>
+          <ListPagination
+            page={page}
+            total={data?.pagination?.total || 0}
+            limit={limit}
+            loading={loading}
+            onPage={setPage}
+            noun="check-ins"
+          />
         </GlassCard>
       </div>
+      </SectionLoader>
     </OwnerPageShell>
   );
 };

@@ -7,7 +7,8 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import AppModal from '../../../components/fitsphere/AppModal';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 
 const StoreCategories = () => {
   const { currentGym } = useSelector((s) => s.gym);
@@ -16,17 +17,21 @@ const StoreCategories = () => {
   const [modal, setModal] = useState(null);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0 });
+  const limit = 10;
 
   const load = () => {
     if (!currentGym?.id) return;
     setLoading(true);
-    getRequest(ENDPOINTS.CATEGORIES.LIST(currentGym.id)).then((res) => {
-      setCategories(res.data || []);
+    getRequest(ENDPOINTS.CATEGORIES.LIST(currentGym.id), { params: { page, limit } }).then((res) => {
+      setCategories(Array.isArray(res.data) ? res.data : []);
+      setPagination(res.meta?.pagination || { total: 0 });
       setLoading(false);
     });
   };
 
-  useEffect(load, [currentGym?.id]);
+  useEffect(load, [currentGym?.id, page]);
 
   const openCreate = () => {
     setName('');
@@ -69,7 +74,7 @@ const StoreCategories = () => {
   }
 
   return (
-    <PageLoader show={loading} message="Loading categories...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -135,6 +140,14 @@ const StoreCategories = () => {
                 )}
               </tbody>
             </table>
+            <ListPagination
+              page={page}
+              total={pagination.total || 0}
+              limit={limit}
+              loading={loading}
+              onPage={setPage}
+              noun="categories"
+            />
           </GlassCard>
         </div>
 
@@ -163,7 +176,7 @@ const StoreCategories = () => {
           </form>
         </AppModal>
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

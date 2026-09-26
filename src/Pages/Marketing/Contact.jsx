@@ -31,8 +31,8 @@ const Contact = () => {
             Elevate your <span className="text-primary-container">connection.</span>
           </h1>
           <p className="mt-4 text-lg text-secondary">
-            Ask about gym owner invites, SaaS plans, or a demo of the owner and super admin
-            dashboards. Existing owners should use in-app Support after login.
+            Tell us about your gym, ask about pricing, or request an invite. If you already have an
+            account, sign in and use Support inside the app.
           </p>
         </header>
 
@@ -153,7 +153,7 @@ const Contact = () => {
                 <div>
                   <p className="text-xs font-semibold uppercase text-secondary">Demo accounts</p>
                   <p className="text-sm text-secondary">
-                    See README for super admin and owner demo credentials (local development).
+                    We reply within one or two business days.
                   </p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ const Contact = () => {
                 className="h-full w-full object-cover brightness-50 grayscale"
               />
               <div className="absolute bottom-4 left-4 glass-card rounded-lg px-4 py-2 text-xs text-primary-container">
-                Gym SaaS platform
+                FitSphere Pro
               </div>
             </div>
           </div>

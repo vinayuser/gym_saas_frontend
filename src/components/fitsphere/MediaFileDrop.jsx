@@ -47,7 +47,7 @@ const MediaFileDrop = ({
         className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-white/10 p-6 text-center transition hover:border-primary-container/40 ${uploading ? 'pointer-events-none opacity-60' : ''}`}
       >
         <Icon name={icon} size={36} className="text-secondary" />
-        <span className="text-sm font-medium">{uploading ? 'Uploading to Cloudinary…' : hint}</span>
+        <span className="text-sm font-medium">{uploading ? 'Uploading…' : hint}</span>
         {!uploading && (
           <span className="rounded-full border border-white/20 px-4 py-1 text-xs">Browse</span>
         )}

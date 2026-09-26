@@ -11,7 +11,6 @@ import {
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import MediaFileDrop from '../../../components/fitsphere/MediaFileDrop';
-import PageLoader from '../../../components/Loader/PageLoader';
 import SuccessModal from '../../../components/fitsphere/SuccessModal';
 import { uploadMediaFile } from '../../../helpers/mediaUpload';
 
@@ -246,7 +245,11 @@ const AddStaff = ({ mode = 'staff' }) => {
   };
 
   if (editId && loading && !currentStaff) {
-    return <PageLoader show message={isTrainerMode ? 'Loading trainer...' : 'Loading staff member...'} />;
+    return (
+      <div className="flex justify-center py-24">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-fixed/25 border-t-primary-fixed" />
+      </div>
+    );
   }
 
   if (!currentGym) {
@@ -571,7 +574,7 @@ const AddStaff = ({ mode = 'staff' }) => {
               </div>
               {(form.addressProofUrl || form.idProofUrl) && (
                 <p className="mt-4 text-xs text-secondary">
-                  Documents are stored securely on Cloudinary and linked to this staff record.
+                  Documents are stored with this staff record.
                 </p>
               )}
             </GlassCard>

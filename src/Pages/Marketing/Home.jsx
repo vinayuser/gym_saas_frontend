@@ -9,7 +9,6 @@ import {
   MARKETING_STATS,
   OWNER_ONBOARDING_STEPS,
   PRODUCT_NAME,
-  PRODUCT_TAGLINE,
   SUPER_ADMIN_FEATURES,
 } from '../../constants/marketingContent';
 
@@ -28,7 +27,7 @@ const Home = () => (
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-container/30 bg-primary-container/5 px-4 py-1">
           <Icon name="fitness_center" size={16} className="text-primary-container" />
           <span className="text-xs font-semibold uppercase tracking-widest text-primary-container">
-            Gym SaaS · Multi-tenant
+            For gym owners
           </span>
         </div>
         <h1 className="font-display text-4xl font-bold leading-tight text-on-surface md:text-6xl">
@@ -37,9 +36,8 @@ const Home = () => (
           <span className="text-primary-container">one owner portal</span>
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-secondary">
-          {PRODUCT_NAME} is {PRODUCT_TAGLINE.toLowerCase()}. Manage members, staff, attendance,
-          membership plans, finances, inventory, events, and leads—with super admin invite onboarding
-          and Razorpay activation.
+          {PRODUCT_NAME} helps you run members, staff, classes, payments, and every branch from one
+          login. Start with your first gym, then add locations and extra tools only when you need them.
         </p>
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link
@@ -52,7 +50,7 @@ const Home = () => (
             to="/pricing"
             className="rounded-lg border border-white/20 px-8 py-3 text-center text-sm font-medium transition hover:bg-white/5"
           >
-            View SaaS plans
+            See pricing
           </Link>
         </div>
         <p className="mt-6 text-sm text-secondary">
@@ -73,7 +71,7 @@ const Home = () => (
       <MarketingSectionHeader
         eyebrow="Owner portal"
         title="Everything in your sidebar"
-        subtitle="The marketing site reflects what gym owners actually use after login—same modules, same workflows."
+        subtitle="The same tools you get after you sign in: members, money, classes, and your team."
       />
       <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {HOME_PLATFORM_MODULES.map((mod) => (
@@ -135,7 +133,7 @@ const Home = () => (
               <Icon name={card.icon} className="text-primary-container" />
               <p className="mt-3 text-xs uppercase text-secondary">{card.label}</p>
               <p className="text-xl font-bold">{card.value}</p>
-              <p className="mt-1 text-[10px] text-secondary">Populated from your gym data</p>
+              <p className="mt-1 text-[10px] text-secondary">From your gym, after you sign in</p>
             </div>
           ))}
         </div>
@@ -144,9 +142,9 @@ const Home = () => (
 
     <section className="px-4 py-20 md:px-12">
       <MarketingSectionHeader
-        eyebrow="Super admin"
+        eyebrow="For our team"
         title="Platform operator tools"
-        subtitle="Super admins manage the SaaS network—send invites, assign plans, and list onboarded gym owners."
+        subtitle="We look after new gyms joining FitSphere Pro and keep the platform running."
       />
       <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-3">
         {SUPER_ADMIN_FEATURES.map((f) => (
@@ -163,7 +161,7 @@ const Home = () => (
       <MarketingSectionHeader
         eyebrow="Onboarding"
         title="From invite link to live gym"
-        subtitle="Gym owners are provisioned only after completing setup and Razorpay payment."
+        subtitle="You tell us about your gym, pay the first month, and sign in the same day."
       />
       <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {OWNER_ONBOARDING_STEPS.map((s) => (
@@ -182,7 +180,7 @@ const Home = () => (
           <h2 className="font-display text-3xl font-bold">Finances, inventory &amp; retail</h2>
           <p className="text-secondary">
             Track payments, expenses, P&amp;L, and ledger entries per gym. Run inventory and a member
-            store for products—upload images through Cloudinary from the owner portal.
+            store for products your members can buy.
           </p>
           {[
             { icon: 'monitoring', title: 'Finance overview', sub: 'Revenue & expense summary' },
@@ -219,18 +217,18 @@ const Home = () => (
         {[
           {
             icon: 'lock',
-            title: 'JWT authentication',
-            text: 'Secure login with access and refresh tokens for owners and staff.',
+            title: 'Safe sign-in',
+            text: 'Owners and staff sign in with their own account. Sessions stay on that device until you log out.',
           },
           {
             icon: 'apartment',
-            title: 'Tenant isolation',
-            text: 'Each gym business has its own tenant; APIs enforce scope on every request.',
+            title: 'Your gym, your data',
+            text: 'Members, payments, and staff stay with your gym. Other gyms cannot open them.',
           },
           {
             icon: 'cloud_upload',
-            title: 'Cloudinary media',
-            text: 'Logos, banners, and product images uploaded to cloud storage.',
+            title: 'Photos in the app',
+            text: 'Add your logo, banners, and product pictures so members see your gym, not a generic one.',
           },
         ].map((f) => (
           <div
@@ -247,7 +245,7 @@ const Home = () => (
 
     <MarketingCta
       title="Ready to onboard your gym?"
-      description="Gym owners need a super admin invite. Platform operators can sign in to send invites and manage gym owners."
+      description="Tell us about your gym and we will send a private invite so you can set it up and pay for the first month."
       primaryLabel="Contact for access"
       primaryTo="/contact"
       secondaryLabel="View pricing"

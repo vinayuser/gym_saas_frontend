@@ -25,7 +25,7 @@ const Sidebar = () => {
     <aside className="flex w-64 flex-col bg-slate-900 text-white">
       <div className="flex h-16 items-center gap-2 border-b border-slate-700 px-6">
         <Dumbbell className="h-7 w-7 text-blue-400" />
-        <span className="text-lg font-bold">GymSaaS</span>
+        <span className="text-lg font-bold">FitSphere Pro</span>
       </div>
 
       <nav className="flex-1 space-y-1 p-4">

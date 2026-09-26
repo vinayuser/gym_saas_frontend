@@ -6,7 +6,7 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
 import FinanceCategoryFilter from '../../../components/fitsphere/FinanceCategoryFilter';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { formatCurrency } from '../../../helpers/formatUtils';
 
 const FinanceExpenses = () => {
@@ -23,8 +23,6 @@ const FinanceExpenses = () => {
       .finally(() => setLoading(false));
   }, [currentGym?.id, category]);
 
-  if (loading) return <PageLoader show message="Loading P&L..." />;
-
   const items = [
     { key: 'equipment', label: 'Equipment', icon: 'fitness_center' },
     { key: 'salaries', label: 'Salaries', icon: 'groups' },
@@ -36,6 +34,7 @@ const FinanceExpenses = () => {
 
   return (
     <OwnerPageShell showSearch={false}>
+      <SectionLoader show={loading}>
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
@@ -86,6 +85,7 @@ const FinanceExpenses = () => {
           </div>
         </GlassCard>
       </div>
+      </SectionLoader>
     </OwnerPageShell>
   );
 };

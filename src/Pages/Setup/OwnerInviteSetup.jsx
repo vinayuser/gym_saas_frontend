@@ -15,7 +15,8 @@ const inputClass =
   'input-cyber w-full rounded-lg border border-white/10 bg-surface-container-lowest px-3 py-2.5 text-sm';
 const labelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-secondary';
 
-const TOTAL_STEPS = 5;
+const STEP_LABELS = ['Welcome', 'Password', 'Profile', 'Photos', 'Tools', 'Payment'];
+const TOTAL_STEPS = STEP_LABELS.length;
 
 const OwnerInviteSetup = () => {
   const { token } = useParams();
@@ -47,6 +48,7 @@ const OwnerInviteSetup = () => {
     logoPreview: null,
     logoName: '',
   });
+  const [selectedAddons, setSelectedAddons] = useState([]);
   const [media, setMedia] = useState({
     videoUrl: null,
     videoPreview: null,
@@ -72,6 +74,7 @@ const OwnerInviteSetup = () => {
       logoUrl: o.logoUrl || null,
       logoPreview: o.logoUrl || null,
     }));
+    setSelectedAddons(Array.isArray(o.addonKeys) ? o.addonKeys : []);
     setMedia((m) => ({
       ...m,
       videoUrl: o.videoUrl || null,
@@ -103,7 +106,7 @@ const OwnerInviteSetup = () => {
         setLoadError(null);
 
         if (loaded.completed) {
-          setStep(6);
+          setStep(7);
           return;
         }
 
@@ -115,7 +118,6 @@ const OwnerInviteSetup = () => {
         }
         if (loaded.paymentPending) {
           restoreOnboarding(loaded);
-          setStep(5);
         }
       })
       .catch((err) => {
@@ -126,14 +128,14 @@ const OwnerInviteSetup = () => {
   }, [token]);
 
   useEffect(() => {
-    if (!invite?.paymentPending || step !== 5 || loadingInvite) return;
+    if (!invite?.paymentPending || step !== 6 || loadingInvite) return;
 
     let cancelled = false;
     (async () => {
       const result = await tryCompletePendingPayment();
       if (!cancelled && result?.success) {
         toast.success('Payment confirmed — your app is ready');
-        setStep(6);
+        setStep(7);
       }
     })();
 
@@ -185,8 +187,8 @@ const OwnerInviteSetup = () => {
   };
 
   const validateProfile = () => {
-    if (!profile.businessName.trim()) {
-      toast.error('Gym / business name is required');
+    if (!invite?.businessName?.trim()) {
+      toast.error('This invite has no gym name. Contact the platform team.');
       return false;
     }
     const phones = profile.contactPhones.map((p) => p.trim()).filter(Boolean);
@@ -219,6 +221,10 @@ const OwnerInviteSetup = () => {
     }
     if (step === 4) {
       setStep(5);
+      return;
+    }
+    if (step === 5) {
+      setStep(6);
     }
   };
 
@@ -325,7 +331,8 @@ const OwnerInviteSetup = () => {
 
   const buildCheckoutPayload = () => {
     const payload = {
-      businessName: profile.businessName.trim(),
+      businessName: invite.businessName.trim(),
+      addonKeys: selectedAddons,
       description: profile.description,
       contactPhones: profile.contactPhones.map((p) => p.trim()).filter(Boolean),
       supportEmails: profile.supportEmails.map((e) => e.trim()).filter(Boolean),
@@ -346,7 +353,7 @@ const OwnerInviteSetup = () => {
   const completeActivation = async (paymentPayload = {}) => {
     await postRequest(ENDPOINTS.INVITES.VERIFY_PAYMENT(token), paymentPayload);
     toast.success('Payment successful — your app is ready');
-    setStep(6);
+    setStep(7);
   };
 
   const handlePayment = async () => {
@@ -359,7 +366,7 @@ const OwnerInviteSetup = () => {
       const pending = await tryCompletePendingPayment();
       if (pending?.success) {
         toast.success('Payment confirmed — your app is ready');
-        setStep(6);
+        setStep(7);
         return;
       }
 
@@ -432,7 +439,17 @@ const OwnerInviteSetup = () => {
     );
   }
 
-  const amountDue = Number(plan?.priceMonthly ?? 0);
+  const addons = (invite.billing?.addons || []).filter((addon) => addon.isActive !== false);
+  const addonTotal = addons
+    .filter((addon) => selectedAddons.includes(addon.key))
+    .reduce((sum, addon) => sum + Number(addon.pricePerGymMonthly || 0), 0);
+  const amountDue = Number(invite.billing?.basePriceMonthly ?? plan?.priceMonthly ?? 0) + addonTotal;
+
+  const toggleAddon = (key) => {
+    setSelectedAddons((current) =>
+      current.includes(key) ? current.filter((item) => item !== key) : [...current, key]
+    );
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -458,14 +475,27 @@ const OwnerInviteSetup = () => {
       <main className="flex flex-1 justify-center px-6 py-8">
         <div className="w-full max-w-2xl">
           {step <= TOTAL_STEPS && (
-            <div className="mb-8 flex justify-center gap-1.5">
-              {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
-                <div
-                  key={s}
-                  title={`Step ${s}`}
-                  className={`h-1.5 flex-1 max-w-12 rounded-full ${step >= s ? 'bg-primary-container' : 'bg-white/10'}`}
-                />
-              ))}
+            <div className="mb-8 flex justify-center gap-2">
+              {STEP_LABELS.map((label, index) => {
+                const number = index + 1;
+                const reached = number <= step;
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    disabled={!reached}
+                    onClick={() => setStep(number)}
+                    className="flex min-w-0 flex-1 max-w-24 flex-col items-center gap-1 disabled:cursor-default"
+                  >
+                    <span
+                      className={`h-1.5 w-full rounded-full ${reached ? 'bg-primary-container' : 'bg-white/10'}`}
+                    />
+                    <span className={`text-[10px] ${number === step ? 'text-on-surface' : 'text-secondary'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -590,7 +620,7 @@ const OwnerInviteSetup = () => {
 
               <MediaFileDrop
                 label="App logo"
-                hint="PNG or JPG, max 5MB — uploads to Cloudinary"
+                hint="PNG or JPG, max 5MB"
                 accept="image/png,image/jpeg,image/webp"
                 preview={profile.logoPreview}
                 uploading={uploadingLogo}
@@ -603,16 +633,11 @@ const OwnerInviteSetup = () => {
               />
 
               <div>
-                <label className={labelClass} htmlFor="businessName">
-                  Gym / business name
-                </label>
-                <input
-                  id="businessName"
-                  required
-                  className={inputClass}
-                  value={profile.businessName}
-                  onChange={(e) => setProfileField('businessName', e.target.value)}
-                />
+                <p className={labelClass}>Gym / business name</p>
+                <p className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm font-medium">
+                  {invite.businessName}
+                </p>
+                <p className="mt-1 text-xs text-secondary">Set by the platform. You cannot change this.</p>
               </div>
 
               <div>
@@ -768,7 +793,7 @@ const OwnerInviteSetup = () => {
 
               <MediaFileDrop
                 label="Gym video (optional)"
-                hint="MP4 or WebM, max 50MB — uploads to Cloudinary"
+                hint="MP4 or WebM, max 50MB"
                 accept="video/mp4,video/webm,video/quicktime"
                 preview={media.videoPreview}
                 previewType="video"
@@ -849,20 +874,84 @@ const OwnerInviteSetup = () => {
                   onClick={goNext}
                   className="cyber-glow flex-[2] rounded-lg bg-primary-container py-3 font-bold text-on-primary-container"
                 >
+                  Continue
+                </button>
+              </div>
+            </GlassCard>
+          )}
+
+          {step === 5 && (
+            <GlassCard className="space-y-6 p-8">
+              <div>
+                <h1 className="font-display text-2xl font-bold">Optional tools</h1>
+                <p className="mt-1 text-sm text-secondary">
+                  These are not required. Turn one on only if you want it for {invite.businessName}.
+                  The amount due updates before you pay.
+                </p>
+              </div>
+              <div className="space-y-3">
+                {addons.length === 0 ? (
+                  <p className="text-sm text-secondary">No optional tools are available right now.</p>
+                ) : (
+                  addons.map((addon) => {
+                    const on = selectedAddons.includes(addon.key);
+                    return (
+                      <label
+                        key={addon.key}
+                        className={`flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 ${
+                          on ? 'border-primary-container bg-primary-container/10' : 'border-white/10'
+                        }`}
+                      >
+                        <span>
+                          <span className="block font-semibold">{addon.name}</span>
+                          <span className="mt-1 block text-sm text-secondary">{addon.description}</span>
+                          <span className="mt-1 block text-sm text-primary-container">
+                            {formatCurrency(addon.pricePerGymMonthly)} / month
+                          </span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={() => toggleAddon(addon.key)}
+                          className="h-5 w-5 accent-[#c3f400]"
+                        />
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+              <div className="flex justify-between border-t border-white/10 pt-4 text-sm">
+                <span className="text-secondary">Due today</span>
+                <span className="font-display text-2xl font-bold text-primary-container">
+                  {formatCurrency(amountDue)}
+                </span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(4)}
+                  className="flex-1 rounded-lg border border-white/10 py-3 text-sm hover:bg-white/5"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="cyber-glow flex-[2] rounded-lg bg-primary-container py-3 font-bold text-on-primary-container"
+                >
                   Continue to payment
                 </button>
               </div>
             </GlassCard>
           )}
 
-          {/* Step 5 — Payment */}
-          {step === 5 && plan && (
+          {/* Step 6 — Payment */}
+          {step === 6 && plan && (
             <GlassCard className="space-y-6 p-8">
               <div>
                 <h1 className="font-display text-2xl font-bold">Activate your app</h1>
                 <p className="mt-1 text-sm text-secondary">
-                  Pay the first month to launch <strong>{profile.businessName}</strong> on{' '}
-                  {plan.name}.
+                  Pay the first month to launch <strong>{invite.businessName}</strong>.
                 </p>
                 {invite.paymentPending && (
                   <p className="mt-2 text-xs text-primary-container">
@@ -877,9 +966,17 @@ const OwnerInviteSetup = () => {
                   <span className="font-medium">{plan.name}</span>
                 </div>
                 <div className="mt-2 flex justify-between text-sm">
-                  <span className="text-secondary">Billing</span>
-                  <span>Monthly</span>
+                  <span className="text-secondary">First gym</span>
+                  <span>{formatCurrency(invite.billing?.basePriceMonthly ?? plan?.priceMonthly ?? 0)}</span>
                 </div>
+                {addons
+                  .filter((addon) => selectedAddons.includes(addon.key))
+                  .map((addon) => (
+                    <div key={addon.key} className="mt-2 flex justify-between text-sm">
+                      <span className="text-secondary">{addon.name}</span>
+                      <span>{formatCurrency(addon.pricePerGymMonthly)}</span>
+                    </div>
+                  ))}
                 <div className="mt-4 flex items-end justify-between border-t border-white/10 pt-4">
                   <span className="text-secondary">Due today</span>
                   <span className="font-display text-3xl font-bold text-primary-container">
@@ -890,13 +987,13 @@ const OwnerInviteSetup = () => {
 
               <p className="rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm text-secondary">
                 <Icon name="lock" size={18} className="mr-2 inline align-middle text-primary-container" />
-                Secure payment via Razorpay. Media is stored on Cloudinary.
+                Secure payment. Your photos are stored with your gym.
               </p>
 
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(5)}
                   disabled={paying}
                   className="flex-1 rounded-lg border border-white/10 py-3 text-sm hover:bg-white/5 disabled:opacity-50"
                 >
@@ -925,14 +1022,14 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 6 — Success */}
-          {step === 6 && (
+          {step === 7 && (
             <GlassCard className="p-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-container/20">
                 <Icon name="celebration" size={36} className="text-primary-container" />
               </div>
               <h1 className="font-display text-2xl font-bold">Your app is live!</h1>
               <p className="mt-2 text-sm text-secondary">
-                <strong>{profile.businessName}</strong> is ready on the {plan?.name} plan. Sign in
+                <strong>{invite.businessName}</strong> is ready. Sign in
                 with <strong>{invite.email}</strong> and the password you created.
               </p>
               <button

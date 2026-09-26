@@ -6,14 +6,17 @@ import Icon from '../../../components/fitsphere/Icon';
 import AdminPageShell from '../../../components/fitsphere/AdminPageShell';
 import ENDPOINTS from '../../../config/apiUrls';
 import { getRequest, postRequest, patchRequest } from '../../../config/dataApi';
-import { formatCurrency } from '../../../helpers/formatUtils';
+
+const inr = (amount) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
+    Number(amount) || 0
+  );
 
 const inputClass = 'input-cyber w-full rounded-lg border border-white/10 bg-surface-container-lowest px-3 py-2.5';
 
 const CreateInvite = () => {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState([]);
-  const [planId, setPlanId] = useState('');
+  const [catalog, setCatalog] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     email: '',
@@ -26,30 +29,21 @@ const CreateInvite = () => {
   const [createdLink, setCreatedLink] = useState('');
 
   useEffect(() => {
-    getRequest(ENDPOINTS.INVITES.PLANS)
-      .then((res) => {
-        const list = res.data?.plans || [];
-        setPlans(list);
-        if (list[0]) setPlanId(list[0].id);
-      })
-      .catch(() => toast.error('Failed to load plans'));
+    getRequest(ENDPOINTS.PLATFORM_BILLING.CATALOG)
+      .then((res) => setCatalog(res.data?.catalog || null))
+      .catch(() => toast.error('Failed to load pricing'));
   }, []);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!planId) {
-      toast.error('Select a plan');
-      return;
-    }
     setSubmitting(true);
     try {
       const res = await postRequest(ENDPOINTS.INVITES.CREATE, {
         email: form.email,
         inviteeName: form.inviteeName,
         businessName: form.businessName,
-        planId,
         note: form.note,
         expiryDays: Number(form.expiryDays),
       });
@@ -84,8 +78,8 @@ const CreateInvite = () => {
           </div>
           <h1 className="font-display text-2xl font-bold">Invite ready</h1>
           <p className="mt-2 text-sm text-secondary">
-            Share this link with <strong className="text-on-surface">{createdInvite.email}</strong>{' '}
-            for onboarding and Razorpay payment.
+            Share this link with <strong className="text-on-surface">{createdInvite.email}</strong> so
+            they can set up the gym and pay the first month.
           </p>
           <div className="mt-6 break-all rounded-lg border border-white/10 bg-black/30 p-3 text-left text-xs font-mono text-secondary">
             {createdLink}
@@ -127,7 +121,7 @@ const CreateInvite = () => {
           </Link>
           <h1 className="font-display text-3xl font-bold">Create Gym Invite</h1>
           <p className="mt-1 text-secondary/70">
-            Assign a subscription plan. The owner pays via Razorpay to activate their tenant.
+            The owner pays the first month for their gym, then signs in.
           </p>
         </div>
 
@@ -153,8 +147,9 @@ const CreateInvite = () => {
                 onChange={(e) => set('inviteeName', e.target.value)}
               />
               <input
+                required
                 className={inputClass}
-                placeholder="Business / gym name (optional)"
+                placeholder="Gym / business name"
                 value={form.businessName}
                 onChange={(e) => set('businessName', e.target.value)}
               />
@@ -184,33 +179,27 @@ const CreateInvite = () => {
 
           <div>
             <h2 className="mb-4 flex items-center gap-2 font-semibold">
-              <Icon name="workspace_premium" className="text-primary-container" />
-              Assign SaaS plan
+              <Icon name="workspace_premium" className="text-primary-fixed" />
+              What this invite starts with
             </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {plans.map((plan) => (
-                <button
-                  key={plan.id}
-                  type="button"
-                  onClick={() => setPlanId(plan.id)}
-                  className={`rounded-xl border p-5 text-left transition ${
-                    planId === plan.id
-                      ? 'border-primary-container bg-primary-container/10 ring-1 ring-primary-container/50'
-                      : 'border-white/10 bg-surface-container-low hover:border-white/20'
-                  }`}
-                >
-                  <p className="font-bold">{plan.name}</p>
-                  <p className="mt-1 text-2xl font-bold text-primary-container">
-                    {formatCurrency(Number(plan.priceMonthly))}
-                    <span className="text-sm font-normal text-secondary">/mo</span>
+            <GlassCard className="p-5 text-sm text-secondary">
+              {catalog ? (
+                <>
+                  <p className="text-on-surface">
+                    First gym: <strong>{inr(catalog.basePriceMonthly)}</strong> / month
+                    ({catalog.baseName})
                   </p>
-                  <p className="mt-2 text-xs text-secondary">
-                    Up to {plan.gymLimit === -1 ? 'unlimited' : plan.gymLimit} gym
-                    {plan.gymLimit === 1 ? '' : 's'}
+                  <p className="mt-2">
+                    Each extra gym the owner adds later: {inr(catalog.extraGymPriceMonthly)} / month.
                   </p>
-                </button>
-              ))}
-            </div>
+                  <p className="mt-2">
+                    Attendance, member store, and day pass are optional and billed per gym after setup.
+                  </p>
+                </>
+              ) : (
+                <p>Loading pricing…</p>
+              )}
+            </GlassCard>
           </div>
 
           <div className="flex justify-end gap-3">

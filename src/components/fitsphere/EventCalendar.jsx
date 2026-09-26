@@ -48,6 +48,7 @@ const EventCalendar = ({
   onEdit,
   onDelete,
   onCreateForDate,
+  readOnly = false,
 }) => {
   const today = new Date();
   const [selected, setSelected] = useState(null);
@@ -132,7 +133,7 @@ const EventCalendar = ({
                 <p className="text-secondary">No events scheduled for this day.</p>
                 <button
                   type="button"
-                  onClick={() => onCreateForDate?.(anchorDate)}
+                  onClick={() => !readOnly && onCreateForDate?.(anchorDate)}
                   className="mt-4 rounded-lg bg-primary-container/20 px-4 py-2 text-sm font-semibold text-primary-container hover:bg-primary-container/30"
                 >
                   Add event for this day
@@ -190,7 +191,7 @@ const EventCalendar = ({
                       {items.length === 0 && (
                         <button
                           type="button"
-                          onClick={() => onCreateForDate?.(day)}
+                          onClick={() => !readOnly && onCreateForDate?.(day)}
                           className="mt-1 flex h-full min-h-[60px] w-full items-center justify-center rounded-md border border-dashed border-white/5 text-secondary/30 hover:border-primary-container/30 hover:text-primary-container/60"
                           aria-label="Add event"
                         >
@@ -226,8 +227,8 @@ const EventCalendar = ({
                     key={day.toISOString()}
                     role="button"
                     tabIndex={0}
-                    onClick={() => items.length === 0 && onCreateForDate?.(day)}
-                    onKeyDown={(e) => e.key === 'Enter' && items.length === 0 && onCreateForDate?.(day)}
+                    onClick={() => !readOnly && items.length === 0 && onCreateForDate?.(day)}
+                    onKeyDown={(e) => e.key === 'Enter' && !readOnly && items.length === 0 && onCreateForDate?.(day)}
                     className={`min-h-[96px] cursor-default bg-surface-container-lowest p-1.5 transition md:min-h-[120px] md:p-2 ${
                       inMonth ? '' : 'opacity-35'
                     } ${isToday ? 'ring-1 ring-inset ring-primary-container/50' : ''} hover:bg-white/[0.02]`}
@@ -303,25 +304,29 @@ const EventCalendar = ({
               </div>
             )}
             <div className="flex gap-2 border-t border-white/10 pt-4">
-              <button
-                type="button"
-                onClick={() => handleEdit(selected)}
-                className="flex-1 rounded-lg bg-primary-container py-2.5 text-sm font-bold text-on-primary-container"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (window.confirm('Delete this event?')) {
-                    await onDelete?.(selected.id);
-                    setSelected(null);
-                  }
-                }}
-                className="rounded-lg border border-error/30 px-4 py-2.5 text-sm text-error hover:bg-error/10"
-              >
-                Delete
-              </button>
+              {!readOnly && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(selected)}
+                    className="flex-1 rounded-lg bg-primary-container py-2.5 text-sm font-bold text-on-primary-container"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm('Delete this event?')) {
+                        await onDelete?.(selected.id);
+                        setSelected(null);
+                      }
+                    }}
+                    className="rounded-lg border border-error/30 px-4 py-2.5 text-sm text-error hover:bg-error/10"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
               <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm">
                 Close
               </button>

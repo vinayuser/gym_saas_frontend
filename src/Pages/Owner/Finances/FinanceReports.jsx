@@ -8,7 +8,7 @@ import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
 import FinanceCategoryFilter from '../../../components/fitsphere/FinanceCategoryFilter';
 import FinanceExportActions from '../../../components/fitsphere/FinanceExportActions';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { fetchFinanceLedger } from '../../../helpers/financeApi';
 import {
   exportRevenueReportCsv,
@@ -72,13 +72,12 @@ const FinanceReports = () => {
     }
   };
 
-  if (loading) return <PageLoader show message="Loading reports..." />;
-
   const total = data?.breakdown?.reduce((s, b) => s + b.amount, 0) || 1;
   const hasData = (data?.breakdown || []).some((b) => b.amount > 0);
 
   return (
     <OwnerPageShell showSearch={false}>
+      <SectionLoader show={loading}>
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
@@ -130,6 +129,7 @@ const FinanceReports = () => {
           </p>
         </GlassCard>
       </div>
+      </SectionLoader>
     </OwnerPageShell>
   );
 };

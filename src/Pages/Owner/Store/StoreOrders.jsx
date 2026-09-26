@@ -8,7 +8,8 @@ import Icon from '../../../components/fitsphere/Icon';
 import AppModal from '../../../components/fitsphere/AppModal';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 import { formatCurrency, formatDateTime } from '../../../helpers/formatUtils';
 
 const FULFILLMENT_STATUSES = [
@@ -57,22 +58,26 @@ const StoreOrders = () => {
   const [selected, setSelected] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0 });
+  const limit = 10;
 
   const load = () => {
     if (!currentGym?.id) return;
     setLoading(true);
-    const params = { limit: 100, ...(statusFilter ? { fulfillmentStatus: statusFilter } : {}) };
+    const params = { page, limit, ...(statusFilter ? { fulfillmentStatus: statusFilter } : {}) };
     Promise.all([
       getRequest(ENDPOINTS.ORDERS.LIST(currentGym.id), { params }),
       getRequest(ENDPOINTS.ORDERS.STATS(currentGym.id)),
     ]).then(([list, st]) => {
-      setOrders(list.data || []);
+      setOrders(Array.isArray(list.data) ? list.data : []);
+      setPagination(list.meta?.pagination || { total: 0 });
       setStats(st.data);
       setLoading(false);
     });
   };
 
-  useEffect(load, [currentGym?.id, statusFilter]);
+  useEffect(load, [currentGym?.id, statusFilter, page]);
 
   const viewOrder = async (order) => {
     const res = await getRequest(ENDPOINTS.ORDERS.BY_ID(currentGym.id, order.id));
@@ -106,7 +111,7 @@ const StoreOrders = () => {
   const pendingPickup = stats?.byStatus?.READY_FOR_PICKUP ?? 0;
 
   return (
-    <PageLoader show={loading} message="Loading orders...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-6">
           <div>
@@ -128,7 +133,10 @@ const StoreOrders = () => {
             <select
               className="input-cyber rounded-lg px-3 py-2 text-sm"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
             >
               {FULFILLMENT_STATUSES.map((s) => (
                 <option key={s.value || 'all'} value={s.value}>{s.label}</option>
@@ -186,6 +194,14 @@ const StoreOrders = () => {
                 )}
               </tbody>
             </table>
+            <ListPagination
+              page={page}
+              total={pagination.total || 0}
+              limit={limit}
+              loading={loading}
+              onPage={setPage}
+              noun="orders"
+            />
           </GlassCard>
         </div>
 
@@ -286,7 +302,7 @@ const StoreOrders = () => {
           )}
         </AppModal>
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

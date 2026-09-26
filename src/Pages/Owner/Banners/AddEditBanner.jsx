@@ -10,7 +10,6 @@ import {
 } from '../../../store/slices/bannerSlice';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
-import PageLoader from '../../../components/Loader/PageLoader';
 import {
   BANNER_CATEGORIES,
   BANNER_PLACEMENTS,
@@ -169,7 +168,11 @@ const AddEditBanner = () => {
   }
 
   if (isEdit && loading && !currentBanner) {
-    return <PageLoader show message="Loading banner..." />;
+    return (
+      <div className="flex justify-center py-24">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-fixed/25 border-t-primary-fixed" />
+      </div>
+    );
   }
 
   const ctaButtonLabel = getCtaLabel(form.ctaType).split(' ')[0].toUpperCase();
@@ -380,7 +383,7 @@ const AddEditBanner = () => {
                   <Icon name="cloud_upload" size={48} className="text-secondary" />
                   <div>
                     <p className="font-medium">
-                      {uploadingImage ? 'Uploading to Cloudinary…' : 'Drag & drop your banner creative'}
+                      {uploadingImage ? 'Uploading…' : 'Drag and drop your banner'}
                     </p>
                     <p className="mt-1 text-xs text-secondary">
                       Recommended: 1080×450. Max 5MB (PNG, JPG, WebP)

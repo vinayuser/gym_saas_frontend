@@ -7,7 +7,7 @@ import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import ProductDetailModal from '../../../components/fitsphere/ProductDetailModal';
 import AppModal from '../../../components/fitsphere/AppModal';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { formatCurrency, formatDateTime } from '../../../helpers/formatUtils';
 
 const CATEGORIES = ['All', 'Supplements', 'Gear', 'Apparel'];
@@ -77,7 +77,7 @@ const MemberStore = () => {
   });
 
   return (
-    <PageLoader show={loading} message="Loading catalog...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-8">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -269,7 +269,7 @@ const MemberStore = () => {
           )}
         </AppModal>
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

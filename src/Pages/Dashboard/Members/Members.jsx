@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMembers, createMember, deleteMember } from '../../../store/slices/memberSlice';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 import { ROLES } from '../../../constants';
 import { Plus, Trash2, Search } from 'lucide-react';
@@ -51,7 +51,7 @@ const Members = () => {
   }
 
   return (
-    <PageLoader show={loading && !members.length}>
+    <SectionLoader show={loading && !members.length}>
     <ProtectedRoute
       allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER, ROLES.MANAGER, ROLES.RECEPTIONIST]}
     >
@@ -141,7 +141,7 @@ const Members = () => {
         </div>
       </div>
     </ProtectedRoute>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

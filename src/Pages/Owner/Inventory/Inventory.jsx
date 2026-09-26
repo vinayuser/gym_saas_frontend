@@ -8,7 +8,8 @@ import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import AppModal from '../../../components/fitsphere/AppModal';
 import StatCard from '../../../components/fitsphere/StatCard';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 import { formatCurrency } from '../../../helpers/formatUtils';
 import { uploadMediaFile } from '../../../helpers/mediaUpload';
 
@@ -20,20 +21,25 @@ const Inventory = () => {
   const [modal, setModal] = useState(null);
   const [productImageUrl, setProductImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0 });
+  const limit = 10;
 
   const load = () => {
     if (!currentGym?.id) return;
+    setLoading(true);
     Promise.all([
-      getRequest(ENDPOINTS.PRODUCTS.LIST(currentGym.id)),
+      getRequest(ENDPOINTS.PRODUCTS.LIST(currentGym.id), { params: { page, limit } }),
       getRequest(ENDPOINTS.PRODUCTS.STATS(currentGym.id)),
     ]).then(([list, st]) => {
-      setProducts(list.data || []);
+      setProducts(Array.isArray(list.data) ? list.data : []);
+      setPagination(list.meta?.pagination || { total: 0 });
       setStats(st.data);
       setLoading(false);
     });
   };
 
-  useEffect(load, [currentGym?.id]);
+  useEffect(load, [currentGym?.id, page]);
 
   const save = async (e) => {
     e.preventDefault();
@@ -66,7 +72,7 @@ const Inventory = () => {
   }
 
   return (
-    <PageLoader show={loading} message="Loading inventory...">
+    <SectionLoader show={loading}>
     <OwnerPageShell showSearch={false}>
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -141,6 +147,14 @@ const Inventory = () => {
               ))}
             </tbody>
           </table>
+          <ListPagination
+            page={page}
+            total={pagination.total || 0}
+            limit={limit}
+            loading={loading}
+            onPage={setPage}
+            noun="products"
+          />
         </GlassCard>
       </div>
 
@@ -194,7 +208,7 @@ const Inventory = () => {
         </form>
       </AppModal>
     </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

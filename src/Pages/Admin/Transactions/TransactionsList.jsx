@@ -141,28 +141,58 @@ const TransactionsList = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
   const [selected, setSelected] = useState(null);
+  const limit = 10;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { limit: 100 };
+      const params = { page, limit };
       if (statusFilter !== 'ALL') params.status = statusFilter;
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch) params.search = debouncedSearch;
       const res = await getRequest(ENDPOINTS.TRANSACTIONS.LIST, { params });
       setTransactions(res.data?.transactions || []);
       setSummary(res.data?.summary || null);
+      setPagination(res.data?.pagination || { total: 0, page, limit, totalPages: 1 });
     } catch {
       setTransactions([]);
       setSummary(null);
+      setPagination({ total: 0, page: 1, limit, totalPages: 1 });
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, search]);
+  }, [statusFilter, debouncedSearch, page]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const total = pagination.total || 0;
+  const totalPages = pagination.totalPages || 1;
+  const start = total === 0 ? 0 : (page - 1) * limit + 1;
+  const end = Math.min(page * limit, total);
+  const pageNumbers = (() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = new Set([1, totalPages, page, page - 1, page + 1].filter((n) => n >= 1 && n <= totalPages));
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+    const withEllipsis = [];
+    sorted.forEach((n, i) => {
+      if (i > 0 && n - sorted[i - 1] > 1) withEllipsis.push('...');
+      withEllipsis.push(n);
+    });
+    return withEllipsis;
+  })();
 
   return (
     <AdminPageShell
@@ -175,7 +205,7 @@ const TransactionsList = () => {
         <div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">Payment Transactions</h1>
           <p className="mt-1 text-secondary/70">
-            SaaS subscription payments from gym owner onboarding and Razorpay checkout.
+            Monthly payments from gyms when they join.
           </p>
         </div>
 
@@ -217,7 +247,10 @@ const TransactionsList = () => {
             <button
               key={s}
               type="button"
-              onClick={() => setStatusFilter(s)}
+              onClick={() => {
+                setStatusFilter(s);
+                setPage(1);
+              }}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
                 statusFilter === s ? 'bg-white/10 text-on-surface' : 'text-secondary hover:bg-white/5'
               }`}
@@ -305,6 +338,48 @@ const TransactionsList = () => {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-white/5 px-6 py-3">
+            <p className="text-xs font-semibold text-secondary">
+              {total === 0 ? 'No transactions' : `Showing ${start} to ${end} of ${total.toLocaleString()} transactions`}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded p-1 text-secondary transition-colors hover:bg-white/10 disabled:opacity-30"
+              >
+                <Icon name="chevron_left" size={22} />
+              </button>
+              {pageNumbers.map((n, i) =>
+                n === '...' ? (
+                  <span key={`ellipsis-${i}`} className="px-1 text-secondary">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={n}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setPage(n)}
+                    className={`flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-colors ${
+                      page === n ? 'bg-neon text-on-primary-fixed' : 'text-secondary hover:bg-white/10'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                )
+              )}
+              <button
+                type="button"
+                disabled={page >= totalPages || loading}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="rounded p-1 text-secondary transition-colors hover:bg-white/10 disabled:opacity-30"
+              >
+                <Icon name="chevron_right" size={22} />
+              </button>
+            </div>
           </div>
         </GlassCard>
       </div>

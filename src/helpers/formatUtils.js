@@ -1,7 +1,9 @@
-export const formatCurrency = (amount, currency = 'USD') =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(
-    Number(amount) || 0
-  );
+export const formatCurrency = (amount, currency = 'INR') =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0);
 
 export const formatDate = (d) =>
   d

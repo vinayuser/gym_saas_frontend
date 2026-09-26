@@ -9,7 +9,7 @@ import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import AppModal from '../../../components/fitsphere/AppModal';
 import LeadFormModal from '../../../components/fitsphere/LeadFormModal';
 import StatCard from '../../../components/fitsphere/StatCard';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { formatDate } from '../../../helpers/formatUtils';
 
 const COLUMNS = [
@@ -226,7 +226,7 @@ const Leads = () => {
   const active = enquiries.filter((e) => !['CONVERTED', 'LOST'].includes(e.status)).length;
 
   return (
-    <PageLoader show={loading} message="Loading pipeline...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-8">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -263,7 +263,7 @@ const Leads = () => {
                   <div className="flex items-center justify-between gap-2 px-1">
                     <h3 className="text-sm font-semibold text-on-surface">{col.title}</h3>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${col.badge}`}>
-                      {columnCounts[col.status] || 0}
+                      {stats.byStatus?.[col.status] || 0}
                     </span>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ const Leads = () => {
                     .map((lead) => (
                       <LeadCard key={lead.id} lead={lead} onOpen={setDetailLead} onMove={moveLead} />
                     ))}
-                  {(columnCounts[col.status] || 0) === 0 && (
+                  {enquiries.filter((e) => e.status === col.status).length === 0 && (
                     <div className="rounded-xl border border-dashed border-white/15 bg-black/10 px-4 py-8 text-center">
                       <Icon name="inbox" size={22} className="mx-auto mb-2 text-secondary/50" />
                       <p className="text-xs text-secondary">No inquiries</p>
@@ -356,7 +356,7 @@ const Leads = () => {
                   ['Occupation', detailLead.occupation],
                   ['Preferred contact', detailLead.preferredContact],
                   ['Interested in', detailLead.interestedIn],
-                  ['Budget', detailLead.budget != null ? `$${Number(detailLead.budget).toFixed(0)}` : null],
+                  ['Budget', detailLead.budget != null ? `₹${Number(detailLead.budget).toFixed(0)}` : null],
                   ['Trial date', detailLead.trialDate ? formatDate(detailLead.trialDate) : null],
                   ['Follow-up', detailLead.followUpAt ? formatDate(detailLead.followUpAt) : null],
                   ['Referral', detailLead.referralSource],
@@ -429,7 +429,7 @@ const Leads = () => {
           )}
         </AppModal>
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

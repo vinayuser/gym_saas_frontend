@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStaff, deleteStaff } from '../../../store/slices/staffSlice';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
@@ -75,7 +75,7 @@ const Staff = () => {
   }
 
   return (
-    <PageLoader show={loading && !staff.length} message="Loading staff...">
+    <SectionLoader show={loading && !staff.length}>
     <>
       <OwnerPageShell
         variant="staff"
@@ -402,7 +402,7 @@ const Staff = () => {
       )}
 
     </>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

@@ -43,11 +43,11 @@ import Support from './Pages/Owner/Support/Support';
 import AdminLayout from './Layout/Admin/AdminLayout';
 import SuperAdminDashboard from './Pages/Admin/Dashboard/SuperAdminDashboard';
 import InviteList from './Pages/Admin/Invites/InviteList';
+import InviteDetail from './Pages/Admin/Invites/InviteDetail';
 import CreateInvite from './Pages/Admin/Invites/CreateInvite';
 import PlansList from './Pages/Admin/Plans/PlansList';
 import AdminSettings from './Pages/Admin/Settings/AdminSettings';
-import TenantsList from './Pages/Admin/Tenants/TenantsList';
-import GymOwnersList from './Pages/Admin/GymOwners/GymOwnersList';
+import RolesPermissions from './Pages/Admin/Roles/RolesPermissions';
 import TransactionsList from './Pages/Admin/Transactions/TransactionsList';
 import AdminSupport from './Pages/Admin/Support/AdminSupport';
 import OwnerInviteSetup from './Pages/Setup/OwnerInviteSetup';
@@ -388,11 +388,13 @@ const App = () => {
           <Route path="dashboard" element={<SuperAdminDashboard />} />
           <Route path="invites" element={<InviteList />} />
           <Route path="invites/new" element={<CreateInvite />} />
-          <Route path="gym-owners" element={<GymOwnersList />} />
+          <Route path="invites/:inviteId" element={<InviteDetail />} />
+          <Route path="gym-owners" element={<Navigate to="/admin/invites" replace />} />
           <Route path="transactions" element={<TransactionsList />} />
           <Route path="support" element={<AdminSupport />} />
-          <Route path="tenants" element={<TenantsList />} />
+          <Route path="tenants" element={<Navigate to="/admin/invites" replace />} />
           <Route path="plans" element={<PlansList />} />
+          <Route path="roles" element={<RolesPermissions />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 

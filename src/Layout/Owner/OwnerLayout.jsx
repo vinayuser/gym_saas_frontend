@@ -4,24 +4,28 @@ import useAuthMiddleware from '../../useAuthMiddleware';
 import OwnerSidebar from './OwnerSidebar';
 import PageLoader from '../../components/Loader/PageLoader';
 import { isAuthRestoring } from '../../helpers/authUtils';
+import { ROLES } from '../../constants';
 
 const OwnerLayout = () => {
   useAuthMiddleware();
   const location = useLocation();
   const auth = useSelector((state) => state.auth);
-  const { isAuthenticated } = auth;
+  const { isAuthenticated, user } = auth;
 
   const authPending = isAuthRestoring(auth);
 
   if (!authPending && !isAuthenticated) {
     return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
+  if (!authPending && user?.role === ROLES.PLATFORM_ADMIN) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   return (
     <>
-      <div className="min-h-screen bg-background">
+      <div className="h-screen overflow-hidden bg-background">
         <OwnerSidebar />
-        <div className="ml-[280px] flex min-h-screen flex-col">
+        <div className="custom-scrollbar ml-[280px] h-screen overflow-y-auto">
           <Outlet />
         </div>
       </div>

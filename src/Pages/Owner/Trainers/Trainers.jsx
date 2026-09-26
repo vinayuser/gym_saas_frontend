@@ -7,25 +7,29 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 
 const Trainers = () => {
   const { currentGym } = useSelector((s) => s.gym);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     if (!currentGym?.id) return;
-    getRequest(ENDPOINTS.TRAINERS.PERFORMANCE(currentGym.id))
+    setLoading(true);
+    getRequest(ENDPOINTS.TRAINERS.PERFORMANCE(currentGym.id), { params: { page, limit } })
       .then((res) => setData(res.data))
       .finally(() => setLoading(false));
-  }, [currentGym?.id]);
+  }, [currentGym?.id, page]);
 
   const summary = data?.summary || {};
   const trainers = data?.trainers || [];
 
   return (
-    <PageLoader show={loading} message="Loading trainers...">
+    <SectionLoader show={loading}>
     <OwnerPageShell showSearch={false}>
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -35,7 +39,7 @@ const Trainers = () => {
           </div>
           <Link
             to="/owner/trainers/new"
-            className="cyber-glow flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 text-sm font-bold text-on-primary-container"
+            className="neon-glow flex items-center gap-2 rounded-lg bg-primary-fixed px-6 py-3 text-sm font-bold text-on-primary-fixed"
           >
             <Icon name="person_add" size={20} />
             Add Trainer
@@ -89,10 +93,18 @@ const Trainers = () => {
               )}
             </tbody>
           </table>
+          <ListPagination
+            page={page}
+            total={data?.pagination?.total || 0}
+            limit={limit}
+            loading={loading}
+            onPage={setPage}
+            noun="trainers"
+          />
         </GlassCard>
       </div>
     </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

@@ -6,7 +6,7 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import FinanceCategoryFilter from '../../../components/fitsphere/FinanceCategoryFilter';
 import FinanceExportActions from '../../../components/fitsphere/FinanceExportActions';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { FINANCE_CATEGORY_LABELS, sourceBadgeClass } from '../../../constants/financeCategories';
 import {
   exportGeneralLedgerCsv,
@@ -67,10 +67,9 @@ const FinanceLedger = () => {
     }
   };
 
-  if (loading) return <PageLoader show message="Loading ledger..." />;
-
   return (
     <OwnerPageShell showSearch={false}>
+      <SectionLoader show={loading}>
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
@@ -136,6 +135,7 @@ const FinanceLedger = () => {
           </table>
         </GlassCard>
       </div>
+      </SectionLoader>
     </OwnerPageShell>
   );
 };

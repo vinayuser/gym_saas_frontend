@@ -85,6 +85,11 @@
     border-color: rgba(195, 244, 0, 0.3);
   }
 
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(195, 244, 0, 0.45) transparent;
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;

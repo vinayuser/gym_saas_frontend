@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchGyms, createGym, deleteGym } from '../../store/slices/gymSlice';
-import PageLoader from '../../components/Loader/PageLoader';
+import SectionLoader from '../../components/Loader/SectionLoader';
 import GlassCard from '../../components/fitsphere/GlassCard';
 import Icon from '../../components/fitsphere/Icon';
 import OwnerPageShell from '../../components/fitsphere/OwnerPageShell';
@@ -37,7 +37,7 @@ const Gyms = () => {
   };
 
   return (
-    <PageLoader show={loading && !gyms.length} message="Loading gyms...">
+    <SectionLoader show={loading && !gyms.length}>
     <OwnerPageShell title="Gyms">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -145,7 +145,7 @@ const Gyms = () => {
         ))}
       </div>
     </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

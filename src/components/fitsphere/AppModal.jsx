@@ -50,7 +50,7 @@ const AppModal = ({
       />
       <GlassCard
         className={`relative z-10 shrink-0 rounded-2xl p-6 ${SIZES[size]} ${
-          scrollable ? 'max-h-[90vh] overflow-y-auto' : ''
+          scrollable ? 'custom-scrollbar max-h-[90vh] overflow-y-auto' : ''
         } ${panelClassName}`}
         hover={false}
       >

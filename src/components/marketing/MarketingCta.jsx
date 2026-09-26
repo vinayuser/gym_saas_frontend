@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 const MarketingCta = ({
-  title = 'Get started with Gym SaaS',
+  title = 'Start with your first gym',
   description = 'Gym owners need an invite from your platform admin. Contact us or sign in if you already have access.',
   primaryLabel = 'Contact us',
   primaryTo = '/contact',

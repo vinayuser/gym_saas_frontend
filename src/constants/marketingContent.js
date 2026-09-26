@@ -4,13 +4,13 @@
  */
 
 export const PRODUCT_NAME = 'FitSphere Pro';
-export const PRODUCT_TAGLINE = 'Multi-tenant gym management SaaS for owners and chains';
+export const PRODUCT_TAGLINE = 'One place to run your gym, your members, and every branch';
 
 export const MARKETING_STATS = [
-  { value: 'Multi-tenant', label: 'SaaS platform', sub: 'Isolated data per gym business' },
-  { value: '4', label: 'Owner plan tiers', sub: '1, 2, 5, or unlimited gym locations' },
-  { value: '6', label: 'User roles', sub: 'Super admin through trainer & member' },
-  { value: 'Razorpay', label: 'Invite checkout', sub: 'Owners pay & get provisioned automatically' },
+  { value: '₹1,999', label: 'First gym', sub: 'Your monthly starting price' },
+  { value: '₹999', label: 'Each extra gym', sub: 'Add a branch whenever you need it' },
+  { value: 'Optional', label: 'Extra tools', sub: 'Turn on attendance, store, or day passes' },
+  { value: 'Your price', label: 'Day visits', sub: 'Set what a guest pays to train for one day' },
 ];
 
 /** Grouped capabilities — mirrors owner portal modules */
@@ -53,7 +53,7 @@ export const HOME_PLATFORM_MODULES = [
   {
     icon: 'view_carousel',
     title: 'Banners & media',
-    text: 'Promotional banners with images and video uploaded via Cloudinary.',
+    text: 'Promotional banners with photos and video for your members.',
   },
   {
     icon: 'forum',
@@ -63,31 +63,31 @@ export const HOME_PLATFORM_MODULES = [
 ];
 
 export const SUPER_ADMIN_FEATURES = [
-  { icon: 'mail', title: 'Gym owner invites', text: 'Create invite links with plan, email, and expiry.' },
-  { icon: 'group', title: 'Gym owners list', text: 'View all onboarded tenants and their subscription status.' },
-  { icon: 'dashboard', title: 'Platform dashboard', text: 'Super admin overview of the SaaS network.' },
+  { icon: 'mail', title: 'Invite an owner', text: 'Send a private link so a gym can join FitSphere Pro.' },
+  { icon: 'group', title: 'Your gyms', text: 'See every gym on the platform and how their plan is set up.' },
+  { icon: 'dashboard', title: 'Platform overview', text: 'A simple view of owners, payments, and support.' },
 ];
 
 export const OWNER_ONBOARDING_STEPS = [
   {
     step: '1',
     title: 'Receive invite',
-    text: 'Super admin sends you a secure link with your plan (Single, 2, 5, or Unlimited gyms).',
+    text: 'We send you a private link to set up your first gym.',
   },
   {
     step: '2',
-    title: 'Complete profile',
-    text: 'Set password, business details, logo, and gym media during the setup wizard.',
+    title: 'Tell us about your gym',
+    text: 'Add your password, gym details, logo, and photos.',
   },
   {
     step: '3',
-    title: 'Pay with Razorpay',
-    text: 'First-month SaaS fee is collected via Razorpay before your tenant is activated.',
+    title: 'Pay the first month',
+    text: 'Pay securely for your first gym. Extra branches and tools can be added later.',
   },
   {
     step: '4',
-    title: 'Run your gym',
-    text: 'Sign in to the owner portal—add members, staff, plans, and start daily operations.',
+    title: 'Open your gym',
+    text: 'Sign in and start adding members, staff, classes, and daily check-ins.',
   },
 ];
 
@@ -95,12 +95,12 @@ export const PLATFORM_ROLES = [
   {
     role: 'Super Admin',
     icon: 'admin_panel_settings',
-    desc: 'Platform operator: invites gym owners, assigns plans, and monitors tenants.',
+    desc: 'Our team invites gym owners and looks after the platform.',
   },
   {
     role: 'Gym Owner',
     icon: 'storefront',
-    desc: 'Full access to their tenant: gyms, members, finances, and settings.',
+    desc: 'You run your gyms: members, money, staff, and settings.',
   },
   {
     role: 'Manager',
@@ -139,35 +139,35 @@ export const PRICING_COMPARE_ROWS = [
 
 export const PRICING_FAQ = [
   {
-    q: 'How does gym owner onboarding work?',
-    a: 'A super admin creates an invite with the owner email and subscription plan. The owner opens the link, completes setup, pays the first month through Razorpay, and receives a gym owner account with tenant and gym records.',
+    q: 'How do I start with FitSphere Pro?',
+    a: 'Ask us for an invite. You open the link, add your gym details, and pay the first month for your first gym. Then you can sign in and start running the gym.',
   },
   {
-    q: 'What limits apply to each plan?',
-    a: 'Plans cap how many gym locations you can create under one tenant: 1, 2, 5, or unlimited. All other owner features are included; only the branch count changes.',
+    q: 'How is the monthly price worked out?',
+    a: 'Your first gym is a fixed monthly price. Every extra gym you add costs less per month. Attendance, the member store, and day passes are optional and charged only for the gyms where you turn them on.',
   },
   {
-    q: 'Are prices in INR?',
-    a: 'Yes. Plan prices shown on this page match the SaaS subscription amounts used during invite checkout (monthly and yearly options).',
+    q: 'Are prices in rupees?',
+    a: 'Yes. Every price on this site and in your owner account is in Indian rupees per month.',
   },
   {
-    q: 'Can I add more gyms later?',
-    a: 'You need a plan that supports your target branch count. Contact your platform admin to upgrade from Single to multi-gym or Unlimited.',
+    q: 'Can I add another gym later?',
+    a: 'Yes. Add a branch from your account. It is billed as an extra gym each month. You do not need to switch to a bigger package.',
   },
 ];
 
 export const CONTACT_CHANNELS = [
   { icon: 'mail', label: 'Sales & demos', value: 'sales@gymsaas.com', sub: 'New gym owners & partnerships' },
   { icon: 'support_agent', label: 'Support', value: 'support@gymsaas.com', sub: 'Existing owner accounts' },
-  { icon: 'admin_panel_settings', label: 'Platform admin', value: 'superadmin@gymsaas.com', sub: 'Demo super admin (see docs)' },
+  { icon: 'admin_panel_settings', label: 'Hello from the team', value: 'hello@fitspherepro.com', sub: 'New gyms and partnerships' },
   { icon: 'schedule', label: 'Response', value: '1–2 business days', sub: 'Via contact form or email' },
 ];
 
 export const FAQ_POPULAR_TOPICS = [
-  'Owner invite',
-  'Razorpay payment',
-  'Multi-gym plan',
-  'QR attendance',
+  'Getting started',
+  'Monthly price',
+  'Extra gyms',
+  'Check-in',
   'Staff roles',
 ];
 
@@ -203,45 +203,45 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: 'What is FitSphere Pro?',
-        a: 'FitSphere Pro is the customer-facing brand of our Gym SaaS platform—a multi-tenant system for running gym businesses. Gym owners manage members, staff, attendance, finances, inventory, events, and leads from one web dashboard.',
+        a: 'FitSphere Pro is the app gym owners use to run members, staff, classes, payments, and more than one branch from a single login.',
       },
       {
         q: 'Who uses the platform?',
-        a: 'Super admins operate the SaaS (invites and gym owner list). Gym owners and their staff (managers, receptionists, trainers) run day-to-day operations per location.',
+        a: 'Gym owners and their team use it every day. Our team helps new gyms join and looks after the platform.',
       },
       {
         q: 'How do I become a gym owner on the platform?',
-        a: 'You must receive an invite from the platform super admin. You cannot self-register as an owner without that invite link and successful Razorpay payment for your assigned plan.',
+        a: 'Request an invite from us. After you finish setup and pay for your first gym, you can sign in and start operating.',
       },
     ],
   },
   {
     id: 'technical',
-    label: 'Technical',
+    label: 'Privacy',
     items: [
       {
         q: 'How is my gym data kept separate from others?',
-        a: 'Each gym business is a tenant. API requests are scoped by tenant and gym so one owner cannot access another tenant’s members or financial records.',
+        a: 'Your members, payments, and staff stay with your gym. Another gym on FitSphere Pro cannot open your records.',
       },
       {
-        q: 'How does authentication work?',
-        a: 'The app uses JWT access tokens with refresh tokens. Owners and staff sign in at /auth/login; sessions are restored on return visits.',
+        q: 'How do I sign in?',
+        a: 'Owners and staff use the sign-in page. We keep you signed in on that device until you log out.',
       },
       {
-        q: 'Where are uploaded images stored?',
-        a: 'Logos, banner images, product photos, and invite-setup media are uploaded to Cloudinary via the /api/v1/media endpoints.',
+        q: 'Where do my photos go?',
+        a: 'Logos, banners, and product photos are stored securely and shown only inside your gym.',
       },
     ],
     highlights: [
       {
         icon: 'cloud_upload',
-        title: 'Cloudinary uploads',
-        text: 'Gym logos, banners, and product images use Cloudinary with a configurable folder per environment.',
+        title: 'Your photos stay with your gym',
+        text: 'Logos, banners, and product pictures are stored for your gym and shown in the app.',
       },
       {
         icon: 'lock',
-        title: 'Role-based access',
-        text: 'Routes in the owner portal check roles (owner, manager, receptionist, trainer) before showing sensitive screens.',
+        title: 'The right people see the right screens',
+        text: 'Owners, managers, front desk, and trainers only open what their role needs.',
       },
     ],
   },
@@ -251,7 +251,7 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: 'Can I run more than one gym location?',
-        a: 'Yes, if your SaaS plan allows it (2, 5, or unlimited gyms). Use Gyms & Branches in the owner portal to add locations up to your plan limit.',
+        a: 'Yes. Add another branch from your account. Each extra gym is billed every month on top of your first gym.',
       },
       {
         q: 'What staff roles exist?',
@@ -269,15 +269,15 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: 'What am I paying for as a gym owner?',
-        a: 'You pay a monthly (or yearly) SaaS subscription based on your plan tier—how many gym locations you may operate. Member gym fees inside the app are separate and managed in your Finance module.',
+        a: 'Your first gym has a monthly price. Each extra gym adds a smaller monthly amount. Attendance, the member store, and day passes are optional extras, billed only for the gyms where you switch them on. What members pay you for memberships is separate and sits in your finances.',
       },
       {
-        q: 'How does Razorpay fit in?',
-        a: 'When you accept a super admin invite, you pay the first SaaS period through Razorpay. After verification, your user, tenant, subscription, and initial gym are created automatically.',
+        q: 'When do I pay?',
+        a: 'You pay for the first gym when you accept your invite. After that, your monthly bill follows the gyms you run and the extras you turn on. You can see the breakdown under Subscription after you sign in.',
       },
       {
-        q: 'Where do I see my SaaS subscription?',
-        a: 'Logged-in gym owners can open Subscription in the sidebar to view their platform plan and status.',
+        q: 'Where do I see my bill?',
+        a: 'After you sign in, open Subscription in the menu. It lists your gyms, optional tools, and the monthly total in rupees.',
       },
     ],
   },
@@ -286,8 +286,8 @@ export const FAQ_CATEGORIES = [
 export const ABOUT_VALUES = [
   {
     icon: 'apartment',
-    title: 'Multi-tenant by design',
-    text: 'One installation serves many gym businesses with strict tenant boundaries—built for SaaS operators and chains.',
+    title: 'Your gym stays yours',
+    text: 'Members, payments, and staff records belong to your gym. Other gyms on FitSphere Pro cannot see them.',
   },
   {
     icon: 'dashboard',
@@ -302,7 +302,7 @@ export const ABOUT_VALUES = [
   {
     icon: 'verified_user',
     title: 'Controlled onboarding',
-    text: 'Super admin invites and Razorpay verification ensure only paying, approved owners receive a tenant.',
+    text: 'We invite your gym, you complete setup, and you pay the first month before the account opens.',
   },
 ];
 
@@ -310,7 +310,7 @@ export const PRIVACY_SECTIONS = [
   {
     id: 'introduction',
     title: '1. Introduction',
-    content: `This Privacy Policy explains how ${PRODUCT_NAME} (Gym SaaS) collects and uses information when you use our web application, owner portal, and super admin tools.`,
+    content: `This privacy policy explains how ${PRODUCT_NAME} looks after information when you use the website and the gym owner app.`,
   },
   {
     id: 'data-collection',
@@ -320,7 +320,7 @@ export const PRIVACY_SECTIONS = [
       'Account data: name, email, phone, and role (super admin, gym owner, staff).',
       'Gym data: business profile, branches, operating hours, GST, and media you upload.',
       'Member data: profiles, memberships, attendance, and enquiry records you enter.',
-      'Payment metadata: Razorpay transaction references for SaaS subscription activation (not full card numbers).',
+      'Payment references for your monthly plan (we never store full card numbers).',
       'Technical logs: IP address, browser type, and API usage for security and debugging.',
     ],
     image: MARKETING_IMAGES.privacyData,
@@ -328,10 +328,10 @@ export const PRIVACY_SECTIONS = [
   {
     id: 'security',
     title: '3. Security',
-    content: 'We use HTTPS, hashed passwords, JWT-based sessions, and tenant-scoped database access.',
+    content: 'We protect sign-in, keep passwords private, and keep each gym’s records separate.',
     cards: [
-      { title: 'Tenant isolation', text: 'Gym owner data is tied to a tenant ID; middleware enforces scope on API routes.' },
-      { title: 'Media storage', text: 'Uploaded files are stored in Cloudinary; URLs are saved on gym and product records.' },
+      { title: 'Your gym only', text: 'Another gym cannot open your members or your money.' },
+      { title: 'Photos', text: 'Logos and product pictures are stored for your gym and shown in the app.' },
     ],
   },
   {
@@ -339,7 +339,7 @@ export const PRIVACY_SECTIONS = [
     title: '4. Cookies & local storage',
     content: 'We store auth tokens locally so you stay signed in. These are required to use the dashboard.',
     bullets: [
-      'Access and refresh tokens for the Gym SaaS API.',
+      'A sign-in session so you stay logged in.',
       'Theme and UI preferences where applicable.',
     ],
   },
@@ -367,7 +367,7 @@ export const TERMS_SECTIONS = [
     id: 'service',
     title: '2. Service description',
     content:
-      'We provide multi-tenant gym management software: member and staff management, membership plans, QR attendance, events, enquiries (leads), inventory, member store, finance tools, banners, community chat, and super admin invite management. Features are delivered via web dashboard; availability may evolve with releases.',
+      'We provide software for gym owners: members, staff, membership plans, check-in, classes, enquiries, a shop, finances, banners, and community chat. You use it in a web browser.',
   },
   {
     id: 'accounts',
@@ -377,15 +377,15 @@ export const TERMS_SECTIONS = [
   },
   {
     id: 'billing',
-    title: '4. SaaS subscription & Razorpay',
+    title: '4. Monthly plan',
     content:
-      'Platform fees depend on your plan (number of gyms allowed). Invite onboarding requires payment through Razorpay before tenant activation. Refunds follow applicable law and our billing policy.',
+      'Your first gym has a monthly price. Each extra gym and each optional tool (attendance, member store, day passes) is added only when you use it. You pay securely when you join. Refunds follow the law and our billing policy.',
   },
   {
     id: 'content',
     title: '5. Your content',
     content:
-      'You own member lists, images, and business data you upload. You grant us permission to host and process that data solely to provide the service (including Cloudinary for media).',
+      'You own your member lists, photos, and business details. You allow us to host them so we can run the service for your gym.',
   },
   {
     id: 'liability',

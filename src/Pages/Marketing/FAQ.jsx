@@ -61,8 +61,7 @@ const FAQ = () => {
               <span className="text-primary-container">questions</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-secondary md:text-lg md:leading-8">
-              Invites, Razorpay, plans, roles, attendance, and tenant data—search or browse by
-              category.
+              Pricing, extra gyms, check-in, and your team—search or browse by category.
             </p>
           </div>
 

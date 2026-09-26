@@ -67,7 +67,7 @@ const GymOwnersList = () => {
         <div>
           <h1 className="font-display text-3xl font-bold md:text-4xl">Gym Owners</h1>
           <p className="mt-1 text-secondary/70">
-            Tenants created after invite onboarding and Razorpay payment.
+            Gyms that finished setup and paid the first month.
           </p>
         </div>
 

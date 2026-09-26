@@ -8,7 +8,7 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import EmojiPicker from '../../../components/fitsphere/EmojiPicker';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import { ROLES } from '../../../constants';
 import { formatDateTime } from '../../../helpers/formatUtils';
 
@@ -35,11 +35,11 @@ const ChatMessage = ({
     <div className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`group relative max-w-[85%] rounded-2xl px-4 py-2 ${
-          message.isOwn ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high'
+          message.isOwn ? 'bg-primary-fixed text-on-primary-fixed' : 'bg-surface-container-high text-on-surface'
         } ${message.isPinned ? 'ring-2 ring-primary-container/50' : ''}`}
       >
         {message.isPinned && (
-          <div className={`mb-1 flex items-center gap-1 text-[10px] font-semibold ${message.isOwn ? 'text-on-primary-container/80' : 'text-primary-container'}`}>
+          <div className={`mb-1 flex items-center gap-1 text-[10px] font-semibold ${message.isOwn ? 'text-on-primary-fixed' : 'text-primary-fixed'}`}>
             <Icon name="push_pin" size={12} />
             Pinned{message.pinnedBy?.name ? ` by ${message.pinnedBy.name}` : ''}
           </div>
@@ -68,7 +68,7 @@ const ChatMessage = ({
 
         {message.content && <p className="whitespace-pre-wrap text-sm">{message.content}</p>}
 
-        <p className={`mt-1 text-[10px] ${message.isOwn ? 'text-on-primary-container/70' : 'text-secondary'}`}>
+        <p className={`mt-1 text-[10px] ${message.isOwn ? 'text-on-primary-fixed/80' : 'text-secondary'}`}>
           {formatDateTime(message.createdAt)}
           {message.editedAt && ' · edited'}
         </p>
@@ -249,7 +249,7 @@ const CommunityChat = () => {
   }
 
   return (
-    <PageLoader show={loading} message="Loading chat...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false} className="!p-0">
         <div className="flex h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-xl border border-white/10">
           <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
@@ -364,7 +364,7 @@ const CommunityChat = () => {
           </form>
         </div>
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

@@ -4,7 +4,7 @@ import { PRIVACY_SECTIONS } from '../../constants/marketingContent';
 const Privacy = () => (
   <LegalPage
     title="Privacy Policy"
-    subtitle="How Gym SaaS (FitSphere Pro) handles account, gym, member, and payment data."
+    subtitle="How FitSphere Pro looks after your account, your gym, your members, and payments."
     updated="October 24, 2024"
     sections={PRIVACY_SECTIONS}
     sidebarLinks={PRIVACY_SECTIONS.map((s) => ({

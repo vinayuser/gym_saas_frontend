@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import Icon from '../../components/fitsphere/Icon';
 import OwnerProfileMenu from '../../components/fitsphere/OwnerProfileMenu';
+import { AppLauncher, NotificationMenu } from '../../components/fitsphere/HeaderMenus';
 import { setCurrentGym } from '../../store/slices/gymSlice';
 
 const MEMBERS_ADMIN_AVATAR =
@@ -119,19 +120,8 @@ const OwnerHeader = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-4 md:gap-6">
-        <button
-          type="button"
-          className="relative text-secondary transition-colors hover:text-primary-fixed"
-        >
-          <Icon name="notifications" size={24} />
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-neon" />
-        </button>
-        <button
-          type="button"
-          className="hidden text-secondary transition-colors hover:text-primary-fixed sm:block"
-        >
-          <Icon name="apps" size={24} />
-        </button>
+        <NotificationMenu />
+        <AppLauncher />
 
         <OwnerProfileMenu
           roleLabel={useSearchFirst ? 'Admin' : 'Gym Owner'}

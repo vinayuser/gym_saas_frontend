@@ -13,7 +13,7 @@ import { getRequest } from '../../../config/dataApi';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import MediaFileDrop from '../../../components/fitsphere/MediaFileDrop';
-import PageLoader from '../../../components/Loader/PageLoader';
+import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import SuccessModal from '../../../components/fitsphere/SuccessModal';
 import { uploadMediaFile } from '../../../helpers/mediaUpload';
 
@@ -198,7 +198,13 @@ const AddEditMember = () => {
   };
 
   if (isEdit && loading && !currentMember) {
-    return <PageLoader show message="Loading member..." />;
+    return (
+      <OwnerPageShell variant="members" showSearch={false}>
+        <div className="flex justify-center py-24">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-fixed/25 border-t-primary-fixed" />
+        </div>
+      </OwnerPageShell>
+    );
   }
 
   if (!currentGym) {
@@ -210,40 +216,8 @@ const AddEditMember = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-surface/80 px-6 py-3 backdrop-blur-xl md:px-8">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div className="relative hidden max-w-md flex-1 lg:block">
-            <Icon
-              name="search"
-              size={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary"
-            />
-            <input
-              type="search"
-              placeholder="Search members, assets, reports..."
-              className="input-cyber w-full rounded-full py-2 pl-10 pr-4 text-sm"
-            />
-          </div>
-          <nav className="hidden items-center gap-6 md:flex">
-            {['Overview', 'Analytics', 'Reports'].map((tab) => (
-              <span key={tab} className="text-sm text-secondary">
-                {tab}
-              </span>
-            ))}
-          </nav>
-          <div className="flex items-center gap-4">
-            <button type="button" className="text-secondary hover:text-primary-fixed">
-              <Icon name="notifications" size={24} />
-            </button>
-            <button type="button" className="hidden text-secondary hover:text-primary-fixed sm:block">
-              <Icon name="apps" size={24} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 p-6 md:p-8">
+    <>
+      <OwnerPageShell variant="members" showSearch={false}>
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <nav className="mb-2 flex gap-2 text-xs font-semibold text-secondary">
@@ -563,7 +537,7 @@ const AddEditMember = () => {
             Cancel
           </Link>
         </div>
-      </main>
+      </OwnerPageShell>
 
       <SuccessModal
         open={showSuccess}
@@ -573,7 +547,7 @@ const AddEditMember = () => {
         actionLabel="Back to Directory"
         onAction={() => navigate('/owner/members')}
       />
-    </div>
+    </>
   );
 };
 

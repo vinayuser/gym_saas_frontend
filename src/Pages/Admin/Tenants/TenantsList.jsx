@@ -4,16 +4,34 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import AdminPageShell from '../../../components/fitsphere/AdminPageShell';
 import AppModal from '../../../components/fitsphere/AppModal';
-import ToggleSwitch from '../../../components/fitsphere/ToggleSwitch';
 import ENDPOINTS from '../../../config/apiUrls';
 import { getRequest, patchRequest } from '../../../config/dataApi';
 import { formatDate } from '../../../helpers/formatUtils';
-import {
-  TENANT_FEATURE_OPTIONS,
-  normalizeTenantFeatures,
-} from '../../../constants/tenantFeatures';
 
-const STATUS_OPTIONS = ['ALL', 'ACTIVE', 'INACTIVE'];
+const INCLUDED = [
+  'Members and membership plans',
+  'Staff and trainers',
+  'Finances',
+  'Events',
+  'Leads',
+  'Banners',
+  'Community chat',
+];
+
+const ADDONS = [
+  { key: 'attendance', label: 'Attendance', price: 'Priced per gym' },
+  { key: 'store', label: 'Member store', price: 'Priced per gym' },
+  { key: 'day_pass', label: 'Day pass', price: 'Priced per gym' },
+];
+
+const addonState = (value) => {
+  const src = value && typeof value === 'object' ? value : {};
+  return {
+    attendance: Boolean(src.attendance),
+    store: Boolean(src.store),
+    day_pass: Boolean(src.day_pass),
+  };
+};
 
 const tenantStatusClass = (isActive) =>
   isActive
@@ -34,6 +52,8 @@ const subStatusClass = (status) => {
   }
 };
 
+const STATUS_OPTIONS = ['ALL', 'ACTIVE', 'INACTIVE'];
+
 const TenantsList = () => {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,8 +65,7 @@ const TenantsList = () => {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [featuresTenant, setFeaturesTenant] = useState(null);
-  const [featureDraft, setFeatureDraft] = useState(normalizeTenantFeatures(null));
-  const [savingFeatures, setSavingFeatures] = useState(false);
+  const [savingAddon, setSavingAddon] = useState('');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -129,7 +148,6 @@ const TenantsList = () => {
   const openFeatures = (tenant) => {
     setMenuOpenId(null);
     setFeaturesTenant(tenant);
-    setFeatureDraft(normalizeTenantFeatures(tenant.features));
   };
 
   const closeFeatures = () => {
@@ -152,21 +170,28 @@ const TenantsList = () => {
     }
   };
 
-  const saveFeatures = async (e) => {
-    e.preventDefault();
+  const toggleAddon = async (gym, key) => {
     if (!featuresTenant) return;
-    setSavingFeatures(true);
+    const current = addonState(gym.commercialAddons);
+    const next = { ...current, [key]: !current[key] };
+    const busyKey = `${gym.id}:${key}`;
+    setSavingAddon(busyKey);
     try {
-      await patchRequest(ENDPOINTS.TENANTS.UPDATE_FEATURES(featuresTenant.id), {
-        features: featureDraft,
+      await patchRequest(ENDPOINTS.TENANTS.UPDATE_ADDONS(featuresTenant.id, gym.id), {
+        addons: next,
       });
-      toast.success('Features updated');
-      closeFeatures();
-      load();
-    } catch {
-      /* toast from api */
+      const gyms = (featuresTenant.gyms || []).map((item) =>
+        item.id === gym.id ? { ...item, commercialAddons: next } : item
+      );
+      setFeaturesTenant({ ...featuresTenant, gyms });
+      setTenants((rows) =>
+        rows.map((row) => (row.id === featuresTenant.id ? { ...row, gyms } : row))
+      );
+      toast.success(`${next[key] ? 'Enabled' : 'Removed'} add-on`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update add-on');
     } finally {
-      setSavingFeatures(false);
+      setSavingAddon('');
     }
   };
 
@@ -384,7 +409,7 @@ const TenantsList = () => {
               className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-white/5"
             >
               <Icon name="tune" size={16} />
-              Manage features
+              Manage add-ons
             </button>
             <button
               type="button"
@@ -399,53 +424,69 @@ const TenantsList = () => {
         </>
       )}
 
-      <AppModal open={Boolean(featuresTenant)} onClose={closeFeatures} size="md" scrollable>
-        <h2 className="font-display text-xl font-bold">Gym features</h2>
+      <AppModal open={Boolean(featuresTenant)} onClose={closeFeatures} size="lg" scrollable>
+        <h2 className="font-display text-xl font-bold">Plan and add-ons</h2>
         <p className="mt-1 text-sm text-secondary">
-          Enable modules for {featuresTenant?.name || 'this tenant'}. Disabled modules are hidden
-          from the owner dashboard.
+          {featuresTenant?.name} already includes the standard gym tools. Add-ons are extra and billed
+          per gym.
         </p>
-        <form onSubmit={saveFeatures} className="mt-5 space-y-3">
-          {TENANT_FEATURE_OPTIONS.map((option) => (
-            <div
-              key={option.key}
-              className="flex items-center justify-between gap-4 rounded-lg border border-white/10 px-4 py-3"
-            >
-              <div>
-                <p className="text-sm font-medium">{option.label}</p>
-                <p className="text-xs text-secondary">{option.description}</p>
-              </div>
-              <ToggleSwitch
-                id={`feature-${option.key}`}
-                label={option.label}
-                checked={Boolean(featureDraft[option.key])}
-                onChange={() =>
-                  setFeatureDraft((current) => ({
-                    ...current,
-                    [option.key]: !current[option.key],
-                  }))
-                }
-                disabled={savingFeatures}
-              />
-            </div>
-          ))}
-          <div className="flex justify-end gap-2 pt-3">
-            <button
-              type="button"
-              onClick={closeFeatures}
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-secondary hover:bg-white/5"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={savingFeatures}
-              className="rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container disabled:opacity-50"
-            >
-              {savingFeatures ? 'Saving…' : 'Save features'}
-            </button>
+
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Included</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {INCLUDED.map((label) => (
+              <span
+                key={label}
+                className="rounded-full border border-white/10 px-3 py-1 text-xs text-on-surface"
+              >
+                {label}
+              </span>
+            ))}
           </div>
-        </form>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Purchased add-ons</p>
+          {(featuresTenant?.gyms || []).length === 0 ? (
+            <p className="text-sm text-secondary">This account has no gym yet.</p>
+          ) : (
+            featuresTenant.gyms.map((gym) => {
+              const flags = addonState(gym.commercialAddons);
+              return (
+                <div key={gym.id} className="rounded-xl border border-white/10 p-4">
+                  <p className="font-semibold">{gym.name}</p>
+                  <div className="mt-3 space-y-2">
+                    {ADDONS.map((addon) => (
+                      <label key={addon.key} className="flex items-center justify-between gap-4 text-sm">
+                        <span>
+                          {addon.label}
+                          <span className="block text-xs text-secondary">{addon.price}</span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={flags[addon.key]}
+                          disabled={savingAddon === `${gym.id}:${addon.key}`}
+                          onChange={() => toggleAddon(gym, addon.key)}
+                          className="h-4 w-4 accent-[#c3f400]"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            onClick={closeFeatures}
+            className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-bold text-on-primary-fixed"
+          >
+            Done
+          </button>
+        </div>
       </AppModal>
     </>
   );

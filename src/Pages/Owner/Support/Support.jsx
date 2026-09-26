@@ -4,7 +4,8 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import SupportTicketForm from '../../../components/fitsphere/SupportTicketForm';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 import ENDPOINTS from '../../../config/apiUrls';
 import { getRequest } from '../../../config/dataApi';
 import {
@@ -26,6 +27,9 @@ const Support = () => {
   const [searchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0 });
+  const limit = 10;
 
   const formDefaults = useMemo(() => {
     const fromState = location.state || {};
@@ -39,14 +43,16 @@ const Support = () => {
   const loadTickets = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getRequest(ENDPOINTS.SUPPORT.TICKETS, { params: { limit: 10 } });
+      const res = await getRequest(ENDPOINTS.SUPPORT.TICKETS, { params: { page, limit } });
       setTickets(res.data?.tickets || []);
+      setPagination(res.data?.pagination || { total: 0 });
     } catch {
       setTickets([]);
+      setPagination({ total: 0 });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     loadTickets();
@@ -113,7 +119,7 @@ const Support = () => {
             <p className="mt-1 text-sm text-secondary">Track support tickets submitted from this account</p>
           </div>
 
-          <PageLoader show={loading} message="Loading tickets...">
+          <SectionLoader show={loading}>
             {tickets.length === 0 ? (
               <p className="px-6 py-8 text-sm text-secondary">No support requests yet.</p>
             ) : (
@@ -160,7 +166,15 @@ const Support = () => {
                 </table>
               </div>
             )}
-          </PageLoader>
+          </SectionLoader>
+          <ListPagination
+            page={page}
+            total={pagination.total || 0}
+            limit={limit}
+            loading={loading}
+            onPage={setPage}
+            noun="tickets"
+          />
         </GlassCard>
       </div>
     </OwnerPageShell>

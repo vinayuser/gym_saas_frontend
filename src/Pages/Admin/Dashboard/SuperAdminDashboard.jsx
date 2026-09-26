@@ -35,7 +35,7 @@ const SuperAdminDashboard = () => {
           <div>
             <h1 className="font-display text-3xl font-bold md:text-4xl">Platform Overview</h1>
             <p className="mt-1 text-secondary/70">
-              Manage gym owner invites, Razorpay onboarding, and tenants.
+              Invite new gyms, see who has joined, and follow monthly payments.
             </p>
           </div>
           <Link
@@ -76,14 +76,14 @@ const SuperAdminDashboard = () => {
               className="flex items-center gap-3 rounded-lg border border-white/10 p-4 transition hover:bg-white/5"
             >
               <Icon name="list_alt" className="text-primary-container" />
-              <span>View all gym invites</span>
+              <span>View all businesses</span>
             </Link>
             <Link
-              to="/admin/gym-owners"
+              to="/admin/invites"
               className="flex items-center gap-3 rounded-lg border border-white/10 p-4 transition hover:bg-white/5"
             >
-              <Icon name="groups" className="text-primary-container" />
-              <span>Manage gym owners</span>
+              <Icon name="tune" className="text-primary-container" />
+              <span>Manage add-ons</span>
             </Link>
             <Link
               to="/admin/transactions"

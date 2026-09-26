@@ -34,16 +34,16 @@ const About = () => (
         </h1>
         <p className="mt-4 text-xl text-primary-container">{PRODUCT_TAGLINE}</p>
         <p className="mt-6 max-w-2xl text-lg text-secondary">
-          Built as a production-grade Gym Management SaaS: Node.js API, PostgreSQL, Prisma,
-          multi-tenant middleware, and a React owner dashboard. Super admins onboard paying gym
-          owners; owners run members, staff, finances, and daily operations.
+          FitSphere Pro is built for gym owners in India. Run members, staff, check-ins, classes,
+          and payments in rupees, then add another branch when you are ready. Your records stay with
+          your gym.
         </p>
         <div className="mt-8 flex flex-wrap gap-4">
           <Link
             to="/pricing"
             className="neon-glow rounded-lg bg-primary-container px-6 py-2.5 text-sm font-bold text-on-primary-container"
           >
-            SaaS pricing
+            See pricing
           </Link>
           <Link
             to="/auth/login"
@@ -66,12 +66,11 @@ const About = () => (
           <p className="mt-4 leading-relaxed text-secondary">
             Independent gyms and small chains often juggle spreadsheets, WhatsApp, and separate
             billing tools. {PRODUCT_NAME} centralizes the workflows your team already does—member
-            sign-up, renewals, check-ins, staff, money in/out, and promotions—in one tenant-aware
-            system.
+            sign-up, renewals, check-ins, staff, money in and out, and promotions—in one place.
           </p>
           <p className="mt-4 leading-relaxed text-secondary">
-            The platform is designed for the Indian market (INR plans, Razorpay, GST fields on gyms)
-            but works for any operator who needs multi-branch control under one owner account.
+            Prices are in rupees. Start with one gym, add branches later, and turn on extras such as
+            check-in, a member shop, or day visits only for the locations that need them.
           </p>
         </div>
         <div className="overflow-hidden rounded-xl glass-card p-2">
@@ -87,13 +86,13 @@ const About = () => (
     <section className="bg-surface-container-lowest px-4 py-20 md:px-12">
       <MarketingSectionHeader
         title="How the product is structured"
-        subtitle="Two main experiences: platform admin (SaaS operator) and gym owner (your business)."
+        subtitle="You run your gym. We help new gyms join and keep the service available."
       />
       <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-2">
         <div className="glass-card rounded-xl p-8">
           <h3 className="flex items-center gap-2 font-display text-xl font-bold">
             <Icon name="admin_panel_settings" className="text-primary-container" />
-            Super admin
+            FitSphere team
           </h3>
           <ul className="mt-6 space-y-4">
             {SUPER_ADMIN_FEATURES.map((f) => (
@@ -107,7 +106,7 @@ const About = () => (
             ))}
           </ul>
           <p className="mt-6 text-xs text-secondary">
-            Demo login: superadmin@gymsaas.com (see project README).
+            Already a customer? Sign in and use Support inside the app.
           </p>
         </div>
         <div className="glass-card rounded-xl p-8">
@@ -116,7 +115,7 @@ const About = () => (
             Gym owner portal
           </h3>
           <p className="mt-4 text-sm text-secondary">
-            After invite onboarding, owners manage:
+            After you join, you can manage:
           </p>
           <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
             {[

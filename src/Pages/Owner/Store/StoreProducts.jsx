@@ -8,7 +8,8 @@ import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import ProductFormModal from '../../../components/fitsphere/ProductFormModal';
 import StatCard from '../../../components/fitsphere/StatCard';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
+import ListPagination from '../../../components/fitsphere/ListPagination';
 import { formatCurrency } from '../../../helpers/formatUtils';
 
 const StoreProducts = () => {
@@ -19,24 +20,28 @@ const StoreProducts = () => {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [filterCategory, setFilterCategory] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0 });
+  const limit = 10;
 
   const load = () => {
     if (!currentGym?.id) return;
     setLoading(true);
-    const productParams = { limit: 100, ...(filterCategory ? { categoryId: filterCategory } : {}) };
+    const productParams = { page, limit, ...(filterCategory ? { categoryId: filterCategory } : {}) };
     Promise.all([
       getRequest(ENDPOINTS.PRODUCTS.LIST(currentGym.id), { params: productParams }),
-      getRequest(ENDPOINTS.CATEGORIES.LIST(currentGym.id)),
+      getRequest(ENDPOINTS.CATEGORIES.LIST(currentGym.id), { params: { limit: 100 } }),
       getRequest(ENDPOINTS.PRODUCTS.STATS(currentGym.id)),
     ]).then(([list, cats, st]) => {
-      setProducts(list.data || []);
-      setCategories(cats.data || []);
+      setProducts(Array.isArray(list.data) ? list.data : []);
+      setPagination(list.meta?.pagination || { total: 0 });
+      setCategories(Array.isArray(cats.data) ? cats.data : []);
       setStats(st.data);
       setLoading(false);
     });
   };
 
-  useEffect(load, [currentGym?.id, filterCategory]);
+  useEffect(load, [currentGym?.id, filterCategory, page]);
 
   const openCreate = () => setModal({ mode: 'create' });
   const openEdit = (p) => setModal({ mode: 'edit', product: p });
@@ -50,7 +55,7 @@ const StoreProducts = () => {
   }
 
   return (
-    <PageLoader show={loading} message="Loading products...">
+    <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
         <div className="space-y-6">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -70,7 +75,7 @@ const StoreProducts = () => {
 
           <div className="grid gap-4 md:grid-cols-3">
             <StatCard label="Store Revenue" value={formatCurrency(stats?.totalRevenue)} icon="payments" accent />
-            <StatCard label="Products" value={products.length} icon="inventory_2" />
+            <StatCard label="Products" value={pagination.total || 0} icon="inventory_2" />
             <StatCard label="Low Stock" value={stats?.lowStock || 0} icon="warning" sub="Needs restock" />
           </div>
 
@@ -79,7 +84,10 @@ const StoreProducts = () => {
             <select
               className="input-cyber rounded-lg px-3 py-2 text-sm"
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onChange={(e) => {
+                setFilterCategory(e.target.value);
+                setPage(1);
+              }}
             >
               <option value="">All categories</option>
               {categories.map((c) => (
@@ -162,6 +170,14 @@ const StoreProducts = () => {
                 )}
               </tbody>
             </table>
+            <ListPagination
+              page={page}
+              total={pagination.total || 0}
+              limit={limit}
+              loading={loading}
+              onPage={setPage}
+              noun="products"
+            />
           </GlassCard>
         </div>
 
@@ -175,7 +191,7 @@ const StoreProducts = () => {
           onSaved={load}
         />
       </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

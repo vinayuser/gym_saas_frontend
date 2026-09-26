@@ -4,7 +4,7 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import AdminPageShell from '../../../components/fitsphere/AdminPageShell';
 import SupportTicketForm from '../../../components/fitsphere/SupportTicketForm';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import ENDPOINTS from '../../../config/apiUrls';
 import { getRequest, patchRequest } from '../../../config/dataApi';
 import {
@@ -30,27 +30,57 @@ const AdminSupport = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
   const [expandedId, setExpandedId] = useState(null);
+  const limit = 10;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { limit: 50 };
+      const params = { page, limit };
       if (statusFilter !== 'ALL') params.status = statusFilter;
       if (categoryFilter !== 'ALL') params.category = categoryFilter;
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch) params.search = debouncedSearch;
       const res = await getRequest(ENDPOINTS.SUPPORT.TICKETS, { params });
       setTickets(res.data?.tickets || []);
+      setPagination(res.data?.pagination || { total: 0, page, limit, totalPages: 1 });
     } catch {
       setTickets([]);
+      setPagination({ total: 0, page: 1, limit, totalPages: 1 });
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, categoryFilter, search]);
+  }, [statusFilter, categoryFilter, debouncedSearch, page]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const total = pagination.total || 0;
+  const totalPages = pagination.totalPages || 1;
+  const start = total === 0 ? 0 : (page - 1) * limit + 1;
+  const end = Math.min(page * limit, total);
+  const pageNumbers = (() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = new Set([1, totalPages, page, page - 1, page + 1].filter((n) => n >= 1 && n <= totalPages));
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+    const withEllipsis = [];
+    sorted.forEach((n, i) => {
+      if (i > 0 && n - sorted[i - 1] > 1) withEllipsis.push('...');
+      withEllipsis.push(n);
+    });
+    return withEllipsis;
+  })();
 
   const handleStatusChange = async (ticketId, status) => {
     try {
@@ -87,7 +117,10 @@ const AdminSupport = () => {
                 <button
                   key={status}
                   type="button"
-                  onClick={() => setStatusFilter(status)}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    setPage(1);
+                  }}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                     statusFilter === status
                       ? 'border-primary-container/50 bg-primary-container/15 text-primary-container'
@@ -103,7 +136,10 @@ const AdminSupport = () => {
               <select
                 className="input-cyber rounded-lg border border-white/10 bg-surface-container-lowest px-3 py-2 text-sm"
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  setPage(1);
+                }}
               >
                 <option value="ALL">All categories</option>
                 {SUPPORT_CATEGORIES.map((cat) => (
@@ -115,7 +151,7 @@ const AdminSupport = () => {
             </div>
 
             <GlassCard className="overflow-hidden">
-              <PageLoader show={loading} message="Loading support tickets...">
+              <SectionLoader show={loading}>
                 {tickets.length === 0 ? (
                   <p className="px-6 py-10 text-sm text-secondary">No support tickets match your filters.</p>
                 ) : (
@@ -189,7 +225,49 @@ const AdminSupport = () => {
                     })}
                   </div>
                 )}
-              </PageLoader>
+              </SectionLoader>
+              <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 px-6 py-3">
+                <p className="text-xs font-semibold text-secondary">
+                  {total === 0 ? 'No tickets' : `Showing ${start} to ${end} of ${total.toLocaleString()} tickets`}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="rounded p-1 text-secondary transition-colors hover:bg-white/10 disabled:opacity-30"
+                  >
+                    <Icon name="chevron_left" size={22} />
+                  </button>
+                  {pageNumbers.map((n, i) =>
+                    n === '...' ? (
+                      <span key={`ellipsis-${i}`} className="px-1 text-secondary">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={n}
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setPage(n)}
+                        className={`flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-colors ${
+                          page === n ? 'bg-neon text-on-primary-fixed' : 'text-secondary hover:bg-white/10'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    disabled={page >= totalPages || loading}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="rounded p-1 text-secondary transition-colors hover:bg-white/10 disabled:opacity-30"
+                  >
+                    <Icon name="chevron_right" size={22} />
+                  </button>
+                </div>
+              </div>
             </GlassCard>
           </div>
 

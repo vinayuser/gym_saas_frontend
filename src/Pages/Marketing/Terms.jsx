@@ -4,7 +4,7 @@ import { TERMS_SECTIONS } from '../../constants/marketingContent';
 const Terms = () => (
   <LegalPage
     title="Terms of Service"
-    subtitle="Terms for using the Gym SaaS platform, owner portal, and invite-based onboarding."
+    subtitle="The terms for using FitSphere Pro to run your gym."
     updated="October 24, 2024"
     sections={TERMS_SECTIONS}
     sidebarLinks={TERMS_SECTIONS.map((s) => ({

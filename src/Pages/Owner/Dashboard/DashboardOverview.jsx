@@ -3,16 +3,6 @@ import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import { formatCurrency, formatDate } from '../../../helpers/formatUtils';
 
-const heatmapBarClass = (count, max) => {
-  if (!count) return 'bg-white/5';
-  const ratio = count / max;
-  if (ratio > 0.8) return 'bg-primary-fixed';
-  if (ratio > 0.6) return 'bg-primary-fixed/80';
-  if (ratio > 0.4) return 'bg-primary-fixed/60';
-  if (ratio > 0.2) return 'bg-primary-fixed/40';
-  return 'bg-primary-fixed/20';
-};
-
 const StatCard = ({ label, value, subText, subIcon, icon }) => (
   <GlassCard className="flex flex-col justify-between rounded-xl p-6">
     <div className="flex items-center justify-between">
@@ -96,7 +86,9 @@ const DashboardOverview = ({ data, heatmapPeriod, onHeatmapPeriodChange }) => {
           <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h3 className="font-display text-2xl font-semibold">Attendance Heatmap</h3>
-              <p className="text-sm text-secondary opacity-60">Real-time gym floor occupancy by hour</p>
+              <p className="text-sm text-secondary opacity-60">
+                {heatmapPeriod === 'week' ? 'Check-ins for each of the last 7 days' : 'Check-ins today, by hour'}
+              </p>
             </div>
             <div className="flex items-center gap-1 rounded-lg bg-white/5 p-1">
               {['day', 'week'].map((p) => (
@@ -116,26 +108,25 @@ const DashboardOverview = ({ data, heatmapPeriod, onHeatmapPeriodChange }) => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-between px-2 text-xs text-secondary opacity-40">
-              <span>6 AM</span>
-              <span>10 AM</span>
-              <span>2 PM</span>
-              <span>6 PM</span>
-              <span>10 PM</span>
-            </div>
-            <div
-              className="grid h-64 flex-1 gap-1"
-              style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}
-            >
-              {heatmap.map(({ hour, count }) => (
-                <div
-                  key={hour}
-                  className={`h-full rounded-sm ${heatmapBarClass(count, maxHeat)}`}
-                  title={`${hour}:00 — ${count} check-ins`}
-                />
-              ))}
-            </div>
+          <div className="flex h-64 items-end gap-1">
+            {heatmap.length === 0 ? (
+              <p className="text-sm text-secondary">No check-ins in this range yet.</p>
+            ) : (
+              heatmap.map((item) => {
+                const height = item.count ? Math.max((item.count / maxHeat) * 100, 14) : 0;
+                return (
+                  <div key={item.label} className="flex h-full min-w-0 flex-1 flex-col justify-end">
+                    <span className="mb-1 text-center text-[10px] font-semibold text-secondary">{item.count || ''}</span>
+                    <div
+                      className="w-full rounded-t bg-primary-fixed"
+                      style={{ height: `${height}%` }}
+                      title={`${item.label}: ${item.count} check-ins`}
+                    />
+                    <span className="mt-2 truncate text-center text-[10px] text-secondary">{item.label}</span>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-primary-fixed/10 blur-[100px]" />

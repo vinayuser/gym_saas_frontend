@@ -7,7 +7,7 @@ import {
   deleteBanner,
   duplicateBanner,
 } from '../../../store/slices/bannerSlice';
-import PageLoader from '../../../components/Loader/PageLoader';
+import SectionLoader from '../../../components/Loader/SectionLoader';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
@@ -78,7 +78,7 @@ const Banners = () => {
   }
 
   return (
-    <PageLoader show={loading && !banners.length} message="Loading banners...">
+    <SectionLoader show={loading && !banners.length}>
     <OwnerPageShell
       tabs={['Overview', 'Analytics', 'Reports']}
       activeTab="Overview"
@@ -307,7 +307,7 @@ const Banners = () => {
         </GlassCard>
       </div>
     </OwnerPageShell>
-    </PageLoader>
+    </SectionLoader>
   );
 };
 

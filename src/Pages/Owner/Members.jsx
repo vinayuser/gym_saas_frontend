@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMembers, deleteMember } from '../../store/slices/memberSlice';
 import { setCurrentGym } from '../../store/slices/gymSlice';
-import PageLoader from '../../components/Loader/PageLoader';
 import GlassCard from '../../components/fitsphere/GlassCard';
 import Icon from '../../components/fitsphere/Icon';
 import OwnerPageShell from '../../components/fitsphere/OwnerPageShell';
@@ -160,7 +159,6 @@ const Members = () => {
   }
 
   return (
-    <PageLoader show={loading && !members.length} message="Loading members...">
     <>
       <OwnerPageShell
         variant="members"
@@ -280,7 +278,12 @@ const Members = () => {
           </GlassCard>
 
           {/* Data table */}
-          <GlassCard className="overflow-hidden rounded-xl p-0">
+          <GlassCard className="relative overflow-hidden rounded-xl p-0">
+            {loading ? (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/55">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-fixed/25 border-t-primary-fixed" />
+              </div>
+            ) : null}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
                 <thead className="border-b border-white/10 bg-white/5">
@@ -303,13 +306,19 @@ const Members = () => {
                   {displayedMembers.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-16 text-center text-secondary">
-                        <p>No members found.</p>
-                        <Link
-                          to="/owner/members/new"
-                          className="mt-2 inline-block text-sm text-primary-container hover:underline"
-                        >
-                          Add your first member
-                        </Link>
+                        {loading ? (
+                          <p>Loading members…</p>
+                        ) : (
+                          <>
+                            <p>No members found.</p>
+                            <Link
+                              to="/owner/members/new"
+                              className="mt-2 inline-block text-sm text-primary-container hover:underline"
+                            >
+                              Add your first member
+                            </Link>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -451,7 +460,6 @@ const Members = () => {
         />
       )}
     </>
-    </PageLoader>
   );
 };
 
