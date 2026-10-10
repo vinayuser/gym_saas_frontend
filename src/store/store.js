@@ -4,6 +4,7 @@ import gymReducer from './slices/gymSlice';
 import memberReducer from './slices/memberSlice';
 import staffReducer from './slices/staffSlice';
 import bannerReducer from './slices/bannerSlice';
+import broadcastReducer from './slices/broadcastSlice';
 import { bindForceLogout } from '../config/axiosInstance';
 
 const store = configureStore({
@@ -13,6 +14,7 @@ const store = configureStore({
     member: memberReducer,
     staff: staffReducer,
     banner: bannerReducer,
+    broadcast: broadcastReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

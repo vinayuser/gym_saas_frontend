@@ -8,82 +8,112 @@ import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
 import SectionLoader from '../../../components/Loader/SectionLoader';
-import ListPagination from '../../../components/fitsphere/ListPagination';
+import TableShell, {
+  TABLE_CLASS,
+  TD,
+  TH,
+  THEAD_ROW,
+  tableRowNumber,
+} from '../../../components/fitsphere/TableShell';
+import useDebouncedValue from '../../../hooks/useDebouncedValue';
 
 const Trainers = () => {
   const { currentGym } = useSelector((s) => s.gym);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 350);
   const limit = 10;
 
   useEffect(() => {
     if (!currentGym?.id) return;
     setLoading(true);
-    getRequest(ENDPOINTS.TRAINERS.PERFORMANCE(currentGym.id), { params: { page, limit } })
+    getRequest(ENDPOINTS.TRAINERS.PERFORMANCE(currentGym.id), {
+      params: { page, limit, search: debouncedSearch || undefined },
+    })
       .then((res) => setData(res.data))
       .finally(() => setLoading(false));
-  }, [currentGym?.id, page]);
+  }, [currentGym?.id, page, debouncedSearch]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, currentGym?.id]);
 
   const summary = data?.summary || {};
   const trainers = data?.trainers || [];
 
-  return (
-    <SectionLoader show={loading}>
-    <OwnerPageShell showSearch={false}>
-      <div className="space-y-8">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <h1 className="font-display text-3xl font-bold md:text-4xl">Trainer Management</h1>
-            <p className="mt-1 text-secondary/70">Performance, sessions, and roster overview.</p>
-          </div>
-          <Link
-            to="/owner/trainers/new"
-            className="neon-glow flex items-center gap-2 rounded-lg bg-primary-fixed px-6 py-3 text-sm font-bold text-on-primary-fixed"
-          >
-            <Icon name="person_add" size={20} />
-            Add Trainer
-          </Link>
-        </div>
+  if (!currentGym) {
+    return (
+      <OwnerPageShell showSearch={false}>
+        <GlassCard className="p-6 text-secondary">Select a gym branch.</GlassCard>
+      </OwnerPageShell>
+    );
+  }
 
-        <div className="grid gap-6 md:grid-cols-4">
+  return (
+    <SectionLoader show={loading && !data}>
+      <OwnerPageShell showSearch={false}>
+        <div className="mb-4 grid gap-3 md:grid-cols-4">
           <StatCard label="Active Trainers" value={summary.activeTrainers || 0} icon="sports_martial_arts" accent />
           <StatCard label="Avg. Rating" value={`${summary.avgRating || 0}/5`} icon="star" />
           <StatCard label="Sessions" value={summary.totalSessions || 0} icon="event" />
           <StatCard label="Efficiency" value={`${summary.efficiency || 0}%`} icon="speed" />
         </div>
 
-        <GlassCard className="overflow-hidden p-0">
-          <table className="w-full text-left text-sm">
+        <TableShell
+          title="Trainers"
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search trainers..."
+          actions={
+            <Link
+              to="/owner/trainers/new"
+              className="neon-glow inline-flex items-center gap-1.5 rounded-lg bg-primary-fixed px-3 py-2 text-xs font-bold text-on-primary-fixed"
+            >
+              <Icon name="person_add" size={16} />
+              Add Trainer
+            </Link>
+          }
+          page={page}
+          total={data?.pagination?.total || 0}
+          limit={limit}
+          loading={loading}
+          onPage={setPage}
+          noun="trainers"
+        >
+          <table className={`${TABLE_CLASS} min-w-[720px]`}>
             <thead>
-              <tr className="border-b border-white/5 text-xs uppercase text-secondary/60">
-                <th className="px-6 py-3">Trainer</th>
-                <th className="px-6 py-3">Specialization</th>
-                <th className="px-6 py-3">Clients</th>
-                <th className="px-6 py-3">Rating</th>
-                <th className="px-6 py-3">Status</th>
+              <tr className={THEAD_ROW}>
+                <th className={`w-12 ${TH}`}>#</th>
+                <th className={TH}>Trainer</th>
+                <th className={TH}>Specialization</th>
+                <th className={TH}>Clients</th>
+                <th className={TH}>Rating</th>
+                <th className={TH}>Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {trainers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-secondary">
+                  <td colSpan={6} className={`${TD} py-12 text-center text-secondary`}>
                     No trainers yet. Click Add Trainer to onboard your first coach.
                   </td>
                 </tr>
               ) : (
-                trainers.map((t) => (
+                trainers.map((t, i) => (
                   <tr key={t.id} className="hover:bg-white/[0.02]">
-                    <td className="px-6 py-4">
+                    <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                      {tableRowNumber(page, limit, i)}
+                    </td>
+                    <td className={TD}>
                       <p className="font-medium">{t.name}</p>
                       <p className="text-xs text-secondary">{t.email}</p>
                     </td>
-                    <td className="px-6 py-4 text-secondary">
-                      {(t.specialties || []).join(', ') || '—'}
-                    </td>
-                    <td className="px-6 py-4">{t.clients}</td>
-                    <td className="px-6 py-4 font-bold text-primary-container">{t.rating?.toFixed(1)}</td>
-                    <td className="px-6 py-4">
+                    <td className={`${TD} text-secondary`}>{(t.specialties || []).join(', ') || '—'}</td>
+                    <td className={TD}>{t.clients}</td>
+                    <td className={`${TD} font-bold text-primary-container`}>{t.rating?.toFixed(1)}</td>
+                    <td className={TD}>
                       <span className="rounded-full bg-primary-container/20 px-2 py-0.5 text-xs font-semibold text-primary-container">
                         {t.status}
                       </span>
@@ -93,17 +123,8 @@ const Trainers = () => {
               )}
             </tbody>
           </table>
-          <ListPagination
-            page={page}
-            total={data?.pagination?.total || 0}
-            limit={limit}
-            loading={loading}
-            onPage={setPage}
-            noun="trainers"
-          />
-        </GlassCard>
-      </div>
-    </OwnerPageShell>
+        </TableShell>
+      </OwnerPageShell>
     </SectionLoader>
   );
 };

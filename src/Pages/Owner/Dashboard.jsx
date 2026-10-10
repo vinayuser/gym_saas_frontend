@@ -140,11 +140,11 @@ const OwnerDashboard = () => {
           <button
             type="button"
             onClick={() => setQuickOpen((open) => !open)}
-            className="neon-glow flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed shadow-2xl transition-transform hover:scale-110 active:scale-95"
+            className="neon-glow flex h-12 w-12 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed shadow-xl"
             aria-label="Quick actions"
             aria-expanded={quickOpen}
           >
-            <Icon name={quickOpen ? 'close' : 'bolt'} size={32} />
+            <Icon name={quickOpen ? 'close' : 'bolt'} size={22} />
           </button>
         </div>
       ) : null}

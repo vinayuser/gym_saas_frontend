@@ -4,7 +4,22 @@ import axiosInstance, { setAuthToken } from '../../config/axiosInstance';
 import { postRequest, getRequest } from '../../config/dataApi';
 import { getUserRoleInfo } from '../../helpers/roleUtils';
 import { getToken, setTokens, clearTokens } from '../../helpers/utils';
+import { ROLES } from '../../constants';
 import { toast } from 'react-toastify';
+
+const STAFF_WEB_MESSAGE = 'This dashboard is for gym owners, staff, and admins only.';
+
+const acceptWebLogin = (data, rejectWithValue) => {
+  if (data.user?.role === ROLES.MEMBER) {
+    setAuthToken(null);
+    clearTokens();
+    return rejectWithValue(STAFF_WEB_MESSAGE);
+  }
+  const { accessToken, refreshToken } = data.tokens;
+  setAuthToken(accessToken);
+  setTokens(accessToken, refreshToken);
+  return data;
+};
 
 const initialState = {
   isAuthenticated: false,
@@ -27,10 +42,7 @@ export const loginUser = createAsyncThunk(
         return { requiresTwoFactor: true, twoFactorToken: response.data.twoFactorToken };
       }
       if (response.success && response.data?.tokens) {
-        const { accessToken, refreshToken } = response.data.tokens;
-        setAuthToken(accessToken);
-        setTokens(accessToken, refreshToken);
-        return response.data;
+        return acceptWebLogin(response.data, rejectWithValue);
       }
       return rejectWithValue('Invalid email or password.');
     } catch (err) {
@@ -45,10 +57,7 @@ export const verifyTwoFactorLogin = createAsyncThunk(
     try {
       const response = await postRequest(ENDPOINTS.AUTH.LOGIN_2FA, { twoFactorToken, code });
       if (response.success && response.data?.tokens) {
-        const { accessToken, refreshToken } = response.data.tokens;
-        setAuthToken(accessToken);
-        setTokens(accessToken, refreshToken);
-        return response.data;
+        return acceptWebLogin(response.data, rejectWithValue);
       }
       return rejectWithValue('Invalid authentication code.');
     } catch (err) {
@@ -82,6 +91,12 @@ export const fetchCurrentUserProfile = createAsyncThunk(
     try {
       const response = await getRequest(ENDPOINTS.AUTH.PROFILE);
       if (response.success) {
+        const user = response.data?.user ?? response.data;
+        if (user?.role === ROLES.MEMBER) {
+          setAuthToken(null);
+          clearTokens();
+          return rejectWithValue(STAFF_WEB_MESSAGE);
+        }
         return response.data;
       }
       return rejectWithValue('Failed to fetch profile');

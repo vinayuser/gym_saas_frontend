@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
@@ -8,24 +8,44 @@ import TwoFactorModal from './TwoFactorModal';
 import ActiveSessionsModal from './ActiveSessionsModal';
 import NotificationPreferencesCard from './NotificationPreferencesCard';
 import { fetchCurrentUserProfile } from '../../../store/slices/authSlice';
+import { updateGym } from '../../../store/slices/gymSlice';
 
 const Settings = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { currentGym } = useSelector((s) => s.gym);
   const [activeModal, setActiveModal] = useState(null);
+  const [gymForm, setGymForm] = useState({ name: '', email: '', phone: '', city: '' });
+  const [savingGym, setSavingGym] = useState(false);
+
+  useEffect(() => {
+    setGymForm({
+      name: currentGym?.name || '',
+      email: currentGym?.email || '',
+      phone: currentGym?.phone || '',
+      city: currentGym?.city || '',
+    });
+  }, [currentGym]);
+
+  const saveGym = async (e) => {
+    e.preventDefault();
+    if (!currentGym?.id) return;
+    setSavingGym(true);
+    await dispatch(
+      updateGym({
+        gymId: currentGym.id,
+        data: {
+          name: gymForm.name,
+          email: gymForm.email || undefined,
+          phone: gymForm.phone || undefined,
+          city: gymForm.city || undefined,
+        },
+      })
+    );
+    setSavingGym(false);
+  };
 
   const profileSections = [
-    {
-      title: 'Gym Profile',
-      icon: 'location_on',
-      fields: [
-        { label: 'Gym Name', value: currentGym?.name || '—' },
-        { label: 'Email', value: currentGym?.email || '—' },
-        { label: 'Phone', value: currentGym?.phone || '—' },
-        { label: 'City', value: currentGym?.city || '—' },
-      ],
-    },
     {
       title: 'Account',
       icon: 'person',
@@ -68,6 +88,31 @@ const Settings = () => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
+          <GlassCard className="p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Icon name="location_on" className="text-primary-container" />
+              Gym Profile
+            </h2>
+            <form onSubmit={saveGym} className="space-y-3">
+              {['name', 'email', 'phone', 'city'].map((key) => (
+                <div key={key}>
+                  <label className="text-xs font-semibold uppercase text-secondary">{key}</label>
+                  <input
+                    value={gymForm[key]}
+                    onChange={(e) => setGymForm({ ...gymForm, [key]: e.target.value })}
+                    className="input-cyber mt-1 w-full rounded-lg px-3 py-2 text-sm"
+                  />
+                </div>
+              ))}
+              <button
+                type="submit"
+                disabled={savingGym || !currentGym}
+                className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-bold text-on-primary-fixed disabled:opacity-50"
+              >
+                {savingGym ? 'Saving…' : 'Save gym'}
+              </button>
+            </form>
+          </GlassCard>
           {profileSections.map((sec) => (
             <GlassCard key={sec.title} className="p-6">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">

@@ -49,9 +49,7 @@
 
 @layer components {
   .glass-card {
-    background: rgba(30, 30, 30, 0.8);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    background: #201f1f;
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -60,9 +58,7 @@
   }
 
   .glass-panel {
-    background: rgba(30, 30, 30, 0.8);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    background: #201f1f;
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -130,4 +126,5 @@
   .staff-row:nth-child(even) {
     background: rgba(255, 255, 255, 0.02);
   }
+
 }

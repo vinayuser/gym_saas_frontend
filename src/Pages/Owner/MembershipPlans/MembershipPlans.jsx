@@ -8,7 +8,15 @@ import Icon from '../../../components/fitsphere/Icon';
 import AppModal from '../../../components/fitsphere/AppModal';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import SectionLoader from '../../../components/Loader/SectionLoader';
-import ListPagination from '../../../components/fitsphere/ListPagination';
+import TableShell, {
+  TABLE_CLASS,
+  TD,
+  TH,
+  THEAD_ROW,
+  TableSelect,
+  tableRowNumber,
+} from '../../../components/fitsphere/TableShell';
+import useDebouncedValue from '../../../hooks/useDebouncedValue';
 import { formatCurrency } from '../../../helpers/formatUtils';
 
 const CYCLE_LABELS = {
@@ -149,16 +157,18 @@ const MembershipPlans = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0 });
+  const debouncedSearch = useDebouncedValue(search, 350);
   const limit = 10;
 
   const load = async () => {
     if (!currentGym?.id) return;
     setLoading(true);
     try {
-      const params = { page, limit };
+      const params = { page, limit, search: debouncedSearch || undefined };
       if (filter === 'active') params.isActive = 'true';
       if (filter === 'archived') params.isActive = 'false';
       const res = await getRequest(ENDPOINTS.PLANS.LIST(currentGym.id), { params });
@@ -173,9 +183,11 @@ const MembershipPlans = () => {
 
   useEffect(() => {
     load();
-  }, [currentGym?.id, page, filter]);
+  }, [currentGym?.id, page, filter, debouncedSearch]);
 
-  const filteredPlans = plans;
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filter, currentGym?.id]);
 
   const savePlan = async (e) => {
     e.preventDefault();
@@ -212,192 +224,165 @@ const MembershipPlans = () => {
   }
 
   const activeCount = plans.filter((p) => p.isActive).length;
-  const archivedCount = plans.filter((p) => !p.isActive).length;
   const totalMembers = plans.reduce((sum, p) => sum + (p._count?.memberships ?? 0), 0);
-
-  const filters = [
-    ['all', `All Plans (${plans.length})`],
-    ['active', `Active (${activeCount})`],
-    ['archived', `Archived (${archivedCount})`],
-  ];
 
   return (
     <SectionLoader show={loading && !plans.length}>
       <OwnerPageShell showSearch={false}>
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-                Membership &amp; Plans
-              </h1>
-              <p className="mt-1 text-secondary/70">
-                Configure pricing tiers and billing cycles for your members.
-              </p>
-            </div>
+        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <StatCard label="Total Plans" value={pagination.total || 0} icon="card_membership" accent />
+          <StatCard label="Active Plans" value={activeCount} icon="verified" />
+          <StatCard label="Members on Plans" value={totalMembers} icon="groups" />
+        </div>
+
+        <TableShell
+          title="Membership plans"
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search plans..."
+          filters={
+            <TableSelect
+              value={filter}
+              onChange={(value) => {
+                setFilter(value);
+                setPage(1);
+              }}
+            >
+              <option value="all">All plans</option>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </TableSelect>
+          }
+          actions={
             <button
               type="button"
               onClick={() => setModal({})}
-              className="neon-glow flex items-center justify-center gap-2 rounded-lg bg-neon px-6 py-2.5 text-sm font-bold text-on-primary-fixed transition-transform hover:scale-[1.02] active:scale-95"
+              className="neon-glow inline-flex items-center gap-1.5 rounded-lg bg-neon px-3 py-2 text-xs font-bold text-on-primary-fixed"
             >
-              <Icon name="add" size={20} />
+              <Icon name="add" size={16} />
               Create New Plan
             </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <StatCard label="Total Plans" value={pagination.total || 0} icon="card_membership" accent />
-            <StatCard label="Active Plans" value={activeCount} icon="verified" />
-            <StatCard label="Members on Plans" value={totalMembers} icon="groups" />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            {filters.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setFilter(value);
-                  setPage(1);
-                }}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                  filter === value
-                    ? 'bg-primary-container text-on-primary-container'
-                    : 'border border-white/10 text-secondary hover:bg-white/5'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Plans table */}
-          <GlassCard className="overflow-hidden rounded-xl p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-white/10 bg-white/5">
-                    {['Plan Name', 'Price', 'Billing', 'Duration', 'Members', 'Status', ''].map((col) => (
-                      <th
-                        key={col || 'actions'}
-                        className={`px-6 py-3 text-xs font-semibold uppercase tracking-widest text-secondary ${
-                          col === '' ? 'text-right' : ''
+          }
+          page={page}
+          total={pagination.total || 0}
+          limit={limit}
+          loading={loading}
+          onPage={setPage}
+          noun="plans"
+        >
+          <table className={`${TABLE_CLASS} min-w-[720px]`}>
+            <thead>
+              <tr className={THEAD_ROW}>
+                <th className={`w-12 ${TH}`}>#</th>
+                <th className={TH}>Plan Name</th>
+                <th className={TH}>Price</th>
+                <th className={TH}>Billing</th>
+                <th className={TH}>Duration</th>
+                <th className={TH}>Members</th>
+                <th className={TH}>Status</th>
+                <th className={`${TH} text-right`}>Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {plans.length === 0 && !loading ? (
+                <tr>
+                  <td colSpan={8} className={`${TD} py-16 text-center text-secondary`}>
+                    {filter === 'all' ? (
+                      <>
+                        <p>No membership plans found.</p>
+                        <button
+                          type="button"
+                          onClick={() => setModal({})}
+                          className="mt-2 text-sm text-primary-container hover:underline"
+                        >
+                          Create your first plan
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p>No {filter} plans found.</p>
+                        <button
+                          type="button"
+                          onClick={() => setFilter('all')}
+                          className="mt-2 text-sm text-primary-container hover:underline"
+                        >
+                          View all plans
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                plans.map((plan, i) => (
+                  <tr key={plan.id} className="hover:bg-white/[0.02]">
+                    <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                      {tableRowNumber(page, limit, i)}
+                    </td>
+                    <td className={TD}>
+                      <p className="font-semibold">{plan.name}</p>
+                      <p className="mt-0.5 max-w-xs truncate text-xs text-secondary">
+                        {plan.description || 'No description'}
+                      </p>
+                    </td>
+                    <td className={`${TD} font-display font-bold text-primary-container`}>
+                      {formatCurrency(plan.price)}
+                    </td>
+                    <td className={`${TD} text-secondary`}>
+                      {CYCLE_LABELS[plan.billingCycle] || plan.billingCycle}
+                    </td>
+                    <td className={`${TD} text-secondary`}>{plan.durationDays} days</td>
+                    <td className={TD}>{plan._count?.memberships ?? 0}</td>
+                    <td className={TD}>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          plan.isActive
+                            ? 'bg-primary-container/20 text-primary-container'
+                            : 'bg-white/10 text-secondary'
                         }`}
                       >
-                        {col}
-                      </th>
-                    ))}
+                        {plan.isActive ? 'Active' : 'Archived'}
+                      </span>
+                    </td>
+                    <td className={TD}>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setModal(plan)}
+                          className="rounded-lg p-2 text-secondary transition-colors hover:bg-white/5 hover:text-primary-fixed"
+                          aria-label="Edit plan"
+                        >
+                          <Icon name="edit" size={20} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (
+                              window.confirm(
+                                'Archive this plan? Existing memberships will not be affected.'
+                              )
+                            ) {
+                              try {
+                                await deleteRequest(ENDPOINTS.PLANS.DELETE(currentGym.id, plan.id));
+                                toast.success('Plan archived');
+                                load();
+                              } catch {
+                                toast.error('Failed to archive plan');
+                              }
+                            }
+                          }}
+                          className="rounded-lg p-2 text-secondary transition-colors hover:bg-error/10 hover:text-error"
+                          aria-label="Archive plan"
+                        >
+                          <Icon name="archive" size={20} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredPlans.length === 0 && !loading ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-16 text-center text-secondary">
-                        {filter === 'all' ? (
-                          <>
-                            <p>No membership plans found.</p>
-                            <button
-                              type="button"
-                              onClick={() => setModal({})}
-                              className="mt-2 text-sm text-primary-container hover:underline"
-                            >
-                              Create your first plan
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <p>No {filter} plans found.</p>
-                            <button
-                              type="button"
-                              onClick={() => setFilter('all')}
-                              className="mt-2 text-sm text-primary-container hover:underline"
-                            >
-                              View all plans
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPlans.map((plan) => (
-                      <tr key={plan.id} className="transition-colors hover:bg-white/[0.02]">
-                        <td className="px-6 py-4">
-                          <p className="font-semibold">{plan.name}</p>
-                          <p className="mt-0.5 max-w-xs truncate text-xs text-secondary">
-                            {plan.description || 'No description'}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 font-display text-lg font-bold text-primary-container">
-                          {formatCurrency(plan.price)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-secondary">
-                          {CYCLE_LABELS[plan.billingCycle] || plan.billingCycle}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-secondary">{plan.durationDays} days</td>
-                        <td className="px-6 py-4 text-sm">{plan._count?.memberships ?? 0}</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                              plan.isActive
-                                ? 'bg-primary-container/20 text-primary-container'
-                                : 'bg-white/10 text-secondary'
-                            }`}
-                          >
-                            {plan.isActive ? 'Active' : 'Archived'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setModal(plan)}
-                              className="rounded-lg p-2 text-secondary transition-colors hover:bg-white/5 hover:text-primary-fixed"
-                              aria-label="Edit plan"
-                            >
-                              <Icon name="edit" size={20} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                if (
-                                  window.confirm(
-                                    'Archive this plan? Existing memberships will not be affected.'
-                                  )
-                                ) {
-                                  try {
-                                    await deleteRequest(ENDPOINTS.PLANS.DELETE(currentGym.id, plan.id));
-                                    toast.success('Plan archived');
-                                    load();
-                                  } catch {
-                                    toast.error('Failed to archive plan');
-                                  }
-                                }
-                              }}
-                              className="rounded-lg p-2 text-secondary transition-colors hover:bg-error/10 hover:text-error"
-                              aria-label="Archive plan"
-                            >
-                              <Icon name="archive" size={20} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              <ListPagination
-                page={page}
-                total={pagination.total || 0}
-                limit={limit}
-                loading={loading}
-                onPage={setPage}
-                noun="plans"
-              />
-            </div>
-          </GlassCard>
-        </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </TableShell>
       </OwnerPageShell>
 
       <PlanFormModal

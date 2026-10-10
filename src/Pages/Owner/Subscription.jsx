@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { getRequest } from '../../config/dataApi';
 import ENDPOINTS from '../../config/apiUrls';
 import OwnerPageShell from '../../components/fitsphere/OwnerPageShell';
-import GlassCard from '../../components/fitsphere/GlassCard';
 import GymBillingPanel from '../../components/fitsphere/GymBillingPanel';
+import TableShell, { TABLE_CLASS, TD, TH, THEAD_ROW, tableRowNumber } from '../../components/fitsphere/TableShell';
 import { formatDate } from '../../helpers/formatUtils';
 
 const formatInr = (amount) =>
@@ -41,31 +41,30 @@ const Subscription = () => {
         <GymBillingPanel />
 
           {payments.length > 0 ? (
-            <GlassCard className="overflow-hidden">
-              <div className="border-b border-white/10 px-6 py-4">
-                <h2 className="text-lg font-semibold">Payments</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px] text-left text-sm">
-                  <thead className="border-b border-white/10 text-secondary">
-                    <tr>
-                      <th className="px-6 py-3 font-medium">Date</th>
-                      <th className="px-6 py-3 font-medium">Amount</th>
-                      <th className="px-6 py-3 font-medium">Status</th>
+            <TableShell title="Payments">
+              <table className={`${TABLE_CLASS} min-w-[520px]`}>
+                <thead>
+                  <tr className={THEAD_ROW}>
+                    <th className={`w-12 ${TH}`}>#</th>
+                    <th className={TH}>Date</th>
+                    <th className={TH}>Amount</th>
+                    <th className={TH}>Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {payments.map((payment, i) => (
+                    <tr key={payment.id} className="hover:bg-white/[0.02]">
+                      <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                        {tableRowNumber(1, payments.length, i)}
+                      </td>
+                      <td className={TD}>{formatDate(payment.paidAt || payment.createdAt)}</td>
+                      <td className={`${TD} font-medium`}>{formatInr(payment.amount)}</td>
+                      <td className={TD}>{payment.status}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((payment) => (
-                      <tr key={payment.id} className="border-b border-white/5 last:border-0">
-                        <td className="px-6 py-3">{formatDate(payment.paidAt || payment.createdAt)}</td>
-                        <td className="px-6 py-3 font-medium">{formatInr(payment.amount)}</td>
-                        <td className="px-6 py-3">{payment.status}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </GlassCard>
+                  ))}
+                </tbody>
+              </table>
+            </TableShell>
           ) : null}
       </div>
     </OwnerPageShell>

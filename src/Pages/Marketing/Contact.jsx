@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Icon from '../../components/fitsphere/Icon';
 import { CONTACT_CHANNELS, MARKETING_IMAGES } from '../../constants/marketingContent';
+import ENDPOINTS from '../../config/apiUrls';
+import { postRequest } from '../../config/dataApi';
 
 const inputClass =
   'w-full rounded-lg border border-white/10 bg-surface-container-lowest px-4 py-2.5 text-on-surface outline-none transition focus:border-primary-container';
@@ -10,14 +12,22 @@ const inputClass =
 const Contact = () => {
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const fd = new FormData(e.target);
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      toast.success('Message received — our team will respond within 24 hours.');
+    try {
+      await postRequest(ENDPOINTS.PUBLIC.CONTACT, {
+        name: fd.get('name'),
+        email: fd.get('email'),
+        company: fd.get('company'),
+        message: fd.get('message'),
+      });
+      toast.success('Message received — our team will respond within 1–2 business days.');
       e.target.reset();
-    }, 800);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

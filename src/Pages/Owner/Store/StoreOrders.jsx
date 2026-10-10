@@ -9,7 +9,15 @@ import AppModal from '../../../components/fitsphere/AppModal';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import StatCard from '../../../components/fitsphere/StatCard';
 import SectionLoader from '../../../components/Loader/SectionLoader';
-import ListPagination from '../../../components/fitsphere/ListPagination';
+import TableShell, {
+  TABLE_CLASS,
+  TD,
+  TH,
+  THEAD_ROW,
+  TableSelect,
+  tableRowNumber,
+} from '../../../components/fitsphere/TableShell';
+import useDebouncedValue from '../../../hooks/useDebouncedValue';
 import { formatCurrency, formatDateTime } from '../../../helpers/formatUtils';
 
 const FULFILLMENT_STATUSES = [
@@ -57,15 +65,22 @@ const StoreOrders = () => {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
   const [updating, setUpdating] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0 });
+  const debouncedSearch = useDebouncedValue(search, 350);
   const limit = 10;
 
   const load = () => {
     if (!currentGym?.id) return;
     setLoading(true);
-    const params = { page, limit, ...(statusFilter ? { fulfillmentStatus: statusFilter } : {}) };
+    const params = {
+      page,
+      limit,
+      search: debouncedSearch || undefined,
+      ...(statusFilter ? { fulfillmentStatus: statusFilter } : {}),
+    };
     Promise.all([
       getRequest(ENDPOINTS.ORDERS.LIST(currentGym.id), { params }),
       getRequest(ENDPOINTS.ORDERS.STATS(currentGym.id)),
@@ -77,7 +92,11 @@ const StoreOrders = () => {
     });
   };
 
-  useEffect(load, [currentGym?.id, statusFilter, page]);
+  useEffect(load, [currentGym?.id, statusFilter, page, debouncedSearch]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, currentGym?.id]);
 
   const viewOrder = async (order) => {
     const res = await getRequest(ENDPOINTS.ORDERS.BY_ID(currentGym.id, order.id));
@@ -111,99 +130,100 @@ const StoreOrders = () => {
   const pendingPickup = stats?.byStatus?.READY_FOR_PICKUP ?? 0;
 
   return (
-    <SectionLoader show={loading}>
+    <SectionLoader show={loading && !orders.length}>
       <OwnerPageShell showSearch={false}>
-        <div className="space-y-6">
-          <div>
-            <h1 className="font-display text-3xl font-bold md:text-4xl">Store Orders</h1>
-            <p className="mt-1 text-secondary/70">
-              Manage member orders and pickup status at your gym.
-            </p>
-          </div>
+        <div className="mb-4 grid gap-3 md:grid-cols-4">
+          <StatCard label="Total Orders" value={stats?.totalOrders ?? 0} icon="shopping_cart" accent />
+          <StatCard label="Revenue" value={formatCurrency(stats?.totalRevenue)} icon="payments" />
+          <StatCard label="Ready for Pickup" value={pendingPickup} icon="storefront" sub="Awaiting collection" />
+          <StatCard label="Collected" value={stats?.byStatus?.COLLECTED ?? 0} icon="check_circle" />
+        </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
-            <StatCard label="Total Orders" value={stats?.totalOrders ?? 0} icon="shopping_cart" accent />
-            <StatCard label="Revenue" value={formatCurrency(stats?.totalRevenue)} icon="payments" />
-            <StatCard label="Ready for Pickup" value={pendingPickup} icon="storefront" sub="Awaiting collection" />
-            <StatCard label="Collected" value={stats?.byStatus?.COLLECTED ?? 0} icon="check_circle" />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm text-secondary">Filter:</label>
-            <select
-              className="input-cyber rounded-lg px-3 py-2 text-sm"
+        <TableShell
+          title="Store Orders"
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search orders..."
+          filters={
+            <TableSelect
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              onChange={(value) => {
+                setStatusFilter(value);
                 setPage(1);
               }}
             >
               {FULFILLMENT_STATUSES.map((s) => (
-                <option key={s.value || 'all'} value={s.value}>{s.label}</option>
+                <option key={s.value || 'all'} value={s.value}>
+                  {s.label}
+                </option>
               ))}
-            </select>
-          </div>
-
-          <GlassCard className="overflow-hidden p-0">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/5 text-xs uppercase text-secondary/60">
-                  <th className="px-6 py-3">Order</th>
-                  <th className="px-6 py-3">Member</th>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Items</th>
-                  <th className="px-6 py-3">Total</th>
-                  <th className="px-6 py-3">Pickup status</th>
-                  <th className="px-6 py-3" />
+            </TableSelect>
+          }
+          page={page}
+          total={pagination.total || 0}
+          limit={limit}
+          loading={loading}
+          onPage={setPage}
+          noun="orders"
+        >
+          <table className={`${TABLE_CLASS} min-w-[720px]`}>
+            <thead>
+              <tr className={THEAD_ROW}>
+                <th className={`w-12 ${TH}`}>#</th>
+                <th className={TH}>Order</th>
+                <th className={TH}>Member</th>
+                <th className={TH}>Date</th>
+                <th className={TH}>Items</th>
+                <th className={TH}>Total</th>
+                <th className={TH}>Pickup status</th>
+                <th className={`${TH} text-right`}>Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {orders.map((order, i) => (
+                <tr key={order.id} className="hover:bg-white/[0.02]">
+                  <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                    {tableRowNumber(page, limit, i)}
+                  </td>
+                  <td className={TD}>
+                    <p className="font-mono text-xs font-semibold">
+                      {order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}
+                    </p>
+                    <p className="text-xs text-secondary">
+                      {order.fulfillmentType === 'PICKUP' ? 'Gym pickup' : 'Delivery'}
+                    </p>
+                  </td>
+                  <td className={TD}>
+                    <p className="font-medium">{memberName(order.member)}</p>
+                    {order.member?.memberCode && (
+                      <p className="text-xs text-secondary">{order.member.memberCode}</p>
+                    )}
+                  </td>
+                  <td className={`${TD} text-secondary`}>{formatDateTime(order.soldAt)}</td>
+                  <td className={TD}>{order.itemCount ?? order.items?.length ?? 0}</td>
+                  <td className={`${TD} font-medium`}>{formatCurrency(order.totalAmount)}</td>
+                  <td className={TD}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${fulfillmentClass(order.fulfillmentStatus)}`}>
+                      {STATUS_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus}
+                    </span>
+                  </td>
+                  <td className={`${TD} text-right`}>
+                    <button type="button" onClick={() => viewOrder(order)} className="rounded-lg px-3 py-1.5 text-xs hover:bg-white/5">
+                      Manage
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/[0.02]">
-                    <td className="px-6 py-4">
-                      <p className="font-mono text-xs font-semibold">{order.orderNumber || `#${order.id.slice(0, 8).toUpperCase()}`}</p>
-                      <p className="text-xs text-secondary">{order.fulfillmentType === 'PICKUP' ? 'Gym pickup' : 'Delivery'}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{memberName(order.member)}</p>
-                      {order.member?.memberCode && (
-                        <p className="text-xs text-secondary">{order.member.memberCode}</p>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-secondary">{formatDateTime(order.soldAt)}</td>
-                    <td className="px-6 py-4">{order.itemCount ?? order.items?.length ?? 0}</td>
-                    <td className="px-6 py-4 font-medium">{formatCurrency(order.totalAmount)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${fulfillmentClass(order.fulfillmentStatus)}`}>
-                        {STATUS_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button type="button" onClick={() => viewOrder(order)} className="rounded-lg px-3 py-1.5 text-xs hover:bg-white/5">
-                        Manage
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {orders.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-secondary">
-                      No orders yet. Member store purchases will appear here.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <ListPagination
-              page={page}
-              total={pagination.total || 0}
-              limit={limit}
-              loading={loading}
-              onPage={setPage}
-              noun="orders"
-            />
-          </GlassCard>
-        </div>
+              ))}
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={8} className={`${TD} py-12 text-center text-secondary`}>
+                    No orders yet. Member store purchases will appear here.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </TableShell>
 
         <AppModal open={Boolean(selected)} onClose={() => setSelected(null)} size="lg" scrollable>
           {selected && (

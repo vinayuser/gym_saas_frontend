@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import AdminPageShell from '../../../components/fitsphere/AdminPageShell';
 import AppModal from '../../../components/fitsphere/AppModal';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
+import TableShell, { TABLE_CLASS, TD, TH, THEAD_ROW, tableRowNumber } from '../../../components/fitsphere/TableShell';
 import ENDPOINTS from '../../../config/apiUrls';
 import { deleteRequest, getRequest, patchRequest, postRequest, putRequest } from '../../../config/dataApi';
 
@@ -27,21 +28,40 @@ const RolesPermissions = () => {
   const [roleForm, setRoleForm] = useState(null);
   const [adminForm, setAdminForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10 });
+  const limit = 10;
 
-  const load = () => {
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const load = useCallback(() => {
     setLoading(true);
-    getRequest(ENDPOINTS.ROLES.TEAM)
+    const params = { page, limit };
+    if (debouncedSearch) params.search = debouncedSearch;
+    getRequest(ENDPOINTS.ROLES.TEAM, { params })
       .then((res) => {
         setRoles(res.data?.roles || []);
         setPermissions(res.data?.permissions || []);
         setAdmins(res.data?.admins || []);
+        setPagination(
+          res.data?.pagination ||
+            res.meta?.pagination || { total: res.data?.admins?.length || 0, page, limit }
+        );
       })
       .finally(() => setLoading(false));
-  };
+  }, [debouncedSearch, page]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const modules = useMemo(() => {
     const grouped = new Map();
@@ -132,36 +152,10 @@ const RolesPermissions = () => {
 
   return (
     <AdminPageShell showSearch={false}>
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <h1 className="font-display text-3xl font-bold">Roles & permissions</h1>
-          <p className="mt-1 max-w-2xl text-secondary">
-            Create sub-admins for this platform and give each role only the admin screens it should open.
-            Gym staff access is separate and is not set here.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setRoleForm({ ...emptyRole })}
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold"
-          >
-            New role
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminForm({ ...emptyAdmin, roleId: roles[0]?.id || '' })}
-            className="rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container"
-          >
-            Add sub-admin
-          </button>
-        </div>
-      </div>
-
-      {loading ? (
+      {loading && roles.length === 0 && admins.length === 0 ? (
         <GlassCard className="p-6 text-secondary">Loading team…</GlassCard>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-4">
           <section>
             <h2 className="mb-3 font-display text-xl font-bold">Roles</h2>
             {roles.length === 0 ? (
@@ -212,65 +206,99 @@ const RolesPermissions = () => {
             )}
           </section>
 
-          <section>
-            <h2 className="mb-3 font-display text-xl font-bold">Sub-admins</h2>
-            <GlassCard className="overflow-hidden p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-white/5 text-xs uppercase tracking-widest text-secondary/60">
-                      <th className="px-6 py-3">Name</th>
-                      <th className="px-6 py-3">Role</th>
-                      <th className="px-6 py-3">Status</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
+          <TableShell
+            title="Sub-admins"
+            search={search}
+            onSearch={setSearch}
+            searchPlaceholder="Search sub-admins..."
+            page={page}
+            total={pagination.total || 0}
+            limit={limit}
+            loading={loading}
+            onPage={setPage}
+            noun="sub-admins"
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={() => setRoleForm({ ...emptyRole })}
+                  className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold"
+                >
+                  New role
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminForm({ ...emptyAdmin, roleId: roles[0]?.id || '' })}
+                  className="rounded-lg bg-primary-container px-3 py-2 text-xs font-bold text-on-primary-container"
+                >
+                  Add sub-admin
+                </button>
+              </>
+            }
+          >
+            <table className={`${TABLE_CLASS} min-w-[760px]`}>
+              <thead>
+                <tr className={THEAD_ROW}>
+                  <th className={`w-12 ${TH}`}>#</th>
+                  <th className={TH}>Name</th>
+                  <th className={TH}>Role</th>
+                  <th className={TH}>Status</th>
+                  <th className={`${TH} text-right`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {loading && admins.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={`${TD} py-10 text-center text-secondary`}>
+                      Loading…
+                    </td>
+                  </tr>
+                ) : admins.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={`${TD} py-10 text-center text-secondary`}>
+                      No sub-admins yet.
+                    </td>
+                  </tr>
+                ) : (
+                  admins.map((admin, i) => (
+                    <tr key={admin.id} className="hover:bg-white/[0.02]">
+                      <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                        {tableRowNumber(page, limit, i)}
+                      </td>
+                      <td className={TD}>
+                        <p className="font-medium">
+                          {admin.firstName} {admin.lastName}
+                        </p>
+                        <p className="text-xs text-secondary">{admin.email}</p>
+                      </td>
+                      <td className={TD}>{admin.roleName}</td>
+                      <td className={`${TD} text-xs uppercase`}>{admin.status}</td>
+                      <td className={`${TD} text-right`}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAdminForm({
+                              id: admin.id,
+                              firstName: admin.firstName,
+                              lastName: admin.lastName,
+                              email: admin.email,
+                              phone: admin.phone || '',
+                              password: '',
+                              roleId: admin.roleId || '',
+                              status: admin.status,
+                            })
+                          }
+                          className="rounded-lg px-3 py-1.5 text-xs font-bold text-primary-container hover:bg-white/5"
+                        >
+                          Edit
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {admins.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-10 text-center text-secondary">
-                          No sub-admins yet.
-                        </td>
-                      </tr>
-                    ) : (
-                      admins.map((admin) => (
-                        <tr key={admin.id}>
-                          <td className="px-6 py-4">
-                            <p className="font-medium">
-                              {admin.firstName} {admin.lastName}
-                            </p>
-                            <p className="text-xs text-secondary">{admin.email}</p>
-                          </td>
-                          <td className="px-6 py-4">{admin.roleName}</td>
-                          <td className="px-6 py-4 text-xs uppercase">{admin.status}</td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setAdminForm({
-                                  id: admin.id,
-                                  firstName: admin.firstName,
-                                  lastName: admin.lastName,
-                                  email: admin.email,
-                                  phone: admin.phone || '',
-                                  password: '',
-                                  roleId: admin.roleId || '',
-                                  status: admin.status,
-                                })
-                              }
-                              className="rounded-lg px-3 py-1.5 text-xs font-bold text-primary-container hover:bg-white/5"
-                            >
-                              Edit
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </GlassCard>
-          </section>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </TableShell>
         </div>
       )}
 

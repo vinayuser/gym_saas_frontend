@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import ENDPOINTS from '../../../config/apiUrls';
-import { getRequest, putRequest, deleteRequest } from '../../../config/dataApi';
+import { getRequest, putRequest, postRequest, deleteRequest } from '../../../config/dataApi';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
@@ -148,6 +149,7 @@ const LeadCard = ({ lead, onOpen, onMove }) => {
 };
 
 const Leads = () => {
+  const navigate = useNavigate();
   const { currentGym } = useSelector((s) => s.gym);
   const [enquiries, setEnquiries] = useState([]);
   const [stats, setStats] = useState({});
@@ -177,7 +179,24 @@ const Leads = () => {
     return counts;
   }, [enquiries]);
 
+  const convertLead = async (id) => {
+    try {
+      const res = await postRequest(ENDPOINTS.ENQUIRIES.CONVERT(currentGym.id, id), {});
+      const member = res.data?.member;
+      toast.success('Lead converted to a member');
+      setDetailLead(null);
+      if (member?.id) navigate(`/owner/members/${member.id}/edit`);
+      else load();
+    } catch {
+      /* toast from api */
+    }
+  };
+
   const moveLead = async (id, status) => {
+    if (status === 'CONVERTED') {
+      await convertLead(id);
+      return;
+    }
     try {
       await putRequest(ENDPOINTS.ENQUIRIES.UPDATE(currentGym.id, id), { status });
       toast.success('Status updated');
@@ -228,25 +247,19 @@ const Leads = () => {
   return (
     <SectionLoader show={loading}>
       <OwnerPageShell showSearch={false}>
-        <div className="space-y-8">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <h1 className="font-display text-3xl font-bold md:text-4xl">Member Inquiries</h1>
-              <p className="mt-1 text-secondary/70">
-                Track prospects from first contact to membership conversion.
-              </p>
-            </div>
+        <div className="space-y-4">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={openCreate}
-              className="cyber-glow flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 text-sm font-bold text-on-primary-container"
+              className="cyber-glow inline-flex items-center gap-1.5 rounded-lg bg-primary-container px-3 py-2 text-xs font-bold text-on-primary-container"
             >
-              <Icon name="person_add" size={20} />
+              <Icon name="person_add" size={16} />
               Add Inquiry
             </button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
             <StatCard label="Active Inquiries" value={active} icon="filter_alt" accent />
             <StatCard label="Conversion Rate" value={`${conversion}%`} icon="trending_up" />
             <StatCard label="Converted" value={converted} icon="check_circle" />

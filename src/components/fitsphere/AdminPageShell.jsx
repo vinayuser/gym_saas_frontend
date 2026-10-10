@@ -11,10 +11,12 @@ const AdminPageShell = ({
   onSearchChange,
   searchPlaceholder = 'Search...',
   className = '',
+  wide = true,
 }) => (
   <>
     <OwnerHeader
       variant="dashboard"
+      hideBranchPicker
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={onTabChange}
@@ -23,8 +25,8 @@ const AdminPageShell = ({
       onSearchChange={onSearchChange}
       searchPlaceholder={searchPlaceholder}
     />
-    <main className={`p-6 md:p-8 ${className}`}>
-      <div className="mx-auto max-w-7xl">{children}</div>
+    <main className={`${wide ? 'p-4' : 'p-6 md:p-8'} ${className}`}>
+      <div className={wide ? 'w-full' : 'mx-auto max-w-7xl'}>{children}</div>
     </main>
   </>
 );

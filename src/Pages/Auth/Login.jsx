@@ -235,12 +235,14 @@ const Login = () => {
           )}
 
           <p className="mt-8 text-center text-sm text-secondary">
-            Don&apos;t have an account?{' '}
-            <Link to="/auth/register" className="font-bold text-white hover:text-primary-fixed">
-              Start free trial
+            Need a gym account?{' '}
+            <Link to="/contact" className="font-bold text-white hover:text-primary-fixed">
+              Request an invite
             </Link>
           </p>
-          <p className="mt-2 text-center text-xs text-secondary/60">Demo: owner@demo.com / Owner@123</p>
+          <p className="mt-2 text-center text-xs text-secondary/60">
+            Demo owner: owner@demo.com / Owner@123
+          </p>
         </div>
       </section>
     </main>

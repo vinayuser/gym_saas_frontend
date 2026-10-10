@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { getRefreshToken, setTokens, clearTokens } from '../helpers/utils';
+import ENDPOINTS from './apiUrls';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = ENDPOINTS.HEALTH.replace(/\/health$/, '');
 
 const axiosInstance = axios.create({
   headers: {

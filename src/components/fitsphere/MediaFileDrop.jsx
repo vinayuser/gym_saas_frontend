@@ -24,6 +24,11 @@ const MediaFileDrop = ({
       <div className="relative overflow-hidden rounded-xl border border-white/10">
         {previewType === 'video' ? (
           <video src={preview} controls className="max-h-48 w-full bg-black" />
+        ) : previewType === 'audio' ? (
+          <div className="flex items-center gap-3 bg-black/40 p-4">
+            <Icon name="graphic_eq" className="text-primary-container" />
+            <audio src={preview} controls className="w-full" />
+          </div>
         ) : (
           <img src={preview} alt="" className="max-h-40 w-full object-contain bg-black/40" />
         )}

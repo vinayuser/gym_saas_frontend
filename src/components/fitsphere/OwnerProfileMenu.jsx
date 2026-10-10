@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Icon from './Icon';
 import { logoutUser } from '../../store/slices/authSlice';
+import { ROLES } from '../../constants';
 
 const OWNER_AVATAR =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuAbKQvJH_7PIo7BojE2MjqJyvI5I-2z-kntpTQjDE2Ed5BjDQuAG6JGEayiVpRFh2575jnk_dutTTjZtt33mYulgk_1Qj11i5zfx3RpzKcR6KCQyNOw94hGfhgkEj0XmW76Hl5bZtyOyZ8DIu0w_LaDp_eqJ8v3HRMzJ0pL4K-t6mE5pW_LgQo3TPj-60I8O8zbf9XQUizNPSBxmGlOQOA1ETpp6Y8-cyA4ZDw1rplG4SB1XDd1Z1yWQhTEe08JxZk7bNZFMfhDIiY';
@@ -35,6 +36,16 @@ const OwnerProfileMenu = ({ roleLabel = 'Gym Owner', avatarSrc }) => {
 
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'User';
   const imgSrc = avatarSrc || OWNER_AVATAR;
+  const isPlatform = user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.PLATFORM_ADMIN;
+  const settingsPath = isPlatform ? '/admin/settings' : '/owner/settings';
+  const supportPath = isPlatform ? '/admin/support' : '/owner/support';
+  const resolvedRole =
+    roleLabel ||
+    (user?.role === ROLES.SUPER_ADMIN
+      ? 'Super Admin'
+      : user?.role === ROLES.PLATFORM_ADMIN
+        ? 'Sub-admin'
+        : 'Gym Owner');
 
   return (
     <div ref={ref} className="relative border-l border-white/10 pl-4">
@@ -47,7 +58,7 @@ const OwnerProfileMenu = ({ roleLabel = 'Gym Owner', avatarSrc }) => {
       >
         <div className="hidden text-right sm:block">
           <p className="text-sm font-medium">{displayName}</p>
-          <p className="text-[10px] uppercase tracking-wider text-secondary">{roleLabel}</p>
+          <p className="text-[10px] uppercase tracking-wider text-secondary">{resolvedRole}</p>
         </div>
         <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/20">
           <img
@@ -77,7 +88,7 @@ const OwnerProfileMenu = ({ roleLabel = 'Gym Owner', avatarSrc }) => {
           </div>
           <div className="py-1">
             <Link
-              to="/owner/settings"
+              to={settingsPath}
               role="menuitem"
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-white/5"
@@ -86,7 +97,7 @@ const OwnerProfileMenu = ({ roleLabel = 'Gym Owner', avatarSrc }) => {
               Settings
             </Link>
             <Link
-              to="/owner/support"
+              to={supportPath}
               role="menuitem"
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-on-surface transition-colors hover:bg-white/5"

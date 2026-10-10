@@ -1,26 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import BrandMark from '../../../components/fitsphere/BrandMark';
 import EventCalendar from '../../../components/fitsphere/EventCalendar';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import AdminPageShell from '../../../components/fitsphere/AdminPageShell';
+import TableShell, {
+  TABLE_CLASS,
+  TD,
+  TH,
+  THEAD_ROW,
+  TableSelect,
+  tableRowNumber,
+} from '../../../components/fitsphere/TableShell';
+import useDebouncedValue from '../../../hooks/useDebouncedValue';
 import ENDPOINTS from '../../../config/apiUrls';
-import { getRequest } from '../../../config/dataApi';
+import { getRequest, putRequest } from '../../../config/dataApi';
 import { formatCurrency, formatDate, formatDateTime } from '../../../helpers/formatUtils';
+import { toast } from 'react-toastify';
+import AppAdToggles from '../../../components/fitsphere/AppAdToggles';
+import { appAdsOf } from '../../../helpers/appAds';
+
+const PAGE_SIZE = 10;
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'members', label: 'Members' },
-  { id: 'staff', label: 'Staff' },
-  { id: 'trainers', label: 'Trainers' },
-  { id: 'plans', label: 'Plans' },
-  { id: 'payments', label: 'Payments' },
-  { id: 'attendance', label: 'Attendance' },
-  { id: 'store', label: 'Store' },
-  { id: 'events', label: 'Events' },
-  { id: 'leads', label: 'Leads' },
-  { id: 'banners', label: 'Banners' },
+  { id: 'overview', label: 'Overview', icon: 'dashboard' },
+  { id: 'members', label: 'Members', icon: 'group', countKey: 'members' },
+  { id: 'staff', label: 'Staff', icon: 'badge', countKey: 'staff' },
+  { id: 'trainers', label: 'Trainers', icon: 'sports_martial_arts', countKey: 'trainers' },
+  { id: 'plans', label: 'Plans', icon: 'card_membership', countKey: 'plans' },
+  { id: 'payments', label: 'Payments', icon: 'payments', countKey: 'payments' },
+  { id: 'attendance', label: 'Attendance', icon: 'qr_code_scanner', countKey: 'attendance' },
+  { id: 'store', label: 'Store', icon: 'storefront', countKey: 'orders' },
+  { id: 'events', label: 'Events', icon: 'event', countKey: 'events' },
+  { id: 'leads', label: 'Leads', icon: 'filter_alt', countKey: 'leads' },
+  { id: 'banners', label: 'Banners', icon: 'view_carousel', countKey: 'banners' },
 ];
 
 const ADDON_LABELS = {
@@ -28,6 +42,18 @@ const ADDON_LABELS = {
   store: 'Member store',
   day_pass: 'Day pass',
 };
+
+const statusChip = (label, good) => (
+  <span
+    className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${
+      good
+        ? 'border-primary-container/30 bg-primary-container/15 text-primary-container'
+        : 'border-white/10 bg-white/5 text-secondary'
+    }`}
+  >
+    {label}
+  </span>
+);
 
 const chip = (label, tone = 'neutral') => {
   const toneClass =
@@ -37,326 +63,483 @@ const chip = (label, tone = 'neutral') => {
         ? 'border-error-container/30 bg-error-container/15 text-error'
         : 'border-white/10 bg-white/5 text-secondary';
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase ${toneClass}`}>
+    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${toneClass}`}>
       {label}
     </span>
   );
 };
 
-const DataTable = ({ title, count, rows, columns }) => (
-  <div>
-    {title ? (
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h3 className="font-display text-lg font-bold">{title}</h3>
-        <p className="text-xs text-secondary">
-          {count > rows.length ? `Latest ${rows.length} of ${count}` : count}
-        </p>
-      </div>
-    ) : null}
-    {rows.length === 0 ? (
-      <p className="text-sm text-secondary">None yet.</p>
-    ) : (
-      <div className="overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-white/5 bg-white/[0.02] text-xs uppercase tracking-widest text-secondary/60">
-              {columns.map((col) => (
-                <th key={col.key} className="px-4 py-2.5 font-semibold">
-                  {col.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {rows.map((row) => (
-              <tr key={row.id}>
-                {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-2.5 text-secondary">
-                    {col.render(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-);
-
-const Stat = ({ label, value }) => (
-  <div className="rounded-xl border border-white/10 px-4 py-3">
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary/70">{label}</p>
-    <p className="mt-1 text-xl font-bold text-on-surface">{value}</p>
-  </div>
-);
-
-const EventsTab = ({ events }) => {
-  const [calendarView, setCalendarView] = useState('month');
-  const [anchorDate, setAnchorDate] = useState(() => new Date());
-
-  return (
-    <EventCalendar
-      events={events}
-      view={calendarView}
-      onViewChange={setCalendarView}
-      anchorDate={anchorDate}
-      onAnchorChange={setAnchorDate}
-      readOnly
-    />
-  );
+const TAB_COLUMNS = {
+  members: [
+    { key: 'name', label: 'Name', render: (r) => <span className="font-medium text-on-surface">{r.name}</span> },
+    { key: 'code', label: 'Code', render: (r) => r.memberCode },
+    { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
+    { key: 'status', label: 'Status', render: (r) => statusChip(r.isActive ? 'Active' : 'Inactive', r.isActive) },
+    { key: 'joined', label: 'Joined', render: (r) => formatDate(r.joinedAt) },
+  ],
+  staff: [
+    { key: 'name', label: 'Name', render: (r) => <span className="font-medium text-on-surface">{r.name || '—'}</span> },
+    { key: 'role', label: 'Role', render: (r) => r.designation || r.role || '—' },
+    { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
+    { key: 'status', label: 'Status', render: (r) => statusChip(r.status || (r.isActive ? 'Active' : 'Inactive'), r.isActive) },
+  ],
+  trainers: [
+    { key: 'name', label: 'Name', render: (r) => <span className="font-medium text-on-surface">{r.name || '—'}</span> },
+    { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
+    { key: 'focus', label: 'Focus', render: (r) => (r.specialties?.length ? r.specialties.join(', ') : '—') },
+    { key: 'years', label: 'Experience', render: (r) => (r.experience != null ? `${r.experience} yrs` : '—') },
+  ],
+  plans: [
+    { key: 'name', label: 'Plan', render: (r) => <span className="font-medium text-on-surface">{r.name}</span> },
+    { key: 'price', label: 'Price', render: (r) => formatCurrency(r.price) },
+    { key: 'cycle', label: 'Billing', render: (r) => r.billingCycle },
+    { key: 'days', label: 'Days', render: (r) => r.durationDays },
+    { key: 'status', label: 'Status', render: (r) => statusChip(r.isActive ? 'Active' : 'Inactive', r.isActive) },
+  ],
+  payments: [
+    { key: 'member', label: 'Member', render: (r) => <span className="font-medium text-on-surface">{r.member || '—'}</span> },
+    { key: 'amount', label: 'Amount', render: (r) => formatCurrency(r.amount) },
+    { key: 'method', label: 'Method', render: (r) => r.method || '—' },
+    { key: 'status', label: 'Status', render: (r) => r.status },
+    { key: 'when', label: 'Date', render: (r) => formatDate(r.paidAt || r.createdAt) },
+  ],
+  invoices: [
+    { key: 'no', label: 'Invoice', render: (r) => <span className="font-medium text-on-surface">{r.invoiceNumber}</span> },
+    { key: 'amount', label: 'Total', render: (r) => formatCurrency(r.totalAmount) },
+    { key: 'status', label: 'Status', render: (r) => r.status },
+    { key: 'when', label: 'Issued', render: (r) => formatDate(r.issuedAt || r.paidAt) },
+  ],
+  attendance: [
+    { key: 'member', label: 'Member', render: (r) => <span className="font-medium text-on-surface">{r.member || '—'}</span> },
+    { key: 'type', label: 'Type', render: (r) => r.type },
+    { key: 'source', label: 'Source', render: (r) => r.source },
+    { key: 'in', label: 'In', render: (r) => formatDateTime(r.checkInAt) },
+    { key: 'out', label: 'Out', render: (r) => (r.checkOutAt ? formatDateTime(r.checkOutAt) : '—') },
+  ],
+  orders: [
+    {
+      key: 'no',
+      label: 'Order',
+      render: (r) => <span className="font-medium text-on-surface">{r.orderNumber || r.id.slice(0, 8)}</span>,
+    },
+    { key: 'amount', label: 'Total', render: (r) => formatCurrency(r.totalAmount) },
+    { key: 'status', label: 'Payment', render: (r) => r.status },
+    { key: 'fulfill', label: 'Fulfillment', render: (r) => r.fulfillmentStatus },
+    { key: 'when', label: 'Date', render: (r) => formatDate(r.soldAt) },
+  ],
+  products: [
+    { key: 'name', label: 'Product', render: (r) => <span className="font-medium text-on-surface">{r.name}</span> },
+    { key: 'sku', label: 'SKU', render: (r) => r.sku || '—' },
+    { key: 'price', label: 'Price', render: (r) => formatCurrency(r.price) },
+    { key: 'stock', label: 'Stock', render: (r) => r.stockQty },
+    { key: 'status', label: 'Status', render: (r) => statusChip(r.isActive ? 'Active' : 'Inactive', r.isActive) },
+  ],
+  events: [
+    { key: 'title', label: 'Event', render: (r) => <span className="font-medium text-on-surface">{r.title}</span> },
+    { key: 'type', label: 'Type', render: (r) => r.type || '—' },
+    { key: 'when', label: 'Starts', render: (r) => formatDateTime(r.startAt) },
+    { key: 'place', label: 'Location', render: (r) => r.location || '—' },
+    { key: 'status', label: 'Status', render: (r) => statusChip(r.isActive ? 'Active' : 'Inactive', r.isActive) },
+  ],
+  leads: [
+    { key: 'name', label: 'Name', render: (r) => <span className="font-medium text-on-surface">{r.name}</span> },
+    { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
+    { key: 'source', label: 'Source', render: (r) => r.source || '—' },
+    { key: 'status', label: 'Status', render: (r) => r.status },
+    { key: 'when', label: 'Added', render: (r) => formatDate(r.createdAt) },
+  ],
+  banners: [
+    { key: 'name', label: 'Banner', render: (r) => <span className="font-medium text-on-surface">{r.name}</span> },
+    { key: 'place', label: 'Placement', render: (r) => r.placement },
+    { key: 'status', label: 'Status', render: (r) => r.status },
+    { key: 'views', label: 'Views', render: (r) => r.impressions },
+    { key: 'clicks', label: 'Clicks', render: (r) => r.clicks },
+  ],
 };
 
-const TabPanel = ({ tab, gym, business }) => {
-  if (!gym && tab !== 'overview') {
-    return <p className="text-sm text-secondary">This business has no gym yet.</p>;
-  }
+const gymKey = (gym) => String(gym?.id || gym?._id || '');
 
+const emptyList = { rows: [], pagination: { total: 0, page: 1, limit: PAGE_SIZE } };
+
+const GymFilter = ({ gyms, gymId, onGymChange }) =>
+  gyms.length > 0 ? (
+    <TableSelect value={gymId || ''} onChange={onGymChange} className="min-w-[160px]">
+      {gyms.map((item) => (
+        <option key={gymKey(item)} value={gymKey(item)}>
+          {item.name}
+        </option>
+      ))}
+    </TableSelect>
+  ) : null;
+
+const useInviteRecords = (inviteId, gymId, resource, page, search) => {
+  const [state, setState] = useState(emptyList);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!inviteId || !gymId || !resource) {
+      setState(emptyList);
+      return undefined;
+    }
+    let cancelled = false;
+    setLoading(true);
+    getRequest(ENDPOINTS.INVITES.RECORDS(inviteId), {
+      params: { gymId: String(gymId), resource, page, limit: PAGE_SIZE, search: search || undefined },
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setState({
+          rows: res.data?.rows || [],
+          pagination: res.meta?.pagination || res.data?.pagination || { total: 0, page, limit: PAGE_SIZE },
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setState(emptyList);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteId, gymId, resource, page, search]);
+
+  return { ...state, loading };
+};
+
+const RecordsTable = ({
+  title,
+  noun,
+  columns,
+  rows,
+  pagination,
+  loading,
+  onPage,
+  search,
+  onSearch,
+  filters,
+}) => (
+  <TableShell
+    title={title}
+    search={search}
+    onSearch={onSearch}
+    searchPlaceholder={`Search ${noun}...`}
+    filters={filters}
+    page={pagination.page || 1}
+    total={pagination.total || 0}
+    limit={pagination.limit || PAGE_SIZE}
+    loading={loading}
+    onPage={onPage}
+    noun={noun}
+  >
+    <table className={`${TABLE_CLASS} min-w-[720px]`}>
+      <thead>
+        <tr className={THEAD_ROW}>
+          <th className={`w-12 ${TH}`}>#</th>
+          {columns.map((col) => (
+            <th key={col.key} className={TH}>
+              {col.label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-white/5">
+        {loading && rows.length === 0 ? (
+          <tr>
+            <td colSpan={columns.length + 1} className={`${TD} py-10 text-center text-secondary`}>
+              Loading…
+            </td>
+          </tr>
+        ) : rows.length === 0 ? (
+          <tr>
+            <td colSpan={columns.length + 1} className={`${TD} py-10 text-center text-secondary`}>
+              No {noun} yet.
+            </td>
+          </tr>
+        ) : (
+          rows.map((row, i) => (
+            <tr key={row.id} className="hover:bg-white/[0.02]">
+              <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                {tableRowNumber(pagination.page || 1, pagination.limit || PAGE_SIZE, i)}
+              </td>
+              {columns.map((col) => (
+                <td key={col.key} className={`${TD} text-secondary`}>
+                  {col.render(row)}
+                </td>
+              ))}
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </TableShell>
+);
+
+const StatTile = ({ label, value, icon }) => (
+  <GlassCard className="p-3">
+    <div className="flex items-center justify-between gap-2">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-secondary">{label}</p>
+      <Icon name={icon} size={16} className="text-primary-fixed" />
+    </div>
+    <p className="mt-1.5 font-display text-xl font-bold leading-none">{value}</p>
+  </GlassCard>
+);
+
+const OverviewPanel = ({ gym, business, inviteId, onGymAdsUpdated }) => {
   const c = gym?.counts || {};
   const flags = gym?.commercialAddons && typeof gym.commercialAddons === 'object' ? gym.commercialAddons : {};
+  const [savingAd, setSavingAd] = useState('');
   const address = gym
     ? [gym.address, gym.city, gym.state, gym.pincode, gym.country].filter(Boolean).join(', ')
     : '';
+  const ownerName = business?.owner
+    ? `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Owner'
+    : 'Not set up yet';
 
-  if (tab === 'overview') {
-    return (
-      <div className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-3">
-          <GlassCard className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Owner</p>
-            <p className="mt-2 font-semibold">
-              {business?.owner
-                ? `${business.owner.firstName || ''} ${business.owner.lastName || ''}`.trim() || 'Owner'
-                : 'Not set up yet'}
-            </p>
-            <p className="text-sm text-secondary">{business?.owner?.email || business?.email || '—'}</p>
-            {business?.owner?.phone ? <p className="text-sm text-secondary">{business.owner.phone}</p> : null}
+  const toggleAppAd = async (key) => {
+    if (!gym?.id || !inviteId) return;
+    const current = appAdsOf(gym);
+    const nextValue = !current[key];
+    setSavingAd(key);
+    try {
+      const res = await putRequest(ENDPOINTS.INVITES.APP_ADS(inviteId), { gymId: gym.id, [key]: nextValue });
+      const updated = (res.data?.gyms || []).find((row) => row.id === gym.id);
+      onGymAdsUpdated?.(gym.id, updated?.appAds || { ...current, [key]: nextValue });
+      toast.success(nextValue ? 'Channel enabled' : 'Channel disabled');
+    } finally {
+      setSavingAd('');
+    }
+  };
+
+  const stats = [
+    { label: 'Members', value: c.members ?? 0, icon: 'group' },
+    { label: 'Active plans', value: c.activeMemberships ?? 0, icon: 'card_membership' },
+    { label: 'Staff', value: c.staff ?? 0, icon: 'badge' },
+    { label: 'Trainers', value: c.trainers ?? 0, icon: 'sports_martial_arts' },
+    { label: 'Check-ins', value: c.attendance ?? 0, icon: 'qr_code_scanner' },
+    { label: 'Orders', value: c.orders ?? 0, icon: 'shopping_cart' },
+  ];
+
+  return (
+    <div className="space-y-3">
+      {gym ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map((stat) => (
+            <StatTile key={stat.label} {...stat} />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="grid gap-3 lg:grid-cols-12">
+        <GlassCard className="p-4 lg:col-span-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">Owner</p>
+          <p className="mt-1 text-sm font-semibold">{ownerName}</p>
+          <p className="mt-1 text-xs text-secondary">{business?.owner?.email || business?.email || '—'}</p>
+          {business?.owner?.phone ? <p className="text-xs text-secondary">{business.owner.phone}</p> : null}
+          <div className="mt-3">
             {business?.owner?.status
               ? chip(business.owner.status, business.owner.status === 'ACTIVE' ? 'good' : 'bad')
-              : null}
-          </GlassCard>
-          <GlassCard className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Plan</p>
-            <p className="mt-2 font-semibold text-primary-container">{business?.subscription?.plan?.name || '—'}</p>
-            {business?.subscription?.status ? (
-              <div className="mt-2">{chip(business.subscription.status, 'good')}</div>
-            ) : null}
-            {business?.subscription?.currentPeriodEnd ? (
-              <p className="mt-2 text-sm text-secondary">Renews {formatDate(business.subscription.currentPeriodEnd)}</p>
-            ) : null}
-          </GlassCard>
-          <GlassCard className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">Platform payments</p>
-            {(business?.payments || []).length === 0 ? (
-              <p className="mt-2 text-sm text-secondary">None yet.</p>
-            ) : (
-              <ul className="mt-2 space-y-1 text-sm text-secondary">
-                {business.payments.slice(0, 4).map((payment) => (
-                  <li key={payment.id} className="flex justify-between gap-3">
-                    <span className="text-on-surface">{formatCurrency(payment.amount)}</span>
-                    <span>{formatDate(payment.paidAt || payment.createdAt)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </GlassCard>
-        </div>
+              : chip('Pending setup')}
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-4 lg:col-span-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">Plan</p>
+          <p className="mt-1 text-sm font-semibold text-primary-container">
+            {business?.subscription?.plan?.name || '—'}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {business?.subscription?.status ? chip(business.subscription.status, 'good') : null}
+          </div>
+          <p className="mt-3 text-xs text-secondary">
+            {business?.subscription?.currentPeriodEnd
+              ? `Renews ${formatDate(business.subscription.currentPeriodEnd)}`
+              : 'No billing period yet.'}
+          </p>
+        </GlassCard>
+
+        <GlassCard className="p-4 lg:col-span-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">Platform payments</p>
+          {(business?.payments || []).length === 0 ? (
+            <p className="mt-3 text-xs text-secondary">None yet.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {business.payments.slice(0, 4).map((payment) => (
+                <li key={payment.id} className="flex items-center justify-between gap-3 text-xs">
+                  <span className="font-medium text-on-surface">{formatCurrency(payment.amount)}</span>
+                  <span className="text-secondary">{formatDate(payment.paidAt || payment.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </GlassCard>
+
         {gym ? (
           <>
-            <p className="text-sm text-secondary">{address || [gym.email, gym.phone].filter(Boolean).join(' · ')}</p>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(ADDON_LABELS).map(([key, label]) =>
-                chip(flags[key] ? `${label} on` : `${label} off`, flags[key] ? 'good' : 'neutral')
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <Stat label="Members" value={c.members ?? 0} />
-              <Stat label="Active plans" value={c.activeMemberships ?? 0} />
-              <Stat label="Staff" value={c.staff ?? 0} />
-              <Stat label="Trainers" value={c.trainers ?? 0} />
-              <Stat label="Attendance" value={c.attendance ?? 0} />
-              <Stat label="Orders" value={c.orders ?? 0} />
-            </div>
+            <GlassCard className="p-4 lg:col-span-7">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">Location</p>
+                  <p className="mt-1 text-sm font-semibold">{gym.name}</p>
+                  <p className="mt-1 text-xs text-secondary">
+                    {address || [gym.email, gym.phone].filter(Boolean).join(' · ') || 'No address on file'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(ADDON_LABELS).map(([key, label]) =>
+                    chip(flags[key] ? `${label} on` : `${label} off`, flags[key] ? 'good' : 'neutral')
+                  )}
+                </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-4 lg:col-span-5">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">App ads</p>
+              <p className="mt-1 text-xs text-secondary">Banner, video, and audio for this gym’s member app.</p>
+              <div className="mt-3 max-w-xs">
+                <AppAdToggles ads={appAdsOf(gym)} savingKey={savingAd} onToggle={toggleAppAd} compact />
+              </div>
+            </GlassCard>
           </>
         ) : (
-          <p className="text-sm text-secondary">This invite has not created a gym yet.</p>
+          <GlassCard className="p-6 text-sm text-secondary lg:col-span-12">
+            This invite has not created a gym yet.
+          </GlassCard>
         )}
       </div>
-    );
-  }
+    </div>
+  );
+};
 
-  if (tab === 'members') {
-    return (
-      <DataTable
-        count={c.members ?? gym.members.length}
-        rows={gym.members}
-        columns={[
-          { key: 'name', label: 'Name', render: (r) => <span className="text-on-surface">{r.name}</span> },
-          { key: 'code', label: 'Code', render: (r) => r.memberCode },
-          { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
-          { key: 'status', label: 'Status', render: (r) => (r.isActive ? 'Active' : 'Inactive') },
-          { key: 'joined', label: 'Joined', render: (r) => formatDate(r.joinedAt) },
-        ]}
-      />
-    );
-  }
+const TabRecords = ({ inviteId, gymId, gyms, onGymChange, tab }) => {
+  const [page, setPage] = useState(1);
+  const [pageB, setPageB] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchB, setSearchB] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+  const debouncedSearchB = useDebouncedValue(searchB);
+  const [calendarView, setCalendarView] = useState('month');
+  const [anchorDate, setAnchorDate] = useState(() => new Date());
+  const gymFilter = <GymFilter gyms={gyms} gymId={gymId} onGymChange={onGymChange} />;
 
-  if (tab === 'staff') {
-    return (
-      <DataTable
-        count={c.staff ?? gym.staff.length}
-        rows={gym.staff}
-        columns={[
-          { key: 'name', label: 'Name', render: (r) => <span className="text-on-surface">{r.name || '—'}</span> },
-          { key: 'role', label: 'Role', render: (r) => r.designation || r.role || '—' },
-          { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
-          { key: 'status', label: 'Status', render: (r) => r.status || (r.isActive ? 'Active' : 'Inactive') },
-        ]}
-      />
-    );
-  }
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, gymId]);
 
-  if (tab === 'trainers') {
-    return (
-      <DataTable
-        count={c.trainers ?? gym.trainers.length}
-        rows={gym.trainers}
-        columns={[
-          { key: 'name', label: 'Name', render: (r) => <span className="text-on-surface">{r.name || '—'}</span> },
-          { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
-          { key: 'focus', label: 'Focus', render: (r) => (r.specialties?.length ? r.specialties.join(', ') : '—') },
-          { key: 'years', label: 'Experience', render: (r) => (r.experience != null ? `${r.experience} yrs` : '—') },
-        ]}
-      />
-    );
-  }
+  useEffect(() => {
+    setPageB(1);
+  }, [debouncedSearchB, gymId]);
 
-  if (tab === 'plans') {
+  const primaryResource = tab === 'store' ? 'orders' : tab;
+  const secondaryResource = tab === 'payments' ? 'invoices' : tab === 'store' ? 'products' : null;
+
+  const primary = useInviteRecords(inviteId, gymId, primaryResource, page, debouncedSearch);
+  const secondary = useInviteRecords(inviteId, gymId, secondaryResource, pageB, debouncedSearchB);
+
+  if (tab === 'events') {
     return (
-      <DataTable
-        count={c.plans ?? gym.plans.length}
-        rows={gym.plans}
-        columns={[
-          { key: 'name', label: 'Plan', render: (r) => <span className="text-on-surface">{r.name}</span> },
-          { key: 'price', label: 'Price', render: (r) => formatCurrency(r.price) },
-          { key: 'cycle', label: 'Billing', render: (r) => r.billingCycle },
-          { key: 'days', label: 'Days', render: (r) => r.durationDays },
-          { key: 'status', label: 'Status', render: (r) => (r.isActive ? 'Active' : 'Inactive') },
-        ]}
-      />
+      <div className="space-y-3">
+        <RecordsTable
+          title="Scheduled events"
+          noun="events"
+          columns={TAB_COLUMNS.events}
+          rows={primary.rows}
+          pagination={primary.pagination}
+          loading={primary.loading}
+          onPage={setPage}
+          search={search}
+          onSearch={setSearch}
+          filters={gymFilter}
+        />
+        <GlassCard className="p-4">
+          <h3 className="mb-3 text-sm font-semibold">Calendar</h3>
+          <EventCalendar
+            events={primary.rows}
+            view={calendarView}
+            onViewChange={setCalendarView}
+            anchorDate={anchorDate}
+            onAnchorChange={setAnchorDate}
+            readOnly
+          />
+        </GlassCard>
+      </div>
     );
   }
 
   if (tab === 'payments') {
     return (
-      <div className="space-y-8">
-        <DataTable
+      <div className="space-y-3">
+        <RecordsTable
           title="Member payments"
-          count={c.payments ?? gym.payments.length}
-          rows={gym.payments}
-          columns={[
-            { key: 'member', label: 'Member', render: (r) => <span className="text-on-surface">{r.member || '—'}</span> },
-            { key: 'amount', label: 'Amount', render: (r) => formatCurrency(r.amount) },
-            { key: 'method', label: 'Method', render: (r) => r.method || '—' },
-            { key: 'status', label: 'Status', render: (r) => r.status },
-            { key: 'when', label: 'Date', render: (r) => formatDate(r.paidAt || r.createdAt) },
-          ]}
+          noun="payments"
+          columns={TAB_COLUMNS.payments}
+          rows={primary.rows}
+          pagination={primary.pagination}
+          loading={primary.loading}
+          onPage={setPage}
+          search={search}
+          onSearch={setSearch}
+          filters={gymFilter}
         />
-        <DataTable
+        <RecordsTable
           title="Invoices"
-          count={c.invoices ?? gym.invoices.length}
-          rows={gym.invoices}
-          columns={[
-            { key: 'no', label: 'Invoice', render: (r) => <span className="text-on-surface">{r.invoiceNumber}</span> },
-            { key: 'amount', label: 'Total', render: (r) => formatCurrency(r.totalAmount) },
-            { key: 'status', label: 'Status', render: (r) => r.status },
-            { key: 'when', label: 'Issued', render: (r) => formatDate(r.issuedAt || r.paidAt) },
-          ]}
+          noun="invoices"
+          columns={TAB_COLUMNS.invoices}
+          rows={secondary.rows}
+          pagination={secondary.pagination}
+          loading={secondary.loading}
+          onPage={setPageB}
+          search={searchB}
+          onSearch={setSearchB}
+          filters={gymFilter}
         />
       </div>
-    );
-  }
-
-  if (tab === 'attendance') {
-    return (
-      <DataTable
-        count={c.attendance ?? gym.attendance.length}
-        rows={gym.attendance}
-        columns={[
-          { key: 'member', label: 'Member', render: (r) => <span className="text-on-surface">{r.member || '—'}</span> },
-          { key: 'type', label: 'Type', render: (r) => r.type },
-          { key: 'source', label: 'Source', render: (r) => r.source },
-          { key: 'in', label: 'In', render: (r) => formatDateTime(r.checkInAt) },
-          { key: 'out', label: 'Out', render: (r) => (r.checkOutAt ? formatDateTime(r.checkOutAt) : '—') },
-        ]}
-      />
     );
   }
 
   if (tab === 'store') {
     return (
-      <div className="space-y-8">
-        <DataTable
+      <div className="space-y-3">
+        <RecordsTable
           title="Orders"
-          count={c.orders ?? gym.orders.length}
-          rows={gym.orders}
-          columns={[
-            {
-              key: 'no',
-              label: 'Order',
-              render: (r) => <span className="text-on-surface">{r.orderNumber || r.id.slice(0, 8)}</span>,
-            },
-            { key: 'amount', label: 'Total', render: (r) => formatCurrency(r.totalAmount) },
-            { key: 'status', label: 'Payment', render: (r) => r.status },
-            { key: 'fulfill', label: 'Fulfillment', render: (r) => r.fulfillmentStatus },
-            { key: 'when', label: 'Date', render: (r) => formatDate(r.soldAt) },
-          ]}
+          noun="orders"
+          columns={TAB_COLUMNS.orders}
+          rows={primary.rows}
+          pagination={primary.pagination}
+          loading={primary.loading}
+          onPage={setPage}
+          search={search}
+          onSearch={setSearch}
+          filters={gymFilter}
         />
-        <DataTable
+        <RecordsTable
           title="Products"
-          count={c.products ?? gym.products.length}
-          rows={gym.products}
-          columns={[
-            { key: 'name', label: 'Product', render: (r) => <span className="text-on-surface">{r.name}</span> },
-            { key: 'sku', label: 'SKU', render: (r) => r.sku || '—' },
-            { key: 'price', label: 'Price', render: (r) => formatCurrency(r.price) },
-            { key: 'stock', label: 'Stock', render: (r) => r.stockQty },
-            { key: 'status', label: 'Status', render: (r) => (r.isActive ? 'Active' : 'Inactive') },
-          ]}
+          noun="products"
+          columns={TAB_COLUMNS.products}
+          rows={secondary.rows}
+          pagination={secondary.pagination}
+          loading={secondary.loading}
+          onPage={setPageB}
+          search={searchB}
+          onSearch={setSearchB}
+          filters={gymFilter}
         />
       </div>
     );
   }
 
-  if (tab === 'events') return <EventsTab events={gym.events || []} />;
-
-  if (tab === 'leads') {
-    return (
-      <DataTable
-        count={c.leads ?? gym.leads.length}
-        rows={gym.leads}
-        columns={[
-          { key: 'name', label: 'Name', render: (r) => <span className="text-on-surface">{r.name}</span> },
-          { key: 'contact', label: 'Contact', render: (r) => [r.email, r.phone].filter(Boolean).join(' · ') || '—' },
-          { key: 'source', label: 'Source', render: (r) => r.source || '—' },
-          { key: 'status', label: 'Status', render: (r) => r.status },
-          { key: 'when', label: 'Added', render: (r) => formatDate(r.createdAt) },
-        ]}
-      />
-    );
-  }
-
   return (
-    <DataTable
-      count={c.banners ?? gym.banners.length}
-      rows={gym.banners}
-      columns={[
-        { key: 'name', label: 'Banner', render: (r) => <span className="text-on-surface">{r.name}</span> },
-        { key: 'place', label: 'Placement', render: (r) => r.placement },
-        { key: 'status', label: 'Status', render: (r) => r.status },
-        { key: 'views', label: 'Views', render: (r) => r.impressions },
-        { key: 'clicks', label: 'Clicks', render: (r) => r.clicks },
-      ]}
+    <RecordsTable
+      title={TABS.find((item) => item.id === tab)?.label}
+      noun={tab}
+      columns={TAB_COLUMNS[primaryResource]}
+      rows={primary.rows}
+      pagination={primary.pagination}
+      loading={primary.loading}
+      onPage={setPage}
+      search={search}
+      onSearch={setSearch}
+      filters={gymFilter}
     />
   );
 };
@@ -379,7 +562,7 @@ const InviteDetail = () => {
         if (!cancelled) {
           const next = res.data || null;
           setData(next);
-          setGymId(next?.gyms?.[0]?.id || null);
+          setGymId(gymKey(next?.gyms?.[0]) || null);
           setTab('overview');
         }
       } catch {
@@ -400,72 +583,128 @@ const InviteDetail = () => {
   const invite = data?.invite;
   const business = data?.business;
   const gyms = data?.gyms || [];
-  const gym = gyms.find((item) => item.id === gymId) || gyms[0] || null;
+  const gym = useMemo(
+    () => gyms.find((item) => gymKey(item) === String(gymId || '')) || gyms[0] || null,
+    [gyms, gymId]
+  );
+  const selectedGymId = gymKey(gym) || gymId;
   const name = business?.name || invite?.businessName || invite?.email || 'Business';
   const logo = business?.logo || gym?.logo;
+  const counts = gym?.counts || {};
+
+  const switchGym = (nextId) => {
+    const next = String(nextId || '');
+    if (!next || next === String(gymId || '')) return;
+    setGymId(next);
+  };
 
   return (
     <AdminPageShell showSearch={false}>
-      <div className="mb-6">
-        <Link to="/admin/invites" className="inline-flex items-center gap-1 text-sm text-secondary hover:text-on-surface">
-          <Icon name="arrow_back" size={16} />
-          Businesses
-        </Link>
-      </div>
-
       {loading ? (
-        <p className="py-16 text-center text-secondary">Loading business…</p>
+        <GlassCard className="px-4 py-10 text-center text-sm text-secondary">Loading business…</GlassCard>
       ) : error || !invite ? (
-        <p className="py-16 text-center text-secondary">{error || 'Business not found.'}</p>
+        <GlassCard className="px-4 py-10 text-center text-sm text-secondary">
+          {error || 'Business not found.'}
+        </GlassCard>
       ) : (
-        <div className="space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <BrandMark logo={logo} name={name} className="h-16 w-16 text-xl" />
-            <div className="min-w-0">
-              <h1 className="font-display text-3xl font-bold md:text-4xl">{name}</h1>
-              <p className="mt-1 text-sm text-secondary">
-                {[business?.slug, business?.email || invite.email, business?.phone].filter(Boolean).join(' · ')}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {chip(invite.status, invite.status === 'ACCEPTED' ? 'good' : invite.status === 'REVOKED' ? 'bad' : 'neutral')}
-                {business ? chip(business.isActive ? 'Active' : 'Inactive', business.isActive ? 'good' : 'bad') : null}
+        <div className="space-y-3">
+          <GlassCard className="p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <Link
+                  to="/admin/invites"
+                  className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-secondary hover:bg-white/5 hover:text-on-surface"
+                >
+                  <Icon name="arrow_back" size={14} />
+                  Back
+                </Link>
+                <BrandMark logo={logo} name={name} className="h-10 w-10 shrink-0 text-sm" />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="truncate font-display text-lg font-bold leading-tight">{name}</h1>
+                    {chip(
+                      invite.status,
+                      invite.status === 'ACCEPTED' ? 'good' : invite.status === 'REVOKED' ? 'bad' : 'neutral'
+                    )}
+                    {business
+                      ? chip(business.isActive ? 'Active' : 'Inactive', business.isActive ? 'good' : 'bad')
+                      : chip('Invite only')}
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-secondary">
+                    {[business?.email || invite.email, gym?.city || gym?.name].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {gyms.length > 1 ? (
-            <div className="flex flex-wrap gap-2">
-              {gyms.map((item) => (
+              {gyms.length > 0 ? (
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-secondary">Gym</span>
+                  <GymFilter gyms={gyms} gymId={selectedGymId} onGymChange={switchGym} />
+                </div>
+              ) : null}
+            </div>
+          </GlassCard>
+
+          <div className="custom-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1 pb-0.5">
+            {TABS.map((item) => {
+              const count = item.countKey ? counts[item.countKey] : null;
+              const active = tab === item.id;
+              return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setGymId(item.id)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
-                    gym?.id === item.id ? 'bg-white/10 text-on-surface' : 'text-secondary hover:bg-white/5'
+                  onClick={() => setTab(item.id)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                    active
+                      ? 'bg-primary-fixed text-on-primary-fixed'
+                      : 'text-secondary hover:bg-white/5 hover:text-on-surface'
                   }`}
                 >
-                  {item.name}
+                  <Icon name={item.icon} size={15} />
+                  {item.label}
+                  {count != null ? (
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] tabular-nums ${
+                        active ? 'bg-black/15' : 'bg-white/10'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  ) : null}
                 </button>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold ${
-                  tab === item.id ? 'bg-white/10 text-on-surface' : 'text-secondary hover:bg-white/5'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+              );
+            })}
           </div>
 
-          <TabPanel tab={tab} gym={gym} business={business ? { ...business, email: business.email || invite.email } : null} />
+          {tab === 'overview' ? (
+            <OverviewPanel
+              gym={gym}
+              inviteId={inviteId}
+              business={business ? { ...business, email: business.email || invite.email } : null}
+              onGymAdsUpdated={(id, appAds) => {
+                setData((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    gyms: (prev.gyms || []).map((item) =>
+                      gymKey(item) === String(id) ? { ...item, appAds, adsEnabled: appAds.banners } : item
+                    ),
+                  };
+                });
+              }}
+            />
+          ) : selectedGymId ? (
+            <TabRecords
+              key={`${selectedGymId}-${tab}`}
+              inviteId={inviteId}
+              gymId={selectedGymId}
+              gyms={gyms}
+              onGymChange={switchGym}
+              tab={tab}
+            />
+          ) : (
+            <GlassCard className="p-6 text-sm text-secondary">This business has no gym yet.</GlassCard>
+          )}
         </div>
       )}
     </AdminPageShell>

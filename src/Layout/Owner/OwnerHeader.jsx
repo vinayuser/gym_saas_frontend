@@ -1,8 +1,14 @@
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Icon from '../../components/fitsphere/Icon';
 import OwnerProfileMenu from '../../components/fitsphere/OwnerProfileMenu';
 import { AppLauncher, NotificationMenu } from '../../components/fitsphere/HeaderMenus';
+import BroadcastBar from '../../components/fitsphere/BroadcastBar';
+import BroadcastModal from '../../components/fitsphere/BroadcastModal';
 import { setCurrentGym } from '../../store/slices/gymSlice';
+import { fetchActiveBroadcast, removeBroadcast } from '../../store/slices/broadcastSlice';
+import { toast } from 'react-toastify';
+import { ROLES } from '../../constants';
 
 const MEMBERS_ADMIN_AVATAR =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuBTFnH66hZtdbW65c1RX_rV3YDdKzRsnNmIz5uxD0Vy0_nN3waVmmllzH_Dn806JUFIQeF53izxoKBBNxtrqd4J--zxEomy_aeVAYi33EnXoaY8KvxzX1TyXuaQ_bM2ULNrxCpG-GARV4l3aEvK9ImWNmWm4XwrpopFpEKuzCI06MTD2IFive4zcrei8qEP-JL4iy72nLAkydqII6t-XkB2VDyoER29WiN_LWM_QAi1ufvJtdzdkLS4F25d4_dFb-Gbz14SfVbgqvg';
@@ -14,6 +20,7 @@ const OwnerHeader = ({
   onTabChange,
   showSearch = true,
   dashboard = false,
+  hideBranchPicker = false,
   variant = 'default',
   searchValue = '',
   onSearchChange,
@@ -21,17 +28,30 @@ const OwnerHeader = ({
 }) => {
   const dispatch = useDispatch();
   const { gyms, currentGym } = useSelector((state) => state.gym);
+  const { user } = useSelector((state) => state.auth);
+  const broadcast = useSelector((state) => state.broadcast.current);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [removingBroadcast, setRemovingBroadcast] = useState(false);
+  const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
+  const isPlatformAdmin = user?.role === ROLES.PLATFORM_ADMIN;
+  const isPlatform = isSuperAdmin || isPlatformAdmin;
+
+  useEffect(() => {
+    dispatch(fetchActiveBroadcast());
+    const timer = setInterval(() => dispatch(fetchActiveBroadcast()), 45000);
+    return () => clearInterval(timer);
+  }, [dispatch]);
 
   const isMembers = variant === 'members';
   const isStaff = variant === 'staff';
-  const isDashboard = dashboard || variant === 'dashboard';
   const useSearchFirst = isMembers || isStaff;
 
-  const headerHeight = isDashboard ? 'h-20' : 'h-16';
+  const headerHeight = 'h-16';
 
   return (
+    <div className="sticky top-0 z-40">
     <header
-      className={`sticky top-0 z-40 flex ${headerHeight} w-full items-center justify-between border-b border-white/5 bg-surface/80 px-6 backdrop-blur-xl md:px-8`}
+      className={`flex ${headerHeight} w-full items-center justify-between border-b border-white/5 bg-surface px-6 md:px-8`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-6 lg:gap-10">
         {useSearchFirst && showSearch && (
@@ -51,7 +71,7 @@ const OwnerHeader = ({
           </div>
         )}
 
-        {!useSearchFirst && gyms.length > 0 && (
+        {!useSearchFirst && !hideBranchPicker && !isPlatformAdmin && gyms.length > 0 && (
           <div className="group relative hidden shrink-0 lg:block">
             <button
               type="button"
@@ -120,15 +140,46 @@ const OwnerHeader = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-4 md:gap-6">
+        {isPlatform ? (
+          <button
+            type="button"
+            title="Broadcast message"
+            onClick={() => setBroadcastOpen(true)}
+            className="text-secondary transition-colors hover:text-primary-fixed"
+          >
+            <Icon name="campaign" size={22} />
+          </button>
+        ) : null}
         <NotificationMenu />
         <AppLauncher />
 
         <OwnerProfileMenu
-          roleLabel={useSearchFirst ? 'Admin' : 'Gym Owner'}
+          roleLabel={
+            isSuperAdmin ? 'Super Admin' : isPlatformAdmin ? 'Sub-admin' : useSearchFirst ? 'Admin' : 'Gym Owner'
+          }
           avatarSrc={useSearchFirst ? MEMBERS_ADMIN_AVATAR : undefined}
         />
       </div>
     </header>
+    <BroadcastBar
+      message={broadcast?.message}
+      removing={removingBroadcast}
+      onRemove={
+        isPlatform
+          ? async () => {
+              setRemovingBroadcast(true);
+              try {
+                const result = await dispatch(removeBroadcast());
+                if (!result.error) toast.success('Broadcast removed');
+              } finally {
+                setRemovingBroadcast(false);
+              }
+            }
+          : undefined
+      }
+    />
+    {isPlatform ? <BroadcastModal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} /> : null}
+    </div>
   );
 };
 

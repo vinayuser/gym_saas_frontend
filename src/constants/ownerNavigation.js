@@ -1,9 +1,11 @@
 export const OWNER_NAV = [
   { label: 'Dashboard', path: '/owner/dashboard', icon: 'dashboard' },
+  { label: 'Gyms', path: '/owner/gyms', icon: 'apartment' },
   { label: 'Members', path: '/owner/members', icon: 'group' },
   { label: 'Staff', path: '/owner/staff', icon: 'badge' },
   { label: 'Membership Plans', path: '/owner/membership-plans', icon: 'card_membership' },
   { label: 'Attendance', path: '/owner/attendance', icon: 'qr_code_scanner', feature: 'attendance' },
+  { label: 'Day Pass', path: '/owner/day-pass', icon: 'confirmation_number', feature: 'day_pass' },
   { label: 'Events', path: '/owner/events', icon: 'event', feature: 'events' },
   { label: 'Leads', path: '/owner/leads', icon: 'filter_alt', feature: 'leads' },
   {
@@ -29,7 +31,15 @@ export const OWNER_NAV = [
     ],
   },
   { label: 'Trainers', path: '/owner/trainers', icon: 'sports_martial_arts', feature: 'trainers' },
-  { label: 'Banners', path: '/owner/banners', icon: 'view_carousel', feature: 'banners' },
+  {
+    label: 'App ads',
+    icon: 'campaign',
+    children: [
+      { label: 'Banners', path: '/owner/banners', icon: 'view_carousel', feature: 'banners', appAd: 'banners' },
+      { label: 'Video ads', path: '/owner/ads/video', icon: 'movie', appAd: 'video' },
+      { label: 'Audio ads', path: '/owner/ads/audio', icon: 'headphones', appAd: 'audio' },
+    ],
+  },
   { label: 'Community Chat', path: '/owner/chat', icon: 'forum', feature: 'chat' },
   { label: 'Subscription', path: '/owner/subscription', icon: 'workspace_premium' },
   { label: 'Support', path: '/owner/support', icon: 'help' },

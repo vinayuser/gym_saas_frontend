@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ENDPOINTS from '../../../config/apiUrls';
-import { getRequest, deleteRequest } from '../../../config/dataApi';
+import { getRequest, deleteRequest, postRequest } from '../../../config/dataApi';
+import AppModal from '../../../components/fitsphere/AppModal';
+import { toast } from 'react-toastify';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import EventCalendar from '../../../components/fitsphere/EventCalendar';
@@ -23,6 +25,10 @@ const Events = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editEventId, setEditEventId] = useState(null);
   const [createDate, setCreateDate] = useState(null);
+  const [bookingEvent, setBookingEvent] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [memberQuery, setMemberQuery] = useState('');
+  const [memberMatches, setMemberMatches] = useState([]);
 
   const range = useMemo(
     () => getViewRange(calendarView, anchorDate),
@@ -81,6 +87,41 @@ const Events = () => {
     setCreateDate(null);
   };
 
+  const openBookings = async (event) => {
+    setBookingEvent(event);
+    const res = await getRequest(ENDPOINTS.EVENTS.BOOKINGS(currentGym.id, event.id));
+    setBookings(res.data?.bookings || []);
+  };
+
+  const addBooking = async (memberId) => {
+    await postRequest(ENDPOINTS.EVENTS.BOOKINGS(currentGym.id, bookingEvent.id), { memberId });
+    toast.success('Member booked');
+    setMemberQuery('');
+    setMemberMatches([]);
+    openBookings(bookingEvent);
+    load();
+  };
+
+  const cancelBooking = async (memberId) => {
+    await deleteRequest(ENDPOINTS.EVENTS.BOOKINGS(currentGym.id, bookingEvent.id), { data: { memberId } });
+    toast.success('Booking cancelled');
+    openBookings(bookingEvent);
+    load();
+  };
+
+  useEffect(() => {
+    if (!currentGym?.id || memberQuery.trim().length < 2) {
+      setMemberMatches([]);
+      return undefined;
+    }
+    const handle = setTimeout(() => {
+      getRequest(ENDPOINTS.MEMBERS.LIST(currentGym.id), { params: { search: memberQuery, limit: 8 } }).then((res) => {
+        setMemberMatches(res.data || []);
+      });
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [currentGym?.id, memberQuery]);
+
   const handleDelete = async (eventId) => {
     if (!currentGym?.id) return;
     await deleteRequest(ENDPOINTS.EVENTS.DELETE(currentGym.id, eventId));
@@ -123,8 +164,45 @@ const Events = () => {
             onEdit={openEdit}
             onDelete={handleDelete}
             onCreateForDate={openCreate}
+            onBookings={openBookings}
           />
         </div>
+
+        <AppModal open={Boolean(bookingEvent)} onClose={() => setBookingEvent(null)} title={bookingEvent?.title || 'Bookings'}>
+          {bookingEvent ? (
+            <div className="space-y-4 p-2">
+              <p className="text-sm text-secondary">{bookingEvent.participantCount || 0} booked</p>
+              <input
+                value={memberQuery}
+                onChange={(e) => setMemberQuery(e.target.value)}
+                placeholder="Add a member…"
+                className="input-cyber w-full rounded-lg px-3 py-2"
+              />
+              {memberMatches.map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={() => addBooking(member.id)}
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/5"
+                >
+                  {member.firstName} {member.lastName}
+                </button>
+              ))}
+              <div className="space-y-2">
+                {bookings.map((row) => (
+                  <div key={row.id} className="flex items-center justify-between text-sm">
+                    <span>
+                      {row.member?.firstName} {row.member?.lastName}
+                    </span>
+                    <button type="button" onClick={() => cancelBooking(row.memberId || row.member?.id)} className="text-error">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </AppModal>
 
         <EventFormModal
           open={formOpen}

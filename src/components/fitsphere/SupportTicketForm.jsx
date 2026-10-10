@@ -5,7 +5,6 @@ import ENDPOINTS from '../../config/apiUrls';
 import { postRequest } from '../../config/dataApi';
 import {
   SUPPORT_CATEGORIES,
-  SUPPORT_EMAIL,
   getDefaultSupportForm,
   getSupportCategory,
 } from '../../constants/supportTopics';
@@ -25,6 +24,8 @@ const SupportTicketForm = ({
   initialMessage = '',
   onSubmitted,
   compact = false,
+  bare = false,
+  onCancel,
 }) => {
   const { user } = useSelector((s) => s.auth);
   const defaults = useMemo(
@@ -140,16 +141,12 @@ const SupportTicketForm = ({
 
   const messageLength = form.message.trim().length;
 
-  return (
-    <GlassCard className={compact ? 'p-5' : 'p-6'}>
+  const formBody = (
+    <>
       <div className="mb-5">
-        <h2 className="text-lg font-semibold">Send a support request</h2>
+        <h2 className="font-display text-lg font-bold">Open a support ticket</h2>
         <p className="mt-1 text-sm text-secondary">
-          Messages go to{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary-container hover:underline">
-            {SUPPORT_EMAIL}
-          </a>
-          . Subject and message are pre-filled — edit them before sending.
+          FitSphere support will reply on this ticket. You can keep the conversation going from Your tickets.
         </p>
       </div>
 
@@ -228,17 +225,28 @@ const SupportTicketForm = ({
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={sending}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-fixed px-5 py-3 text-sm font-semibold text-on-primary-fixed transition hover:opacity-90 disabled:opacity-60"
-        >
-          <Icon name="send" size={18} />
-          {sending ? 'Sending...' : 'Send support email'}
-        </button>
+        <div className="flex justify-end gap-2">
+          {onCancel ? (
+            <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2.5 text-sm">
+              Cancel
+            </button>
+          ) : null}
+          <button
+            type="submit"
+            disabled={sending}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-fixed px-5 py-2.5 text-sm font-semibold text-on-primary-fixed transition hover:opacity-90 disabled:opacity-60"
+          >
+            <Icon name="send" size={18} />
+            {sending ? 'Opening…' : 'Open ticket'}
+          </button>
+        </div>
       </form>
-    </GlassCard>
+    </>
   );
+
+  if (bare) return formBody;
+
+  return <GlassCard className={compact ? 'p-5' : 'p-6'}>{formBody}</GlassCard>;
 };
 
 export default SupportTicketForm;

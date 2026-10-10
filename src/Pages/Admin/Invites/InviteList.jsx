@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import BrandMark from '../../../components/fitsphere/BrandMark';
-import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import AdminPageShell from '../../../components/fitsphere/AdminPageShell';
 import AppModal from '../../../components/fitsphere/AppModal';
+import TableShell, { TABLE_CLASS, TH, THEAD_ROW, TableSelect, tableRowNumber } from '../../../components/fitsphere/TableShell';
 import ENDPOINTS from '../../../config/apiUrls';
-import { getRequest, patchRequest, putRequest } from '../../../config/dataApi';
+import { getRequest, patchRequest, postRequest, putRequest } from '../../../config/dataApi';
 import { formatDate } from '../../../helpers/formatUtils';
+import AppAdToggles from '../../../components/fitsphere/AppAdToggles';
+import { appAdsOf } from '../../../helpers/appAds';
 
 const STATUS_FILTERS = ['ALL', 'PENDING', 'SENT', 'PAYMENT_PENDING', 'ACCEPTED', 'REVOKED'];
 
@@ -108,8 +110,12 @@ const InviteList = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
   const [savingAddon, setSavingAddon] = useState('');
+  const [savingAppAd, setSavingAppAd] = useState('');
   const [aliasInput, setAliasInput] = useState('');
   const [publishing, setPublishing] = useState(false);
+  const [branchInviteFor, setBranchInviteFor] = useState(null);
+  const [branchForm, setBranchForm] = useState({ businessName: '', note: '', expiryDays: 14 });
+  const [savingBranchInvite, setSavingBranchInvite] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -157,21 +163,6 @@ const InviteList = () => {
   }, [load]);
 
   const total = pagination.total || 0;
-  const totalPages = pagination.totalPages || 1;
-  const start = total === 0 ? 0 : (page - 1) * limit + 1;
-  const end = Math.min(page * limit, total);
-
-  const pageNumbers = (() => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    const pages = new Set([1, totalPages, page, page - 1, page + 1].filter((n) => n >= 1 && n <= totalPages));
-    const sorted = Array.from(pages).sort((a, b) => a - b);
-    const withEllipsis = [];
-    sorted.forEach((n, i) => {
-      if (i > 0 && n - sorted[i - 1] > 1) withEllipsis.push('...');
-      withEllipsis.push(n);
-    });
-    return withEllipsis;
-  })();
 
   const getInviteLink = (token) => `${window.location.origin}/setup/${token}`;
 
@@ -265,6 +256,82 @@ const InviteList = () => {
     setAddonsInvite(invite);
   };
 
+  const openBranchInvite = (invite) => {
+    setMenuOpenId(null);
+    setBranchForm({ businessName: '', note: '', expiryDays: 14 });
+    setBranchInviteFor(invite);
+  };
+
+  const closeBranchInvite = () => {
+    setBranchInviteFor(null);
+    setBranchForm({ businessName: '', note: '', expiryDays: 14 });
+  };
+
+  const handleCreateBranchInvite = async (e) => {
+    e.preventDefault();
+    if (!branchInviteFor?.tenantId && !branchInviteFor?.tenant?.id) {
+      toast.error('This business has no tenant yet');
+      return;
+    }
+    const name = branchForm.businessName.trim();
+    if (name.length < 2) {
+      toast.error('Enter the new branch / gym name');
+      return;
+    }
+    setSavingBranchInvite(true);
+    try {
+      const res = await postRequest(ENDPOINTS.INVITES.CREATE, {
+        purpose: 'EXTRA_BRANCH',
+        parentInviteId: branchInviteFor.id,
+        existingTenantId: branchInviteFor.tenantId || branchInviteFor.tenant?.id,
+        businessName: name,
+        note: branchForm.note.trim() || undefined,
+        expiryDays: Number(branchForm.expiryDays) || 14,
+      });
+      const link = res.data?.link;
+      if (link) {
+        try {
+          await navigator.clipboard.writeText(link);
+          toast.success('Branch invite created — setup link copied');
+        } catch {
+          toast.success('Branch invite created');
+        }
+      } else {
+        toast.success('Branch invite created');
+      }
+      closeBranchInvite();
+      load();
+    } catch {
+      /* toast from api */
+    } finally {
+      setSavingBranchInvite(false);
+    }
+  };
+
+  const applyAppAdsToInvite = (invite, gyms) => {
+    const tenant = { ...invite.tenant, gyms };
+    return { ...invite, tenant, primaryGym: gyms[0] || null };
+  };
+
+  const toggleAppAd = async (invite, key) => {
+    if (invite.status !== 'ACCEPTED' || !invite.tenant?.gyms?.length) return;
+    const current = appAdsOf(invite.primaryGym);
+    const nextValue = !current[key];
+    setSavingAppAd(`${invite.id}:${key}`);
+    try {
+      const res = await putRequest(ENDPOINTS.INVITES.APP_ADS(invite.id), { [key]: nextValue });
+      const gyms = (invite.tenant.gyms || []).map((gym) => {
+        const updated = (res.data?.gyms || []).find((row) => row.id === gym.id);
+        return updated ? { ...gym, appAds: updated.appAds, adsEnabled: updated.appAds?.banners } : gym;
+      });
+      const updated = applyAppAdsToInvite(invite, gyms);
+      setInvites((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+      toast.success(nextValue ? `${key === 'banners' ? 'Banners' : key === 'video' ? 'Video ads' : 'Audio ads'} enabled` : `${key === 'banners' ? 'Banners' : key === 'video' ? 'Video ads' : 'Audio ads'} disabled`);
+    } finally {
+      setSavingAppAd('');
+    }
+  };
+
   const toggleAddon = async (gym, key) => {
     if (!addonsInvite?.tenant) return;
     const current = addonState(gym.commercialAddons);
@@ -353,74 +420,69 @@ const InviteList = () => {
 
   return (
     <>
-      <AdminPageShell
-        showSearch
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search business, owner, or email..."
-      >
-        <div className="space-y-8">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <h1 className="font-display text-3xl font-bold md:text-4xl">Businesses</h1>
-              <p className="mt-1 text-secondary/70">
-                One row per business: the invite, its owner, gyms, and purchased add-ons.
-              </p>
-            </div>
+      <AdminPageShell showSearch={false}>
+        <TableShell
+          title="Businesses"
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search business, owner, or email..."
+          filters={
+            <TableSelect
+              value={statusFilter}
+              onChange={(value) => {
+                setStatusFilter(value);
+                setPage(1);
+              }}
+            >
+              {STATUS_FILTERS.map((s) => (
+                <option key={s} value={s}>
+                  {s === 'ALL' ? 'All statuses' : STATUS_LABELS[s] || s}
+                </option>
+              ))}
+            </TableSelect>
+          }
+          actions={
             <button
               type="button"
               onClick={() => navigate('/admin/invites/new')}
-              className="cyber-glow flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 text-sm font-bold text-on-primary-container"
+              className="cyber-glow inline-flex items-center gap-1.5 rounded-lg bg-primary-container px-3 py-2 text-xs font-bold text-on-primary-container"
             >
-              <Icon name="add" size={20} />
+              <Icon name="add" size={16} />
               Create Invite
             </button>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  setStatusFilter(s);
-                  setPage(1);
-                }}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
-                  statusFilter === s ? 'bg-white/10 text-on-surface' : 'text-secondary hover:bg-white/5'
-                }`}
-              >
-                {s === 'ALL' ? 'All' : STATUS_LABELS[s] || s}
-              </button>
-            ))}
-          </div>
-
-          <GlassCard className="overflow-hidden p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] text-left text-sm">
+          }
+          page={page}
+          total={total}
+          limit={limit}
+          loading={loading}
+          onPage={setPage}
+          noun="businesses"
+        >
+              <table className={`${TABLE_CLASS} min-w-[1180px]`}>
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02] text-xs uppercase tracking-widest text-secondary/60">
-                    <th className="w-14 px-4 py-3">#</th>
-                    <th className="px-6 py-3">Business</th>
-                    <th className="px-6 py-3">Owner</th>
-                    <th className="px-6 py-3">Plan</th>
-                    <th className="px-6 py-3">Gyms</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">App alias</th>
-                    <th className="px-6 py-3">Expires</th>
-                    <th className="px-6 py-3 text-right">Actions</th>
+                  <tr className={THEAD_ROW}>
+                    <th className={`w-12 ${TH}`}>#</th>
+                    <th className="px-3 py-2.5">Business</th>
+                    <th className="px-3 py-2.5">Owner</th>
+                    <th className="px-3 py-2.5">Plan</th>
+                    <th className="w-20 px-3 py-2.5">Gyms</th>
+                    <th className="px-3 py-2.5">Status</th>
+                    <th className="px-3 py-2.5">App ads</th>
+                    <th className="px-3 py-2.5">App alias</th>
+                    <th className="whitespace-nowrap px-3 py-2.5">Expires</th>
+                    <th className="px-3 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {loading ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-secondary">
+                      <td colSpan={10} className="px-3 py-10 text-center text-secondary">
                         Loading…
                       </td>
                     </tr>
                   ) : invites.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-secondary">
+                      <td colSpan={10} className="px-3 py-10 text-center text-secondary">
                         {debouncedSearch ? (
                           <>No businesses match “{debouncedSearch}”.</>
                         ) : (
@@ -444,94 +506,114 @@ const InviteList = () => {
                         ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim()
                         : invite.inviteeName || '';
                       const planName = tenant?.subscription?.plan?.name || invite.planName || '—';
-                      const rowNumber = (page - 1) * limit + rowIndex + 1;
+                      const rowNumber = tableRowNumber(page, limit, rowIndex);
                       return (
                         <tr key={invite.id} className="hover:bg-white/[0.02]">
-                          <td className="px-4 py-4 text-xs font-semibold text-secondary tabular-nums">{rowNumber}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <BrandMark logo={tenant?.logo || gym?.logo} name={businessName} className="h-10 w-10 text-sm" />
+                          <td className="px-3 py-2.5 align-middle text-xs font-semibold text-secondary tabular-nums">
+                            {rowNumber}
+                          </td>
+                          <td className="px-3 py-2.5 align-middle">
+                            <div className="flex items-center gap-2.5">
+                              <BrandMark logo={tenant?.logo || gym?.logo} name={businessName} className="h-8 w-8 text-xs" />
                               <div className="min-w-0">
-                                <p className="font-medium">{businessName}</p>
-                                {tenant?.slug ? <p className="text-xs text-secondary">{tenant.slug}</p> : null}
-                                <p className="text-xs text-secondary/70">{tenant?.email || invite.email}</p>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="truncate font-medium leading-tight">{businessName}</p>
+                                  {invite.purpose === 'EXTRA_BRANCH' ? (
+                                    <span className="rounded-full border border-sky-500/30 bg-sky-500/15 px-1.5 py-px text-[10px] font-semibold uppercase text-sky-300">
+                                      Extra branch
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <p className="truncate text-[11px] leading-tight text-secondary">
+                                  {invite.purpose === 'EXTRA_BRANCH'
+                                    ? `Branch: ${invite.businessName || '—'}`
+                                    : tenant?.email || invite.email}
+                                </p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <p className="font-medium">{ownerName || '—'}</p>
-                            <p className="text-xs text-secondary">{owner?.email || invite.email}</p>
-                            {owner?.phone ? <p className="text-xs text-secondary/70">{owner.phone}</p> : null}
+                          <td className="px-3 py-2.5 align-middle">
+                            <p className="truncate font-medium leading-tight">{ownerName || '—'}</p>
+                            <p className="truncate text-[11px] leading-tight text-secondary">
+                              {owner?.phone || owner?.email || invite.email}
+                            </p>
                           </td>
-                          <td className="px-6 py-4">
-                            <p className="text-primary-container">{planName}</p>
+                          <td className="px-3 py-2.5 align-middle">
+                            <p className="leading-tight text-primary-container">{planName}</p>
                             {tenant?.subscription?.status ? (
                               <span
-                                className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${subStatusClass(tenant.subscription.status)}`}
+                                className={`mt-0.5 inline-flex rounded-full border px-1.5 py-px text-[10px] font-semibold uppercase ${subStatusClass(tenant.subscription.status)}`}
                               >
                                 {tenant.subscription.status}
                               </span>
                             ) : null}
                           </td>
-                          <td className="px-6 py-4">
-                            <p>{gyms.length}</p>
-                            {gyms.slice(0, 2).map((item) => (
-                              <p key={item.id} className="text-xs text-secondary">
-                                {item.name}
+                          <td className="px-3 py-2.5 align-middle">
+                            <p className="leading-tight">{gyms.length}</p>
+                            {gyms[0] ? (
+                              <p className="truncate text-[11px] leading-tight text-secondary">
+                                {gyms[0].name}
+                                {gyms.length > 1 ? ` +${gyms.length - 1}` : ''}
                               </p>
-                            ))}
-                            {gyms.length > 2 ? (
-                              <p className="text-xs text-secondary/70">+{gyms.length - 2} more</p>
                             ) : null}
                           </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase ${statusClass(invite.status)}`}
-                            >
-                              {STATUS_LABELS[invite.status] || invite.status}
-                            </span>
-                            {invite.status === 'ACCEPTED' && tenant ? (
+                          <td className="px-3 py-2.5 align-middle">
+                            <div className="flex flex-wrap items-center gap-1">
                               <span
-                                className={`mt-1 block w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                                  accountIsOn(invite)
-                                    ? 'border-primary-container/30 bg-primary-container/15 text-primary-container'
-                                    : 'border-error-container/30 bg-error-container/15 text-error'
-                                }`}
+                                className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase ${statusClass(invite.status)}`}
                               >
-                                {accountIsOn(invite) ? 'Active' : 'Inactive'}
+                                {STATUS_LABELS[invite.status] || invite.status}
                               </span>
-                            ) : null}
+                              {invite.status === 'ACCEPTED' && tenant ? (
+                                <span
+                                  className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                                    accountIsOn(invite)
+                                      ? 'border-primary-container/30 bg-primary-container/15 text-primary-container'
+                                      : 'border-error-container/30 bg-error-container/15 text-error'
+                                  }`}
+                                >
+                                  {accountIsOn(invite) ? 'Active' : 'Inactive'}
+                                </span>
+                              ) : null}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 text-xs text-secondary">
+                          <td className="px-3 py-2.5 align-middle">
+                            {invite.status === 'ACCEPTED' && gym ? (
+                              <AppAdToggles
+                                layout="row"
+                                ads={appAdsOf(gym)}
+                                savingKey={savingAppAd.startsWith(`${invite.id}:`) ? savingAppAd.split(':')[1] : ''}
+                                onToggle={(key) => toggleAppAd(invite, key)}
+                              />
+                            ) : (
+                              <span className="text-xs text-secondary">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 align-middle text-xs text-secondary">
                             {gym?.appAlias ? (
-                              <>
+                              <div>
                                 <span className="font-mono text-on-surface">{gym.appAlias}</span>
                                 {gym.appPublished ? (
                                   <span className="mt-0.5 block text-[10px] font-semibold uppercase text-primary-container">
                                     Published
                                   </span>
                                 ) : null}
-                              </>
+                              </div>
                             ) : (
                               '—'
                             )}
                           </td>
-                          <td className="px-6 py-4 text-secondary">{formatDate(invite.expiresAt)}</td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/admin/invites/${invite.id}`)}
-                              className="rounded-lg px-2 py-1 text-xs font-bold text-primary-container hover:bg-white/5"
-                            >
-                              View
-                            </button>
+                          <td className="whitespace-nowrap px-3 py-2.5 align-middle text-xs text-secondary">
+                            {formatDate(invite.expiresAt)}
+                          </td>
+                          <td className="px-3 py-2.5 align-middle text-right">
                             <button
                               type="button"
                               title="Actions"
                               onClick={(e) => openMenu(invite.id, e)}
-                              className="rounded p-2 text-secondary hover:bg-white/10 hover:text-on-surface"
+                              className="rounded p-1.5 text-secondary hover:bg-white/10 hover:text-on-surface"
                             >
-                              <Icon name="more_vert" size={20} />
+                              <Icon name="more_vert" size={18} />
                             </button>
                           </td>
                         </tr>
@@ -540,56 +622,7 @@ const InviteList = () => {
                   )}
                 </tbody>
               </table>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-white/5 px-6 py-3">
-              <p className="text-xs font-semibold text-secondary">
-                {total === 0
-                  ? 'No businesses'
-                  : `Showing ${start} to ${end} of ${total.toLocaleString()} businesses`}
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={page <= 1 || loading}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded p-1 text-secondary transition-colors hover:bg-white/10 disabled:opacity-30"
-                >
-                  <Icon name="chevron_left" size={22} />
-                </button>
-                {pageNumbers.map((n, i) =>
-                  n === '...' ? (
-                    <span key={`ellipsis-${i}`} className="px-1 text-secondary">
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={n}
-                      type="button"
-                      disabled={loading}
-                      onClick={() => setPage(n)}
-                      className={`flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-colors ${
-                        page === n
-                          ? 'bg-neon text-on-primary-fixed'
-                          : 'text-secondary hover:bg-white/10'
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  )
-                )}
-                <button
-                  type="button"
-                  disabled={page >= totalPages || loading}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="rounded p-1 text-secondary transition-colors hover:bg-white/10 disabled:opacity-30"
-                >
-                  <Icon name="chevron_right" size={22} />
-                </button>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
+        </TableShell>
       </AdminPageShell>
 
       {menuOpenId && activeInvite && (
@@ -604,6 +637,17 @@ const InviteList = () => {
             className="fixed z-50 min-w-[180px] overflow-hidden rounded-lg border border-white/10 bg-surface-container shadow-xl"
             style={{ top: menuPos.top, right: menuPos.right }}
           >
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpenId(null);
+                navigate(`/admin/invites/${activeInvite.id}`);
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-white/5"
+            >
+              <Icon name="visibility" size={16} />
+              View
+            </button>
             {activeInvite.status !== 'ACCEPTED' && (
               <button
                 type="button"
@@ -642,6 +686,18 @@ const InviteList = () => {
               >
                 <Icon name={accountIsOn(activeInvite) ? 'block' : 'check_circle'} size={16} />
                 {accountIsOn(activeInvite) ? 'Deactivate' : 'Activate'}
+              </button>
+            )}
+            {activeInvite.status === 'ACCEPTED' &&
+              activeInvite.tenant &&
+              activeInvite.purpose !== 'EXTRA_BRANCH' && (
+              <button
+                type="button"
+                onClick={() => openBranchInvite(activeInvite)}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-white/5"
+              >
+                <Icon name="add_business" size={16} />
+                Invite extra branch
               </button>
             )}
             {activeInvite.status === 'ACCEPTED' && activeInvite.tenant && (
@@ -831,6 +887,77 @@ const InviteList = () => {
           </div>
         </AppModal>
       )}
+      {branchInviteFor ? (
+        <AppModal open onClose={closeBranchInvite} size="md">
+          <h2 className="font-display text-xl font-bold">Invite extra branch</h2>
+          <p className="mt-1 text-sm text-secondary">
+            Send a setup link for another gym under{' '}
+            <span className="text-on-surface">
+              {branchInviteFor.tenant?.name || branchInviteFor.businessName}
+            </span>
+            . Same owner account; charged as an extra gym.
+          </p>
+          <form onSubmit={handleCreateBranchInvite} className="mt-5 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary">
+                New branch / gym name
+              </label>
+              <input
+                type="text"
+                value={branchForm.businessName}
+                onChange={(e) => setBranchForm((f) => ({ ...f, businessName: e.target.value }))}
+                placeholder="e.g. Zirakpur"
+                className="input-cyber"
+                required
+                minLength={2}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary">
+                Note (optional)
+              </label>
+              <input
+                type="text"
+                value={branchForm.note}
+                onChange={(e) => setBranchForm((f) => ({ ...f, note: e.target.value }))}
+                placeholder="Internal note"
+                className="input-cyber"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary">
+                Link expires (days)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={90}
+                value={branchForm.expiryDays}
+                onChange={(e) => setBranchForm((f) => ({ ...f, expiryDays: e.target.value }))}
+                className="input-cyber"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={closeBranchInvite}
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-secondary hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingBranchInvite}
+                className="rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container disabled:opacity-50"
+              >
+                {savingBranchInvite ? 'Creating…' : 'Create invite & copy link'}
+              </button>
+            </div>
+          </form>
+        </AppModal>
+      ) : null}
+
     </>
   );
 };

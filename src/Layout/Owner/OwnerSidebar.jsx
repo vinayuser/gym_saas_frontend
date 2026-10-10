@@ -3,6 +3,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Icon from '../../components/fitsphere/Icon';
 import { OWNER_NAV } from '../../constants/ownerNavigation';
+import { ROLES } from '../../constants';
+import { appAdsOf } from '../../helpers/appAds';
 
 const NavItem = ({ item }) => {
   const location = useLocation();
@@ -69,16 +71,28 @@ const NavItem = ({ item }) => {
 
 const OwnerSidebar = () => {
   const { currentGym } = useSelector((state) => state.gym);
-  const { tenant } = useSelector((state) => state.auth);
+  const { tenant, user } = useSelector((state) => state.auth);
   const features = tenant?.features;
+  const ads = appAdsOf(currentGym);
 
-  const navItems = OWNER_NAV.filter((item) => {
+  const allowed = (item) => {
+    if (item.path === '/owner/gyms' && ![ROLES.GYM_OWNER, ROLES.SUPER_ADMIN].includes(user?.role)) {
+      return false;
+    }
     if (item.feature === 'attendance' && currentGym?.commercialAddons?.attendance === false) return false;
     if (item.feature === 'store' && currentGym?.commercialAddons?.store === false) return false;
+    if (item.feature === 'day_pass' && currentGym?.commercialAddons?.day_pass === false) return false;
+    if (item.appAd === 'banners' && ads.banners === false) return false;
+    if (item.appAd === 'video' && !ads.video) return false;
+    if (item.appAd === 'audio' && !ads.audio) return false;
     if (!item.feature) return true;
     if (!features || features[item.feature] === undefined) return true;
     return Boolean(features[item.feature]);
-  });
+  };
+
+  const navItems = OWNER_NAV.map((item) =>
+    item.children ? { ...item, children: item.children.filter(allowed) } : item
+  ).filter((item) => (item.children ? item.children.length > 0 : allowed(item)));
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[280px] flex-col border-r border-white/10 bg-surface/80 py-10 backdrop-blur-xl">

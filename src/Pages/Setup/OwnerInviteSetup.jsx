@@ -15,8 +15,8 @@ const inputClass =
   'input-cyber w-full rounded-lg border border-white/10 bg-surface-container-lowest px-3 py-2.5 text-sm';
 const labelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-secondary';
 
-const STEP_LABELS = ['Welcome', 'Password', 'Profile', 'Photos', 'Tools', 'Payment'];
-const TOTAL_STEPS = STEP_LABELS.length;
+const ONBOARD_STEPS = ['Welcome', 'Password', 'Profile', 'Photos', 'Tools', 'Payment'];
+const BRANCH_STEPS = ['Welcome', 'Profile', 'Photos', 'Tools', 'Payment'];
 
 const OwnerInviteSetup = () => {
   const { token } = useParams();
@@ -56,7 +56,16 @@ const OwnerInviteSetup = () => {
     photos: [],
   });
 
+  const isExtraBranch = invite?.purpose === 'EXTRA_BRANCH';
+  const STEP_LABELS = isExtraBranch ? BRANCH_STEPS : ONBOARD_STEPS;
+  const TOTAL_STEPS = STEP_LABELS.length;
   const plan = invite?.plan;
+  /** Map wizard step → shared content panels (password is skipped for extra branch). */
+  const contentStep = (() => {
+    if (step > TOTAL_STEPS) return 7;
+    if (!isExtraBranch) return step;
+    return ({ 1: 1, 2: 3, 3: 4, 4: 5, 5: 6 }[step] || step);
+  })();
 
   const restoreOnboarding = (loaded) => {
     if (!loaded?.onboardingData) return;
@@ -106,7 +115,7 @@ const OwnerInviteSetup = () => {
         setLoadError(null);
 
         if (loaded.completed) {
-          setStep(7);
+          setStep((loaded.purpose === 'EXTRA_BRANCH' ? BRANCH_STEPS : ONBOARD_STEPS).length + 1);
           return;
         }
 
@@ -118,6 +127,7 @@ const OwnerInviteSetup = () => {
         }
         if (loaded.paymentPending) {
           restoreOnboarding(loaded);
+          setStep(loaded.purpose === 'EXTRA_BRANCH' ? 5 : 6);
         }
       })
       .catch((err) => {
@@ -128,21 +138,24 @@ const OwnerInviteSetup = () => {
   }, [token]);
 
   useEffect(() => {
-    if (!invite?.paymentPending || step !== 6 || loadingInvite) return;
+    const paymentStep = isExtraBranch ? 5 : 6;
+    if (!invite?.paymentPending || step !== paymentStep || loadingInvite) return;
 
     let cancelled = false;
     (async () => {
       const result = await tryCompletePendingPayment();
       if (!cancelled && result?.success) {
-        toast.success('Payment confirmed — your app is ready');
-        setStep(7);
+        toast.success(
+          isExtraBranch ? 'Payment confirmed — branch added' : 'Payment confirmed — your app is ready'
+        );
+        setStep(TOTAL_STEPS + 1);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [invite?.paymentPending, step, loadingInvite, token]);
+  }, [invite?.paymentPending, step, loadingInvite, token, isExtraBranch, TOTAL_STEPS]);
 
   const setProfileField = (key, value) => setProfile((p) => ({ ...p, [key]: value }));
 
@@ -204,6 +217,28 @@ const OwnerInviteSetup = () => {
   };
 
   const goNext = () => {
+    if (isExtraBranch) {
+      if (step === 1) {
+        initProfileFromInvite();
+        setStep(2);
+        return;
+      }
+      if (step === 2) {
+        if (!validateProfile()) return;
+        setStep(3);
+        return;
+      }
+      if (step === 3) {
+        setStep(4);
+        return;
+      }
+      if (step === 4) {
+        setStep(5);
+        return;
+      }
+      return;
+    }
+
     if (step === 1) {
       initProfileFromInvite();
       setStep(2);
@@ -352,12 +387,14 @@ const OwnerInviteSetup = () => {
 
   const completeActivation = async (paymentPayload = {}) => {
     await postRequest(ENDPOINTS.INVITES.VERIFY_PAYMENT(token), paymentPayload);
-    toast.success('Payment successful — your app is ready');
-    setStep(7);
+    toast.success(
+      isExtraBranch ? 'Payment successful — branch added to your account' : 'Payment successful — your app is ready'
+    );
+    setStep(TOTAL_STEPS + 1);
   };
 
   const handlePayment = async () => {
-    if (!invite?.paymentPending && !validatePasswords()) return;
+    if (!invite?.paymentPending && !isExtraBranch && !validatePasswords()) return;
 
     setPaying(true);
     let checkout = null;
@@ -365,8 +402,10 @@ const OwnerInviteSetup = () => {
     try {
       const pending = await tryCompletePendingPayment();
       if (pending?.success) {
-        toast.success('Payment confirmed — your app is ready');
-        setStep(7);
+        toast.success(
+          isExtraBranch ? 'Payment confirmed — branch added' : 'Payment confirmed — your app is ready'
+        );
+        setStep(TOTAL_STEPS + 1);
         return;
       }
 
@@ -443,7 +482,9 @@ const OwnerInviteSetup = () => {
   const addonTotal = addons
     .filter((addon) => selectedAddons.includes(addon.key))
     .reduce((sum, addon) => sum + Number(addon.pricePerGymMonthly || 0), 0);
-  const amountDue = Number(invite.billing?.basePriceMonthly ?? plan?.priceMonthly ?? 0) + addonTotal;
+  const amountDue =
+    Number(invite.billing?.chargeMonthly ?? plan?.priceMonthly ?? invite.billing?.basePriceMonthly ?? 0) +
+    addonTotal;
 
   const toggleAddon = (key) => {
     setSelectedAddons((current) =>
@@ -461,7 +502,9 @@ const OwnerInviteSetup = () => {
             </div>
             <div>
               <p className="font-display font-bold text-primary-container">FitSphere Pro</p>
-              <p className="text-xs text-secondary">Gym owner onboarding</p>
+              <p className="text-xs text-secondary">
+                {isExtraBranch ? 'Extra branch setup' : 'Gym owner onboarding'}
+              </p>
             </div>
           </div>
           {step <= TOTAL_STEPS && (
@@ -500,17 +543,30 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 1 — Welcome (email from invite, no re-entry) */}
-          {step === 1 && (
+          {contentStep === 1 && (
             <GlassCard className="p-8">
               <p className="text-xs font-semibold uppercase tracking-widest text-primary-container">
-                You&apos;re invited
+                {isExtraBranch ? 'Extra branch invite' : "You're invited"}
               </p>
-              <h1 className="mt-2 font-display text-2xl font-bold">Set up your gym app</h1>
+              <h1 className="mt-2 font-display text-2xl font-bold">
+                {isExtraBranch ? 'Add another gym location' : 'Set up your gym app'}
+              </h1>
               <p className="mt-3 text-sm text-secondary">
-                This invite is for{' '}
-                <span className="font-medium text-on-surface">{invite.email}</span>
-                {invite.inviteeName ? ` (${invite.inviteeName})` : ''}. You won&apos;t need to
-                enter your email again.
+                {isExtraBranch ? (
+                  <>
+                    This adds <span className="font-medium text-on-surface">{invite.businessName}</span>{' '}
+                    under your existing FitSphere account (
+                    <span className="font-medium text-on-surface">{invite.email}</span>
+                    ). No new login — pay the extra-gym fee to unlock the branch.
+                  </>
+                ) : (
+                  <>
+                    This invite is for{' '}
+                    <span className="font-medium text-on-surface">{invite.email}</span>
+                    {invite.inviteeName ? ` (${invite.inviteeName})` : ''}. You won&apos;t need to
+                    enter your email again.
+                  </>
+                )}
               </p>
 
               {plan && (
@@ -545,7 +601,7 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 2 — Password only */}
-          {step === 2 && (
+          {contentStep === 2 && (
             <GlassCard className="p-8">
               <h1 className="font-display text-2xl font-bold">Create your password</h1>
               <p className="mt-2 text-sm text-secondary">
@@ -609,7 +665,7 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 3 — Logo, description, contacts, support, location */}
-          {step === 3 && (
+          {contentStep === 3 && (
             <GlassCard className="space-y-6 p-8">
               <div>
                 <h1 className="font-display text-2xl font-bold">Gym profile</h1>
@@ -765,7 +821,7 @@ const OwnerInviteSetup = () => {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(isExtraBranch ? 1 : 2)}
                   className="flex-1 rounded-lg border border-white/10 py-3 text-sm hover:bg-white/5"
                 >
                   Back
@@ -782,7 +838,7 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 4 — Video + photos */}
-          {step === 4 && (
+          {contentStep === 4 && (
             <GlassCard className="space-y-6 p-8">
               <div>
                 <h1 className="font-display text-2xl font-bold">Gym media</h1>
@@ -864,7 +920,7 @@ const OwnerInviteSetup = () => {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setStep(3)}
+                  onClick={() => setStep(isExtraBranch ? 2 : 3)}
                   className="flex-1 rounded-lg border border-white/10 py-3 text-sm hover:bg-white/5"
                 >
                   Back
@@ -880,7 +936,7 @@ const OwnerInviteSetup = () => {
             </GlassCard>
           )}
 
-          {step === 5 && (
+          {contentStep === 5 && (
             <GlassCard className="space-y-6 p-8">
               <div>
                 <h1 className="font-display text-2xl font-bold">Optional tools</h1>
@@ -929,7 +985,7 @@ const OwnerInviteSetup = () => {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(isExtraBranch ? 3 : 4)}
                   className="flex-1 rounded-lg border border-white/10 py-3 text-sm hover:bg-white/5"
                 >
                   Back
@@ -946,7 +1002,7 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 6 — Payment */}
-          {step === 6 && plan && (
+          {contentStep === 6 && plan && (
             <GlassCard className="space-y-6 p-8">
               <div>
                 <h1 className="font-display text-2xl font-bold">Activate your app</h1>
@@ -993,7 +1049,7 @@ const OwnerInviteSetup = () => {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setStep(5)}
+                  onClick={() => setStep(isExtraBranch ? 4 : 5)}
                   disabled={paying}
                   className="flex-1 rounded-lg border border-white/10 py-3 text-sm hover:bg-white/5 disabled:opacity-50"
                 >
@@ -1013,7 +1069,8 @@ const OwnerInviteSetup = () => {
                   ) : (
                     <>
                       <Icon name="lock" size={18} />
-                      Pay {formatCurrency(amountDue)} &amp; launch app
+                      Pay {formatCurrency(amountDue)}
+                      {isExtraBranch ? ' & add branch' : ' & launch app'}
                     </>
                   )}
                 </button>
@@ -1022,15 +1079,26 @@ const OwnerInviteSetup = () => {
           )}
 
           {/* Step 6 — Success */}
-          {step === 7 && (
+          {contentStep === 7 && (
             <GlassCard className="p-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-container/20">
                 <Icon name="celebration" size={36} className="text-primary-container" />
               </div>
-              <h1 className="font-display text-2xl font-bold">Your app is live!</h1>
+              <h1 className="font-display text-2xl font-bold">
+                {isExtraBranch ? 'Branch added!' : 'Your app is live!'}
+              </h1>
               <p className="mt-2 text-sm text-secondary">
-                <strong>{invite.businessName}</strong> is ready. Sign in
-                with <strong>{invite.email}</strong> and the password you created.
+                {isExtraBranch ? (
+                  <>
+                    <strong>{invite.businessName}</strong> is on your account. Sign in with{' '}
+                    <strong>{invite.email}</strong> and switch to the new branch from the header.
+                  </>
+                ) : (
+                  <>
+                    <strong>{invite.businessName}</strong> is ready. Sign in with{' '}
+                    <strong>{invite.email}</strong> and the password you created.
+                  </>
+                )}
               </p>
               <button
                 type="button"

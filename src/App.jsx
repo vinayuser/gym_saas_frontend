@@ -15,14 +15,18 @@ import SubscriptionLegacy from './Pages/Dashboard/Subscription/Subscription';
 import OwnerDashboard from './Pages/Owner/Dashboard';
 import OwnerMembers from './Pages/Owner/Members';
 import AddEditMember from './Pages/Owner/Members/AddEditMember';
+import MemberCare from './Pages/Owner/Members/MemberCare';
 import OwnerGyms from './Pages/Owner/Gyms';
 import OwnerSubscription from './Pages/Owner/Subscription';
 import OwnerStaff from './Pages/Owner/Staff/Staff';
 import AddStaff from './Pages/Owner/Staff/AddStaff';
 import OwnerBanners from './Pages/Owner/Banners/Banners';
 import AddEditBanner from './Pages/Owner/Banners/AddEditBanner';
+import VideoAds from './Pages/Owner/Ads/VideoAds';
+import AudioAds from './Pages/Owner/Ads/AudioAds';
 import MembershipPlans from './Pages/Owner/MembershipPlans/MembershipPlans';
 import Attendance from './Pages/Owner/Attendance/Attendance';
+import DayPass from './Pages/Owner/DayPass/DayPass';
 import Events from './Pages/Owner/Events/Events';
 import CreateEvent from './Pages/Owner/Events/CreateEvent';
 import Leads from './Pages/Owner/Leads/Leads';
@@ -143,9 +147,20 @@ const App = () => {
             }
           />
           <Route
+            path="members/:memberId/plans"
+            element={
+              <ProtectedRoute allowedRoles={[...OWNER_MANAGER, ROLES.TRAINER]} fallbackPath="/owner/members">
+                <MemberCare />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="gyms"
             element={
-              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]} fallbackPath="/owner/dashboard">
+              <ProtectedRoute
+                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER]}
+                fallbackPath="/owner/dashboard"
+              >
                 <OwnerGyms />
               </ProtectedRoute>
             }
@@ -196,6 +211,17 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={[...OWNER_ROLES, ROLES.SUPER_ADMIN]} fallbackPath="/owner/dashboard">
                 <Attendance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="day-pass"
+            element={
+              <ProtectedRoute
+                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER, ROLES.MANAGER, ROLES.RECEPTIONIST]}
+                fallbackPath="/owner/dashboard"
+              >
+                <DayPass />
               </ProtectedRoute>
             }
           />
@@ -350,6 +376,28 @@ const App = () => {
                 fallbackPath="/owner/banners"
               >
                 <AddEditBanner />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="ads/video"
+            element={
+              <ProtectedRoute
+                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER, ROLES.MANAGER]}
+                fallbackPath="/owner/dashboard"
+              >
+                <VideoAds />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="ads/audio"
+            element={
+              <ProtectedRoute
+                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER, ROLES.MANAGER]}
+                fallbackPath="/owner/dashboard"
+              >
+                <AudioAds />
               </ProtectedRoute>
             }
           />

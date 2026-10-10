@@ -19,7 +19,7 @@ const ListPagination = ({ page, total = 0, limit = 10, loading = false, onPage, 
   const pageNumbers = pageNumbersFor(page, totalPages);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-white/5 px-6 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-white/5 px-4 py-2.5">
       <p className="text-xs font-semibold text-secondary">
         {total === 0 ? `No ${noun}` : `Showing ${start} to ${end} of ${total.toLocaleString()} ${noun}`}
       </p>

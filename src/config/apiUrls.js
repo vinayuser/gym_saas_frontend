@@ -1,4 +1,13 @@
-const API_PREFIX = import.meta.env.VITE_API_BASE_URL;
+const configuredApi = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const basePath = String(import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
+/** Medisewa host is retired. Use the host the page was opened on, under the same /fitsphere path. */
+const sameOriginApi = () => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://144.24.124.125';
+  return `${origin}${basePath}/api/v1`;
+};
+
+const API_PREFIX = !configuredApi || /medisewa/i.test(configuredApi) ? sameOriginApi() : configuredApi;
 
 const ENDPOINTS = {
   AUTH: {
@@ -22,6 +31,11 @@ const ENDPOINTS = {
     NOTIFICATION_PREFERENCES: `${API_PREFIX}/auth/notification-preferences`,
   },
   NOTIFICATIONS: `${API_PREFIX}/notifications`,
+  BROADCASTS: {
+    ACTIVE: `${API_PREFIX}/broadcasts/active`,
+    CREATE: `${API_PREFIX}/broadcasts`,
+    REMOVE: `${API_PREFIX}/broadcasts/active`,
+  },
   PLATFORM_BILLING: {
     PUBLIC: `${API_PREFIX}/platform-billing/public`,
     CATALOG: `${API_PREFIX}/platform-billing`,
@@ -60,6 +74,15 @@ const ENDPOINTS = {
     CREATE: (gymId) => `${API_PREFIX}/gyms/${gymId}/members`,
     UPDATE: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}`,
     DELETE: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}`,
+    QR: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/qr`,
+    CARE: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/care`,
+    WORKOUTS: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/workouts`,
+    WORKOUT: (gymId, memberId, planId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/workouts/${planId}`,
+    DIETS: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/diets`,
+    DIET: (gymId, memberId, planId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/diets/${planId}`,
+    MEASUREMENTS: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/measurements`,
+    MEASUREMENT: (gymId, memberId, measurementId) =>
+      `${API_PREFIX}/gyms/${gymId}/members/${memberId}/measurements/${measurementId}`,
   },
   STAFF: {
     LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/staff`,
@@ -81,6 +104,7 @@ const ENDPOINTS = {
     CREATE: (gymId) => `${API_PREFIX}/gyms/${gymId}/events`,
     UPDATE: (gymId, eventId) => `${API_PREFIX}/gyms/${gymId}/events/${eventId}`,
     DELETE: (gymId, eventId) => `${API_PREFIX}/gyms/${gymId}/events/${eventId}`,
+    BOOKINGS: (gymId, eventId) => `${API_PREFIX}/gyms/${gymId}/events/${eventId}/bookings`,
   },
   ENQUIRIES: {
     LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/enquiries`,
@@ -88,10 +112,20 @@ const ENDPOINTS = {
     CREATE: (gymId) => `${API_PREFIX}/gyms/${gymId}/enquiries`,
     UPDATE: (gymId, enquiryId) => `${API_PREFIX}/gyms/${gymId}/enquiries/${enquiryId}`,
     DELETE: (gymId, enquiryId) => `${API_PREFIX}/gyms/${gymId}/enquiries/${enquiryId}`,
+    CONVERT: (gymId, enquiryId) => `${API_PREFIX}/gyms/${gymId}/enquiries/${enquiryId}/convert`,
   },
   ATTENDANCE: {
     LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/attendance`,
+    LOOKUP: (gymId) => `${API_PREFIX}/gyms/${gymId}/attendance/lookup`,
     CHECK_IN: (gymId) => `${API_PREFIX}/gyms/${gymId}/attendance/check-in`,
+  },
+  DAY_PASSES: {
+    LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/day-passes`,
+    CREATE: (gymId) => `${API_PREFIX}/gyms/${gymId}/day-passes`,
+    CHECK_IN: (gymId, passId) => `${API_PREFIX}/gyms/${gymId}/day-passes/${passId}/check-in`,
+  },
+  PUBLIC: {
+    CONTACT: `${API_PREFIX}/public/contact`,
   },
   PRODUCTS: {
     LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/products`,
@@ -130,6 +164,13 @@ const ENDPOINTS = {
     MESSAGE: (gymId, messageId) => `${API_PREFIX}/gyms/${gymId}/chat/messages/${messageId}`,
     PIN: (gymId, messageId) => `${API_PREFIX}/gyms/${gymId}/chat/messages/${messageId}/pin`,
   },
+  MEDIA_ADS: {
+    LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/media-ads`,
+    CREATE: (gymId) => `${API_PREFIX}/gyms/${gymId}/media-ads`,
+    BY_ID: (gymId, adId) => `${API_PREFIX}/gyms/${gymId}/media-ads/${adId}`,
+    UPDATE: (gymId, adId) => `${API_PREFIX}/gyms/${gymId}/media-ads/${adId}`,
+    DELETE: (gymId, adId) => `${API_PREFIX}/gyms/${gymId}/media-ads/${adId}`,
+  },
   BANNERS: {
     LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/banners`,
     STATS: (gymId) => `${API_PREFIX}/gyms/${gymId}/banners/stats`,
@@ -139,15 +180,20 @@ const ENDPOINTS = {
     DELETE: (gymId, bannerId) => `${API_PREFIX}/gyms/${gymId}/banners/${bannerId}`,
     DUPLICATE: (gymId, bannerId) => `${API_PREFIX}/gyms/${gymId}/banners/${bannerId}/duplicate`,
   },
+  ADMIN: {
+    DASHBOARD: `${API_PREFIX}/admin/dashboard`,
+  },
   HEALTH: `${API_PREFIX}/health`,
   INVITES: {
     PLANS: `${API_PREFIX}/invites/plans`,
     LIST: `${API_PREFIX}/invites`,
     OVERVIEW: (id) => `${API_PREFIX}/invites/${id}/overview`,
+    RECORDS: (id) => `${API_PREFIX}/invites/${id}/records`,
     CREATE: `${API_PREFIX}/invites`,
     MARK_SENT: (id) => `${API_PREFIX}/invites/${id}/sent`,
     REVOKE: (id) => `${API_PREFIX}/invites/${id}/revoke`,
     PUBLISH: (id) => `${API_PREFIX}/invites/${id}/publish`,
+    APP_ADS: (id) => `${API_PREFIX}/invites/${id}/app-ads`,
     PUBLIC: (token) => `${API_PREFIX}/invites/public/${token}`,
     CHECKOUT: (token) => `${API_PREFIX}/invites/public/${token}/checkout`,
     VERIFY_PAYMENT: (token) => `${API_PREFIX}/invites/public/${token}/verify-payment`,
@@ -172,6 +218,8 @@ const ENDPOINTS = {
   },
   SUPPORT: {
     TICKETS: `${API_PREFIX}/support/tickets`,
+    BY_ID: (ticketId) => `${API_PREFIX}/support/tickets/${ticketId}`,
+    REPLY: (ticketId) => `${API_PREFIX}/support/tickets/${ticketId}/replies`,
     UPDATE_STATUS: (ticketId) => `${API_PREFIX}/support/tickets/${ticketId}/status`,
   },
 };

@@ -9,7 +9,7 @@ import {
   clearCurrentMember,
 } from '../../../store/slices/memberSlice';
 import ENDPOINTS from '../../../config/apiUrls';
-import { getRequest } from '../../../config/dataApi';
+import { getRequest, postRequest } from '../../../config/dataApi';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
 import MediaFileDrop from '../../../components/fitsphere/MediaFileDrop';
@@ -464,10 +464,21 @@ const AddEditMember = () => {
                 <div>
                   <p className="font-medium">Biometric / QR Assignment</p>
                   <p className="text-sm text-secondary">ID: {qrDisplay}</p>
+                  {currentMember?.qrCode?.startsWith('data:image') ? (
+                    <img src={currentMember.qrCode} alt="Member QR" className="mt-2 h-20 rounded bg-white p-1" />
+                  ) : null}
                 </div>
               </div>
               <button
                 type="button"
+                onClick={async () => {
+                  if (!isEdit || !currentGym?.id) return;
+                  const res = await postRequest(ENDPOINTS.MEMBERS.QR(currentGym.id, memberId), {});
+                  toast.success('QR reassigned');
+                  if (res.data?.qrCode) {
+                    /* currentMember refresh */
+                  }
+                }}
                 className="border-b border-primary-fixed text-sm font-medium text-primary-fixed"
               >
                 Re-assign Tag
@@ -475,50 +486,23 @@ const AddEditMember = () => {
             </div>
           </GlassCard>
 
-          {/* Billing & Payments */}
-          <GlassCard className="col-span-12 space-y-6 rounded-xl p-6 lg:col-span-6">
-            <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-              <Icon name="account_balance_wallet" className="text-primary-fixed" />
-              <h2 className="font-display text-xl font-semibold">Billing & Payments</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-white/10 p-4 transition-colors hover:bg-white/5">
-                <div className="flex items-center gap-4">
-                  <Icon name="credit_card" className="text-secondary" />
-                  <div>
-                    <p className="font-medium">Visa Ending in 4242</p>
-                    <p className="text-sm text-secondary">Expires 12/26</p>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-primary-fixed">DEFAULT</span>
+          {isEdit ? (
+            <GlassCard className="col-span-12 space-y-6 rounded-xl p-6 lg:col-span-6">
+              <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+                <Icon name="fitness_center" className="text-primary-fixed" />
+                <h2 className="font-display text-xl font-semibold">Training</h2>
               </div>
-
-              <button
-                type="button"
-                className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-dashed border-white/10 px-4 py-3 text-secondary transition-colors hover:border-white/30 hover:text-on-surface"
+              <p className="text-sm text-secondary">
+                Assign workout and diet plans from the member care screen.
+              </p>
+              <Link
+                to={`/owner/members/${memberId}/plans`}
+                className="inline-flex rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold"
               >
-                <span className="text-sm font-medium">Add New Payment Method</span>
-                <Icon name="add_circle" size={22} />
-              </button>
-
-              <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                <div>
-                  <p className="font-medium">Auto-pay Enrollment</p>
-                  <p className="text-sm text-secondary">Deduct monthly fees automatically</p>
-                </div>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    checked={form.autoPay}
-                    onChange={(e) => setForm({ ...form, autoPay: e.target.checked })}
-                    className="peer sr-only"
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-surface-variant after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-primary-fixed peer-checked:after:translate-x-full" />
-                </label>
-              </div>
-            </div>
-          </GlassCard>
+                Workout & diet
+              </Link>
+            </GlassCard>
+          ) : null}
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:hidden">

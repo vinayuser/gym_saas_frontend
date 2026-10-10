@@ -48,6 +48,7 @@ const EventCalendar = ({
   onEdit,
   onDelete,
   onCreateForDate,
+  onBookings,
   readOnly = false,
 }) => {
   const today = new Date();
@@ -312,6 +313,16 @@ const EventCalendar = ({
                     className="flex-1 rounded-lg bg-primary-container py-2.5 text-sm font-bold text-on-primary-container"
                   >
                     Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onBookings?.(selected);
+                      setSelected(null);
+                    }}
+                    className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold"
+                  >
+                    Bookings
                   </button>
                   <button
                     type="button"

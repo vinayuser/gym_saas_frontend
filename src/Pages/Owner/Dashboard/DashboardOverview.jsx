@@ -1,105 +1,82 @@
 import { Link } from 'react-router-dom';
 import GlassCard from '../../../components/fitsphere/GlassCard';
 import Icon from '../../../components/fitsphere/Icon';
+import { TABLE_CLASS, TD, TH, THEAD_ROW, tableRowNumber } from '../../../components/fitsphere/TableShell';
 import { formatCurrency, formatDate } from '../../../helpers/formatUtils';
+import { AttendanceAreaChart, MembersLineChart, PlanPieChart, RevenueBarChart } from './dashboardCharts';
 
-const StatCard = ({ label, value, subText, subIcon, icon }) => (
-  <GlassCard className="flex flex-col justify-between rounded-xl p-6">
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-semibold uppercase tracking-widest text-secondary opacity-50">
-        {label}
-      </span>
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-fixed/10">
-        <Icon name={icon} className="text-primary-fixed" />
+const StatCard = ({ label, value, sub, icon }) => (
+  <GlassCard className="p-4">
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">{label}</p>
+        <p className="mt-1 font-display text-2xl font-bold leading-none">{value}</p>
+        {sub ? <p className="mt-1.5 text-xs text-secondary">{sub}</p> : null}
       </div>
-    </div>
-    <div className="mt-6">
-      <h2 className="font-display text-5xl font-bold leading-none tracking-tight">{value}</h2>
-      <div className="mt-2 flex items-center gap-1 text-primary-fixed">
-        <Icon name={subIcon} size={18} />
-        <span className="text-xs font-semibold">{subText}</span>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-fixed/10">
+        <Icon name={icon} size={18} className="text-primary-fixed" />
       </div>
     </div>
   </GlassCard>
 );
 
-const ExpirationRow = ({ item }) => (
-  <Link
-    to={`/owner/members/${item.id}/edit`}
-    className="group flex items-center justify-between rounded-lg border-b border-white/5 p-4 transition-colors hover:bg-white/5"
-  >
-    <div className="flex items-center gap-4">
-      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 text-xs font-bold">
-        {item.firstName?.[0]}
-        {item.lastName?.[0]}
-      </div>
-      <div>
-        <p className="text-sm font-bold">
-          {item.firstName} {item.lastName}
-        </p>
-        <p className="text-sm text-secondary opacity-50">{item.expiresIn}</p>
-      </div>
-    </div>
-    <Icon
-      name="chevron_right"
-      className="text-secondary opacity-0 transition-opacity group-hover:opacity-100"
-    />
-  </Link>
-);
-
 const DashboardOverview = ({ data, heatmapPeriod, onHeatmapPeriodChange }) => {
-  const stats = data?.stats;
-  const heatmap = data?.heatmap || [];
-  const maxHeat = Math.max(...heatmap.map((h) => h.count), 1);
+  const stats = data?.stats || {};
+  const charts = data?.charts || {};
+  const attendance = charts.attendance || data?.heatmap || [];
+  const revenue = charts.revenue || [];
+  const members = charts.members || [];
+  const plans = charts.plans || [];
   const expirationItems = data?.expirations || [];
-  const expirationTotal = stats?.expiringCount ?? expirationItems.length;
+  const expirationTotal = stats.expiringCount ?? expirationItems.length;
   const transactions = data?.transactions || [];
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Active Members"
-          value={(stats?.activeMembers ?? 0).toLocaleString()}
-          subText={`${stats?.memberGrowthPct >= 0 ? '+' : ''}${stats?.memberGrowthPct ?? 0}% this month`}
-          subIcon="trending_up"
+          label="Active members"
+          value={(stats.activeMembers ?? 0).toLocaleString()}
+          sub={`${stats.memberGrowthPct >= 0 ? '+' : ''}${stats.memberGrowthPct ?? 0}% vs last month`}
           icon="group"
         />
         <StatCard
-          label="Today's Check-ins"
-          value={(stats?.todayCheckIns ?? 0).toLocaleString()}
-          subText={`${stats?.checkInCapacityPct ?? 0}% of peak capacity`}
-          subIcon="history"
-          icon="done_all"
+          label="Today's check-ins"
+          value={(stats.todayCheckIns ?? 0).toLocaleString()}
+          sub={`${stats.currentlyInside ?? 0} inside now`}
+          icon="qr_code_scanner"
         />
         <StatCard
-          label="Monthly Revenue"
-          value={formatCurrency(stats?.monthlyRevenue ?? 0)}
-          subText="This month"
-          subIcon="arrow_upward"
+          label="Revenue this month"
+          value={formatCurrency(stats.monthlyRevenue ?? 0)}
+          sub={`${formatCurrency(stats.membershipRevenue ?? 0)} membership`}
           icon="payments"
+        />
+        <StatCard
+          label="Needs attention"
+          value={(stats.expiringCount ?? 0) + (stats.openLeads ?? 0)}
+          sub={`${stats.expiringCount ?? 0} expiring · ${stats.openLeads ?? 0} open leads`}
+          icon="priority_high"
         />
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        <GlassCard className="relative col-span-12 overflow-hidden rounded-xl p-6 lg:col-span-8">
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
+      <div className="grid gap-3 lg:grid-cols-12">
+        <GlassCard className="p-4 lg:col-span-8">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="font-display text-2xl font-semibold">Attendance Heatmap</h3>
-              <p className="text-sm text-secondary opacity-60">
-                {heatmapPeriod === 'week' ? 'Check-ins for each of the last 7 days' : 'Check-ins today, by hour'}
+              <h3 className="text-sm font-semibold">Attendance</h3>
+              <p className="text-xs text-secondary">
+                {heatmapPeriod === 'week' ? 'Check-ins over the last 7 days' : 'Check-ins today by hour'}
               </p>
             </div>
-            <div className="flex items-center gap-1 rounded-lg bg-white/5 p-1">
+            <div className="flex rounded-lg bg-white/5 p-0.5">
               {['day', 'week'].map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => onHeatmapPeriodChange(p)}
-                  className={`rounded px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
-                    heatmapPeriod === p
-                      ? 'bg-primary-fixed text-on-primary-fixed'
-                      : 'text-secondary hover:bg-white/10'
+                  className={`rounded px-3 py-1 text-xs font-semibold capitalize ${
+                    heatmapPeriod === p ? 'bg-primary-fixed text-on-primary-fixed' : 'text-secondary hover:bg-white/10'
                   }`}
                 >
                   {p}
@@ -107,101 +84,115 @@ const DashboardOverview = ({ data, heatmapPeriod, onHeatmapPeriodChange }) => {
               ))}
             </div>
           </div>
-
-          <div className="flex h-64 items-end gap-1">
-            {heatmap.length === 0 ? (
-              <p className="text-sm text-secondary">No check-ins in this range yet.</p>
-            ) : (
-              heatmap.map((item) => {
-                const height = item.count ? Math.max((item.count / maxHeat) * 100, 14) : 0;
-                return (
-                  <div key={item.label} className="flex h-full min-w-0 flex-1 flex-col justify-end">
-                    <span className="mb-1 text-center text-[10px] font-semibold text-secondary">{item.count || ''}</span>
-                    <div
-                      className="w-full rounded-t bg-primary-fixed"
-                      style={{ height: `${height}%` }}
-                      title={`${item.label}: ${item.count} check-ins`}
-                    />
-                    <span className="mt-2 truncate text-center text-[10px] text-secondary">{item.label}</span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-primary-fixed/10 blur-[100px]" />
+          {attendance.length === 0 ? (
+            <p className="py-12 text-center text-sm text-secondary">No check-ins in this range yet.</p>
+          ) : (
+            <AttendanceAreaChart data={attendance} />
+          )}
         </GlassCard>
 
-        <GlassCard className="col-span-12 flex flex-col rounded-xl p-6 lg:col-span-4">
-          <div className="mb-10 flex items-center justify-between">
-            <h3 className="font-display text-2xl font-semibold">Expirations</h3>
-            {expirationTotal > 0 && (
-              <span className="rounded bg-error-container px-2 py-0.5 text-xs font-semibold text-error">
-                High Priority
+        <GlassCard className="flex flex-col p-4 lg:col-span-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Expiring soon</h3>
+            {expirationTotal > 0 ? (
+              <span className="rounded bg-error-container/80 px-2 py-0.5 text-[10px] font-semibold text-error">
+                {expirationTotal} in 14 days
               </span>
-            )}
+            ) : null}
           </div>
-
-          <div className="custom-scrollbar flex-1 space-y-0 overflow-y-auto pr-2">
+          <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto">
             {expirationItems.length === 0 ? (
-              <p className="py-4 text-sm text-secondary">No memberships expiring in the next 14 days.</p>
+              <p className="py-6 text-sm text-secondary">No memberships expiring in the next 14 days.</p>
             ) : (
-              expirationItems.map((item) => <ExpirationRow key={item.id} item={item} />)
+              expirationItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/owner/members/${item.id}/edit`}
+                  className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-white/5"
+                >
+                  <div>
+                    <p className="text-sm font-medium">
+                      {item.firstName} {item.lastName}
+                    </p>
+                    <p className="text-xs text-secondary">{item.planName || item.expiresIn}</p>
+                  </div>
+                  <span className="text-xs text-secondary">{item.expiresIn}</span>
+                </Link>
+              ))
             )}
           </div>
-
-          <Link
-            to="/owner/members"
-            className="mt-6 block w-full rounded-lg border border-white/10 py-3 text-center text-sm font-medium transition-colors hover:bg-white/5"
-          >
-            View All ({expirationTotal})
+          <Link to="/owner/members" className="mt-3 text-center text-xs font-semibold text-primary-fixed hover:underline">
+            View members
           </Link>
         </GlassCard>
 
-        <GlassCard className="col-span-12 overflow-hidden rounded-xl p-0">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 p-6">
-            <h3 className="font-display text-2xl font-semibold">Recent Transactions</h3>
-            <Link
-              to="/owner/finances/payments"
-              className="flex items-center gap-1 text-sm font-medium text-primary-fixed hover:underline"
-            >
+        <GlassCard className="p-4 lg:col-span-8">
+          <h3 className="text-sm font-semibold">Revenue (6 months)</h3>
+          <p className="mb-3 text-xs text-secondary">Membership, store, and invoice income</p>
+          {revenue.length === 0 ? (
+            <p className="py-12 text-center text-sm text-secondary">No revenue recorded yet.</p>
+          ) : (
+            <RevenueBarChart data={revenue} />
+          )}
+        </GlassCard>
+
+        <GlassCard className="p-4 lg:col-span-4">
+          <h3 className="text-sm font-semibold">Plan mix</h3>
+          <p className="mb-2 text-xs text-secondary">Active memberships by plan</p>
+          <PlanPieChart data={plans} />
+        </GlassCard>
+
+        <GlassCard className="p-4 lg:col-span-4">
+          <h3 className="text-sm font-semibold">New members</h3>
+          <p className="mb-2 text-xs text-secondary">Sign-ups over the last 6 months</p>
+          {members.length === 0 ? (
+            <p className="py-12 text-center text-sm text-secondary">No new members yet.</p>
+          ) : (
+            <MembersLineChart data={members} />
+          )}
+        </GlassCard>
+
+        <GlassCard className="overflow-hidden p-0 lg:col-span-8">
+          <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+            <h3 className="text-sm font-semibold">Recent payments</h3>
+            <Link to="/owner/finances/payments" className="text-xs font-semibold text-primary-fixed hover:underline">
               View ledger
-              <Icon name="arrow_forward" size={18} />
             </Link>
           </div>
-
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-white/[0.02]">
-                <tr>
-                  {['Transaction ID', 'Member', 'Plan', 'Date', 'Amount', 'Status'].map((col) => (
-                    <th
-                      key={col}
-                      className="px-6 py-3 text-xs font-semibold uppercase tracking-wider text-secondary opacity-50"
-                    >
-                      {col}
-                    </th>
-                  ))}
+            <table className={`${TABLE_CLASS} min-w-[640px]`}>
+              <thead>
+                <tr className={THEAD_ROW}>
+                  <th className={`w-12 ${TH}`}>#</th>
+                  <th className={TH}>Ref</th>
+                  <th className={TH}>Member</th>
+                  <th className={TH}>Plan</th>
+                  <th className={TH}>Date</th>
+                  <th className={TH}>Amount</th>
+                  <th className={TH}>Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-secondary">
+                    <td colSpan={7} className={`${TD} py-8 text-center text-secondary`}>
                       No transactions yet.
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((tx) => (
-                    <tr key={tx.id} className="transition-colors hover:bg-white/5">
-                      <td className="px-6 py-4 text-sm font-medium">{tx.id}</td>
-                      <td className="px-6 py-4 text-sm font-medium">{tx.member}</td>
-                      <td className="px-6 py-4 text-sm text-secondary">{tx.plan}</td>
-                      <td className="px-6 py-4 text-sm text-secondary">{formatDate(tx.date)}</td>
-                      <td className="px-6 py-4 text-sm font-medium">{formatCurrency(tx.amount)}</td>
-                      <td className="px-6 py-4">
+                  transactions.map((tx, i) => (
+                    <tr key={`${tx.id}-${i}`} className="hover:bg-white/[0.02]">
+                      <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                        {tableRowNumber(1, transactions.length, i)}
+                      </td>
+                      <td className={`${TD} font-medium`}>{tx.id}</td>
+                      <td className={TD}>{tx.member}</td>
+                      <td className={`${TD} text-secondary`}>{tx.plan}</td>
+                      <td className={`${TD} text-secondary`}>{formatDate(tx.date)}</td>
+                      <td className={`${TD} font-medium`}>{formatCurrency(tx.amount)}</td>
+                      <td className={TD}>
                         <span
-                          className={`rounded px-2 py-1 text-xs font-bold uppercase tracking-wider ${
+                          className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
                             tx.status === 'Completed'
                               ? 'bg-primary-fixed/20 text-primary-fixed'
                               : 'bg-secondary-container text-secondary'
