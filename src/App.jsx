@@ -15,11 +15,13 @@ import SubscriptionLegacy from './Pages/Dashboard/Subscription/Subscription';
 import OwnerDashboard from './Pages/Owner/Dashboard';
 import OwnerMembers from './Pages/Owner/Members';
 import AddEditMember from './Pages/Owner/Members/AddEditMember';
+import MemberView from './Pages/Owner/Members/MemberView';
 import MemberCare from './Pages/Owner/Members/MemberCare';
 import OwnerGyms from './Pages/Owner/Gyms';
 import OwnerSubscription from './Pages/Owner/Subscription';
 import OwnerStaff from './Pages/Owner/Staff/Staff';
 import AddStaff from './Pages/Owner/Staff/AddStaff';
+import StaffView from './Pages/Owner/Staff/StaffView';
 import OwnerBanners from './Pages/Owner/Banners/Banners';
 import AddEditBanner from './Pages/Owner/Banners/AddEditBanner';
 import VideoAds from './Pages/Owner/Ads/VideoAds';
@@ -34,13 +36,14 @@ import StoreCategories from './Pages/Owner/Store/StoreCategories';
 import StoreProducts from './Pages/Owner/Store/StoreProducts';
 import StoreOrders from './Pages/Owner/Store/StoreOrders';
 import MemberStore from './Pages/Owner/Store/MemberStore';
-import FinanceOverview from './Pages/Owner/Finances/FinanceOverview';
 import FinancePayments from './Pages/Owner/Finances/FinancePayments';
 import FinanceExpenses from './Pages/Owner/Finances/FinanceExpenses';
-import FinanceLedger from './Pages/Owner/Finances/FinanceLedger';
+import FinanceRefunds from './Pages/Owner/Finances/FinanceRefunds';
+import FinancePnL from './Pages/Owner/Finances/FinancePnL';
 import FinanceReports from './Pages/Owner/Finances/FinanceReports';
 import Trainers from './Pages/Owner/Trainers/Trainers';
 import AddTrainer from './Pages/Owner/Trainers/AddTrainer';
+import TrainerView from './Pages/Owner/Trainers/TrainerView';
 import CommunityChat from './Pages/Owner/Chat/CommunityChat';
 import Settings from './Pages/Owner/Settings/Settings';
 import Support from './Pages/Owner/Support/Support';
@@ -106,14 +109,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="dashboard/reports"
-            element={
-              <ProtectedRoute allowedRoles={OWNER_ROLES} fallbackPath="/owner/dashboard">
-                <OwnerDashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="dashboard/reports" element={<Navigate to="/owner/dashboard" replace />} />
           <Route
             path="dashboard"
             element={
@@ -151,6 +147,14 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={[...OWNER_MANAGER, ROLES.TRAINER]} fallbackPath="/owner/members">
                 <MemberCare />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="members/:memberId"
+            element={
+              <ProtectedRoute allowedRoles={[...OWNER_ROLES, ROLES.SUPER_ADMIN]} fallbackPath="/owner/members">
+                <MemberView />
               </ProtectedRoute>
             }
           />
@@ -195,6 +199,17 @@ const App = () => {
                 fallbackPath="/owner/staff"
               >
                 <AddStaff />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="staff/:staffId"
+            element={
+              <ProtectedRoute
+                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.GYM_OWNER, ROLES.MANAGER, ROLES.RECEPTIONIST]}
+                fallbackPath="/owner/staff"
+              >
+                <StaffView />
               </ProtectedRoute>
             }
           />
@@ -292,11 +307,7 @@ const App = () => {
           />
           <Route
             path="finances/overview"
-            element={
-              <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/dashboard">
-                <FinanceOverview />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/owner/finances/payments" replace />}
           />
           <Route
             path="finances/payments"
@@ -315,12 +326,24 @@ const App = () => {
             }
           />
           <Route
-            path="finances/ledger"
+            path="finances/refunds"
             element={
               <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/dashboard">
-                <FinanceLedger />
+                <FinanceRefunds />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="finances/pnl"
+            element={
+              <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/dashboard">
+                <FinancePnL />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="finances/ledger"
+            element={<Navigate to="/owner/finances/reports" replace />}
           />
           <Route
             path="finances/reports"
@@ -343,6 +366,14 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/trainers">
                 <AddTrainer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="trainers/:trainerId"
+            element={
+              <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/trainers">
+                <TrainerView />
               </ProtectedRoute>
             }
           />

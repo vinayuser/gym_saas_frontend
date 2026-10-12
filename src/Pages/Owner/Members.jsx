@@ -248,6 +248,13 @@ const Members = () => {
                       <div className="inline-flex items-center">
                         <button
                           type="button"
+                          onClick={() => navigate(`/owner/members/${m.id}`)}
+                          className="rounded-lg border border-white/10 px-2.5 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary-fixed/40 hover:text-primary-fixed"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => navigate(`/owner/members/${m.id}/edit`)}
                           className="p-2 text-secondary transition-colors hover:text-primary-fixed"
                         >

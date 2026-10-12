@@ -86,7 +86,7 @@ const Banners = () => {
 
   return (
     <SectionLoader show={loading && !banners.length}>
-      <OwnerPageShell tabs={['Overview', 'Analytics', 'Reports']} activeTab="Overview" showSearch={false}>
+      <OwnerPageShell tabs={['Overview', 'Analytics']} activeTab="Overview" showSearch={false}>
         <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <GlassCard className="flex items-center justify-between p-4" hover={false}>
             <div>

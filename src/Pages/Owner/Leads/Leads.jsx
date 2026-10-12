@@ -11,142 +11,37 @@ import AppModal from '../../../components/fitsphere/AppModal';
 import LeadFormModal from '../../../components/fitsphere/LeadFormModal';
 import StatCard from '../../../components/fitsphere/StatCard';
 import SectionLoader from '../../../components/Loader/SectionLoader';
+import TableShell, {
+  TABLE_CLASS,
+  TD,
+  TH,
+  THEAD_ROW,
+  TableSelect,
+  tableRowNumber,
+} from '../../../components/fitsphere/TableShell';
+import useDebouncedValue from '../../../hooks/useDebouncedValue';
 import { formatDate } from '../../../helpers/formatUtils';
 
-const COLUMNS = [
-  {
-    status: 'NEW',
-    title: 'New Inquiries',
-    accent: 'border-sky-400',
-    badge: 'bg-sky-400/15 text-sky-300',
-    chip: 'border-sky-400/40 text-sky-300 hover:bg-sky-400/15',
-  },
-  {
-    status: 'CONTACTED',
-    title: 'Initial Contact',
-    accent: 'border-amber-400',
-    badge: 'bg-amber-400/15 text-amber-300',
-    chip: 'border-amber-400/40 text-amber-300 hover:bg-amber-400/15',
-  },
-  {
-    status: 'TRIAL',
-    title: 'Trial / Tour',
-    accent: 'border-violet-400',
-    badge: 'bg-violet-400/15 text-violet-300',
-    chip: 'border-violet-400/40 text-violet-300 hover:bg-violet-400/15',
-  },
-  {
-    status: 'FOLLOW_UP',
-    title: 'Closing',
-    accent: 'border-primary-container',
-    badge: 'bg-primary-container/15 text-primary-container',
-    chip: 'border-primary-container/40 text-primary-container hover:bg-primary-container/15',
-  },
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: 'All statuses' },
+  { value: 'NEW', label: 'New' },
+  { value: 'CONTACTED', label: 'Contacted' },
+  { value: 'TRIAL', label: 'Trial' },
+  { value: 'FOLLOW_UP', label: 'Follow-up' },
+  { value: 'CONVERTED', label: 'Converted' },
+  { value: 'LOST', label: 'Lost' },
 ];
 
-const fullName = (lead) => [lead.name, lead.lastName].filter(Boolean).join(' ');
-
-const shortLabel = (title) => title.split(' ')[0];
-
-const LeadCard = ({ lead, onOpen, onMove }) => {
-  const currentIndex = COLUMNS.findIndex((c) => c.status === lead.status);
-  const prev = currentIndex > 0 ? COLUMNS[currentIndex - 1] : null;
-  const next = currentIndex >= 0 && currentIndex < COLUMNS.length - 1 ? COLUMNS[currentIndex + 1] : null;
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-white/10 bg-surface-container-low shadow-lg shadow-black/20">
-      <button
-        type="button"
-        onClick={() => onOpen(lead)}
-        className="w-full p-4 text-left transition-colors hover:bg-white/[0.03]"
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-on-surface">{fullName(lead)}</p>
-            <p className="mt-0.5 text-xs capitalize text-secondary">
-              {lead.source?.replace(/-/g, ' ') || 'walk-in'}
-            </p>
-          </div>
-          {lead.interestedIn ? (
-            <span className="shrink-0 rounded-full border border-primary-container/30 bg-primary-container/10 px-2 py-0.5 text-[10px] font-semibold text-primary-container">
-              {lead.interestedIn.split(' ')[0]}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-3 space-y-1.5 text-xs text-secondary">
-          {lead.phone ? (
-            <p className="flex items-center gap-1.5">
-              <Icon name="call" size={14} className="text-secondary/70" />
-              <span className="truncate">{lead.phone}</span>
-            </p>
-          ) : null}
-          {lead.email ? (
-            <p className="flex items-center gap-1.5">
-              <Icon name="mail" size={14} className="text-secondary/70" />
-              <span className="truncate">{lead.email}</span>
-            </p>
-          ) : null}
-          {lead.trialDate ? (
-            <p className="flex items-center gap-1.5 text-violet-300">
-              <Icon name="event" size={14} />
-              Trial: {formatDate(lead.trialDate)}
-            </p>
-          ) : null}
-          {lead.followUpAt ? (
-            <p className="flex items-center gap-1.5 text-amber-300">
-              <Icon name="schedule" size={14} />
-              Follow-up: {formatDate(lead.followUpAt)}
-            </p>
-          ) : null}
-        </div>
-
-        {lead.fitnessGoal ? (
-          <p className="mt-3 line-clamp-2 text-[11px] leading-relaxed text-secondary/70">
-            {lead.fitnessGoal}
-          </p>
-        ) : null}
-      </button>
-
-      <div className="flex gap-2 border-t border-white/10 bg-black/20 p-2.5">
-        {prev ? (
-          <button
-            type="button"
-            onClick={() => onMove(lead.id, prev.status)}
-            className={`inline-flex flex-1 items-center justify-center gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition-colors ${prev.chip}`}
-            title={`Move to ${prev.title}`}
-          >
-            <Icon name="arrow_back" size={14} />
-            {shortLabel(prev.title)}
-          </button>
-        ) : (
-          <span className="flex-1" />
-        )}
-        {next ? (
-          <button
-            type="button"
-            onClick={() => onMove(lead.id, next.status)}
-            className={`inline-flex flex-1 items-center justify-center gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition-colors ${next.chip}`}
-            title={`Move to ${next.title}`}
-          >
-            {shortLabel(next.title)}
-            <Icon name="arrow_forward" size={14} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onMove(lead.id, 'CONVERTED')}
-            className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-emerald-400/40 px-2.5 py-2 text-[11px] font-semibold text-emerald-300 transition-colors hover:bg-emerald-400/15"
-            title="Mark converted"
-          >
-            Convert
-            <Icon name="check" size={14} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
+const STATUS_STYLE = {
+  NEW: 'bg-sky-400/15 text-sky-300',
+  CONTACTED: 'bg-amber-400/15 text-amber-300',
+  TRIAL: 'bg-violet-400/15 text-violet-300',
+  FOLLOW_UP: 'bg-primary-container/15 text-primary-container',
+  CONVERTED: 'bg-emerald-400/15 text-emerald-300',
+  LOST: 'bg-white/10 text-secondary',
 };
+
+const fullName = (lead) => [lead.name, lead.lastName].filter(Boolean).join(' ');
 
 const Leads = () => {
   const navigate = useNavigate();
@@ -154,9 +49,14 @@ const Leads = () => {
   const [enquiries, setEnquiries] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editLeadId, setEditLeadId] = useState(null);
   const [detailLead, setDetailLead] = useState(null);
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const limit = 10;
 
   const load = () => {
     if (!currentGym?.id) return;
@@ -171,13 +71,24 @@ const Leads = () => {
 
   useEffect(load, [currentGym?.id]);
 
-  const columnCounts = useMemo(() => {
-    const counts = {};
-    COLUMNS.forEach((c) => {
-      counts[c.status] = enquiries.filter((e) => e.status === c.status).length;
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, currentGym?.id]);
+
+  const filtered = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    return enquiries.filter((lead) => {
+      if (statusFilter !== 'ALL' && lead.status !== statusFilter) return false;
+      if (!q) return true;
+      const hay = [fullName(lead), lead.phone, lead.email, lead.source, lead.interestedIn]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
     });
-    return counts;
-  }, [enquiries]);
+  }, [enquiries, debouncedSearch, statusFilter]);
+
+  const pageRows = filtered.slice((page - 1) * limit, page * limit);
 
   const convertLead = async (id) => {
     try {
@@ -185,7 +96,7 @@ const Leads = () => {
       const member = res.data?.member;
       toast.success('Lead converted to a member');
       setDetailLead(null);
-      if (member?.id) navigate(`/owner/members/${member.id}/edit`);
+      if (member?.id) navigate(`/owner/members/${member.id}`);
       else load();
     } catch {
       /* toast from api */
@@ -245,10 +156,30 @@ const Leads = () => {
   const active = enquiries.filter((e) => !['CONVERTED', 'LOST'].includes(e.status)).length;
 
   return (
-    <SectionLoader show={loading}>
+    <SectionLoader show={loading && !enquiries.length}>
       <OwnerPageShell showSearch={false}>
-        <div className="space-y-4">
-          <div className="flex justify-end">
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+          <StatCard label="Active Inquiries" value={active} icon="filter_alt" accent />
+          <StatCard label="Conversion Rate" value={`${conversion}%`} icon="trending_up" />
+          <StatCard label="Converted" value={converted} icon="check_circle" />
+          <StatCard label="Lost" value={lost} icon="cancel" />
+        </div>
+
+        <TableShell
+          title="Leads"
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search name, phone, email..."
+          filters={
+            <TableSelect value={statusFilter} onChange={setStatusFilter}>
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </TableSelect>
+          }
+          actions={
             <button
               type="button"
               onClick={openCreate}
@@ -257,78 +188,90 @@ const Leads = () => {
               <Icon name="person_add" size={16} />
               Add Inquiry
             </button>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-            <StatCard label="Active Inquiries" value={active} icon="filter_alt" accent />
-            <StatCard label="Conversion Rate" value={`${conversion}%`} icon="trending_up" />
-            <StatCard label="Converted" value={converted} icon="check_circle" />
-            <StatCard label="Lost" value={lost} icon="cancel" />
-          </div>
-
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {COLUMNS.map((col) => (
-              <div
-                key={col.status}
-                className={`min-w-[280px] flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-3`}
-              >
-                <div className={`mb-3 border-t-2 ${col.accent} pt-3`}>
-                  <div className="flex items-center justify-between gap-2 px-1">
-                    <h3 className="text-sm font-semibold text-on-surface">{col.title}</h3>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${col.badge}`}>
-                      {stats.byStatus?.[col.status] || 0}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {enquiries
-                    .filter((e) => e.status === col.status)
-                    .map((lead) => (
-                      <LeadCard key={lead.id} lead={lead} onOpen={setDetailLead} onMove={moveLead} />
-                    ))}
-                  {enquiries.filter((e) => e.status === col.status).length === 0 && (
-                    <div className="rounded-xl border border-dashed border-white/15 bg-black/10 px-4 py-8 text-center">
-                      <Icon name="inbox" size={22} className="mx-auto mb-2 text-secondary/50" />
-                      <p className="text-xs text-secondary">No inquiries</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {enquiries.some((e) => ['CONVERTED', 'LOST'].includes(e.status)) && (
-            <div className="grid gap-4 md:grid-cols-2">
-              {['CONVERTED', 'LOST'].map((status) => {
-                const items = enquiries.filter((e) => e.status === status);
-                if (!items.length) return null;
-                return (
-                  <div key={status}>
-                    <h3 className="mb-3 text-sm font-semibold text-secondary">
-                      {status === 'CONVERTED' ? 'Converted members' : 'Lost leads'} ({items.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {items.slice(0, 5).map((lead) => (
+          }
+          page={page}
+          total={filtered.length}
+          limit={limit}
+          loading={loading}
+          onPage={setPage}
+          noun="leads"
+        >
+          <table className={`${TABLE_CLASS} min-w-[880px]`}>
+            <thead>
+              <tr className={THEAD_ROW}>
+                <th className={`w-12 ${TH}`}>#</th>
+                <th className={TH}>Lead</th>
+                <th className={TH}>Contact</th>
+                <th className={TH}>Source</th>
+                <th className={TH}>Interest</th>
+                <th className={TH}>Follow-up</th>
+                <th className={TH}>Status</th>
+                <th className={`${TH} text-right`}>Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {pageRows.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className={`${TD} py-12 text-center text-secondary`}>
+                    No leads match this filter.
+                  </td>
+                </tr>
+              ) : (
+                pageRows.map((lead, i) => (
+                  <tr key={lead.id} className="hover:bg-white/[0.02]">
+                    <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
+                      {tableRowNumber(page, limit, i)}
+                    </td>
+                    <td className={TD}>
+                      <p className="font-medium">{fullName(lead)}</p>
+                      {lead.fitnessGoal ? (
+                        <p className="mt-0.5 line-clamp-1 text-xs text-secondary">{lead.fitnessGoal}</p>
+                      ) : null}
+                    </td>
+                    <td className={TD}>
+                      <p className="text-sm">{lead.phone || '—'}</p>
+                      <p className="text-xs text-secondary">{lead.email || ''}</p>
+                    </td>
+                    <td className={`${TD} capitalize text-secondary`}>
+                      {lead.source?.replace(/-/g, ' ') || '—'}
+                    </td>
+                    <td className={TD}>{lead.interestedIn || '—'}</td>
+                    <td className={`${TD} text-secondary`}>
+                      {lead.followUpAt ? formatDate(lead.followUpAt) : lead.trialDate ? formatDate(lead.trialDate) : '—'}
+                    </td>
+                    <td className={TD}>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                          STATUS_STYLE[lead.status] || 'bg-white/10 text-secondary'
+                        }`}
+                      >
+                        {lead.status?.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td className={`${TD} text-right`}>
+                      <div className="inline-flex items-center gap-1">
                         <button
-                          key={lead.id}
                           type="button"
                           onClick={() => setDetailLead(lead)}
-                          className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-surface-container-low px-4 py-3 text-left transition-colors hover:bg-white/[0.04]"
+                          className="rounded-lg border border-white/10 px-2.5 py-1 text-xs font-semibold text-secondary hover:border-primary-fixed/40 hover:text-primary-fixed"
                         >
-                          <span className="font-medium">{fullName(lead)}</span>
-                          <span className="text-xs text-secondary">
-                            {lead.interestedIn || lead.source}
-                          </span>
+                          View
                         </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(lead)}
+                          className="p-1.5 text-secondary hover:text-primary-fixed"
+                        >
+                          <Icon name="edit" size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </TableShell>
 
         <LeadFormModal
           open={formOpen}
@@ -416,20 +359,24 @@ const Leads = () => {
                 >
                   Edit
                 </button>
-                <button
-                  type="button"
-                  onClick={() => moveLead(detailLead.id, 'CONVERTED')}
-                  className="rounded-lg border border-emerald-500/40 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/10"
-                >
-                  Mark converted
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveLead(detailLead.id, 'LOST')}
-                  className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5"
-                >
-                  Mark lost
-                </button>
+                {!['CONVERTED', 'LOST'].includes(detailLead.status) ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => moveLead(detailLead.id, 'CONVERTED')}
+                      className="rounded-lg border border-emerald-500/40 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/10"
+                    >
+                      Mark converted
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveLead(detailLead.id, 'LOST')}
+                      className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5"
+                    >
+                      Mark lost
+                    </button>
+                  </>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => handleDelete(detailLead.id)}

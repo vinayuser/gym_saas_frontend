@@ -85,15 +85,34 @@ const DashboardAnalytics = ({ data }) => {
 
       <GlassCard className="p-4">
         <h3 className="text-sm font-semibold">Active plan mix</h3>
-        <p className="mb-2 text-xs text-secondary">Share of members on each membership plan</p>
-        <div className="max-w-md">
-          <PlanPieChart data={planMix} />
+        <p className="mb-3 text-xs text-secondary">Share of members on each membership plan</p>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+          <div className="h-[240px] w-full min-w-0">
+            <PlanPieChart data={planMix} />
+          </div>
+          <div className="space-y-2">
+            {planMix.length === 0 ? (
+              <p className="text-sm text-secondary">No active memberships yet.</p>
+            ) : (
+              planMix.map((plan) => {
+                const total = planMix.reduce((sum, row) => sum + (row.count || 0), 0) || 1;
+                const pct = Math.round(((plan.count || 0) / total) * 100);
+                return (
+                  <div key={plan.name} className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate font-medium">{plan.name}</span>
+                      <span className="shrink-0 tabular-nums text-secondary">{plan.count}</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/5">
+                      <div className="h-full rounded-full bg-primary-fixed" style={{ width: `${Math.max(pct, 4)}%` }} />
+                    </div>
+                    <p className="mt-1 text-[11px] text-secondary">{pct}% of active members</p>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-        {revenueTrend.length ? (
-          <p className="mt-2 text-xs text-secondary">
-            Latest month revenue {formatCurrency(revenueTrend[revenueTrend.length - 1]?.amount || 0)}
-          </p>
-        ) : null}
       </GlassCard>
     </div>
   );

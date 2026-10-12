@@ -40,32 +40,50 @@ const Subscription = () => {
 
         <GymBillingPanel />
 
-          {payments.length > 0 ? (
-            <TableShell title="Payments">
-              <table className={`${TABLE_CLASS} min-w-[520px]`}>
-                <thead>
-                  <tr className={THEAD_ROW}>
-                    <th className={`w-12 ${TH}`}>#</th>
-                    <th className={TH}>Date</th>
-                    <th className={TH}>Amount</th>
-                    <th className={TH}>Status</th>
+          <TableShell title="Payments">
+            <table className={`${TABLE_CLASS} min-w-[720px]`}>
+              <thead>
+                <tr className={THEAD_ROW}>
+                  <th className={`w-12 ${TH}`}>#</th>
+                  <th className={TH}>Date</th>
+                  <th className={TH}>Amount</th>
+                  <th className={TH}>Status</th>
+                  <th className={TH}>Provider</th>
+                  <th className={TH}>Reference</th>
+                  <th className={TH}>Currency</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {payments.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className={`${TD} py-10 text-center text-secondary`}>
+                      No subscription payments yet.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {payments.map((payment, i) => (
+                ) : (
+                  payments.map((payment, i) => (
                     <tr key={payment.id} className="hover:bg-white/[0.02]">
                       <td className={`${TD} text-xs font-semibold text-secondary tabular-nums`}>
                         {tableRowNumber(1, payments.length, i)}
                       </td>
                       <td className={TD}>{formatDate(payment.paidAt || payment.createdAt)}</td>
                       <td className={`${TD} font-medium`}>{formatInr(payment.amount)}</td>
-                      <td className={TD}>{payment.status}</td>
+                      <td className={TD}>
+                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs font-semibold">
+                          {payment.status || '—'}
+                        </span>
+                      </td>
+                      <td className={`${TD} text-secondary`}>{payment.provider || '—'}</td>
+                      <td className={`${TD} font-mono text-xs text-secondary`}>
+                        {payment.providerRef || payment.id?.slice(0, 8) || '—'}
+                      </td>
+                      <td className={`${TD} text-secondary`}>{payment.currency || 'INR'}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TableShell>
-          ) : null}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </TableShell>
       </div>
     </OwnerPageShell>
   );

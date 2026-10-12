@@ -104,16 +104,28 @@ export const MembersLineChart = ({ data, name = 'New members' }) => (
 );
 
 export const PlanPieChart = ({ data, emptyLabel = 'No active plans yet.' }) => {
-  const rows = data.map((item) => ({ name: item.name || item.plan, value: item.count }));
+  const rows = (data || []).map((item) => ({
+    name: item.name || item.plan || 'Plan',
+    value: Number(item.count) || 0,
+  })).filter((row) => row.value > 0);
   if (!rows.length) {
     return <p className="py-10 text-center text-sm text-secondary">{emptyLabel}</p>;
   }
   return (
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
-        <Pie data={rows} dataKey="value" nameKey="name" innerRadius={52} outerRadius={80} paddingAngle={3}>
+        <Pie
+          data={rows}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          innerRadius={56}
+          outerRadius={80}
+          paddingAngle={3}
+        >
           {rows.map((entry, i) => (
-            <Cell key={entry.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+            <Cell key={`${entry.name}-${i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip contentStyle={tooltipStyle} />

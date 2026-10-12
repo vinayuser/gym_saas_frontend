@@ -112,8 +112,8 @@ const Attendance = () => {
               Day passes
             </Link>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
+          <div className="grid items-start gap-3 md:grid-cols-2">
+            <div className="relative">
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -121,7 +121,7 @@ const Attendance = () => {
                 className="input-cyber w-full rounded-lg px-3 py-2"
               />
               {matches.length > 0 ? (
-                <div className="mt-2 overflow-hidden rounded-lg border border-white/10">
+                <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-64 overflow-y-auto rounded-lg border border-white/10 bg-surface-container shadow-xl">
                   {matches.map((member) => (
                     <button
                       key={member.id}
@@ -152,7 +152,7 @@ const Attendance = () => {
                   );
                 }
               }}
-              className="flex gap-2"
+              className="flex gap-2 self-start"
             >
               <input
                 value={qrText}

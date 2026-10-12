@@ -129,7 +129,7 @@ const StoreProducts = () => {
                 <th className={TH}>SKU</th>
                 <th className={TH}>Stock</th>
                 <th className={TH}>Price</th>
-                <th className={TH}>Status</th>
+                <th className={TH}>Stock level</th>
                 <th className={`${TH} text-right`}>Actions</th>
               </tr>
             </thead>
@@ -157,15 +157,24 @@ const StoreProducts = () => {
                   <td className={TD}>{p.stockQty}</td>
                   <td className={TD}>{formatCurrency(p.price)}</td>
                   <td className={TD}>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        p.stockQty <= (p.lowStockAt || 5)
-                          ? 'bg-error/20 text-error'
-                          : 'bg-primary-container/20 text-primary-container'
-                      }`}
-                    >
-                      {p.stockQty <= (p.lowStockAt || 5) ? 'LOW' : 'OK'}
-                    </span>
+                    {(() => {
+                      const lowAt = p.lowStockAt || 5;
+                      const qty = Number(p.stockQty) || 0;
+                      let label = 'Full';
+                      let className = 'bg-primary-container/20 text-primary-container';
+                      if (qty <= 0 || qty <= lowAt) {
+                        label = 'Low';
+                        className = 'bg-error/20 text-error';
+                      } else if (qty <= lowAt * 3) {
+                        label = 'Medium';
+                        className = 'bg-amber-400/15 text-amber-300';
+                      }
+                      return (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${className}`}>
+                          {label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className={TD}>
                     <div className="flex justify-end gap-1">

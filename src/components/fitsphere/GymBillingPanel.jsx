@@ -77,7 +77,7 @@ const GymBillingPanel = () => {
           <p className="text-xs font-semibold uppercase tracking-widest text-primary-fixed">This month</p>
           <p className="mt-2 font-display text-4xl font-bold text-primary-fixed">{inr(quote?.total || 0)}</p>
           <p className="mt-1 text-sm text-secondary">
-            First gym {inr(catalog.basePriceMonthly)} · extra gym {inr(catalog.extraGymPriceMonthly)}
+            First gym {inr(catalog.basePriceMonthly)} · second gym {inr(catalog.extraGymPriceMonthly)}
           </p>
         </GlassCard>
         <GlassCard className="p-6">
@@ -101,7 +101,7 @@ const GymBillingPanel = () => {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
-                    {gym.isBase ? 'First gym' : 'Extra gym'}
+                    {gym.isBase ? 'First gym' : 'Second gym'}
                   </p>
                   <h2 className="mt-1 font-display text-xl font-bold">{gym.name}</h2>
                 </div>

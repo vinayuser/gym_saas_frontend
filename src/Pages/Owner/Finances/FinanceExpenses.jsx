@@ -38,9 +38,9 @@ const FinanceExpenses = () => {
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <h1 className="font-display text-3xl font-bold md:text-4xl">Expenses &amp; P&amp;L</h1>
+            <h1 className="font-display text-3xl font-bold md:text-4xl">Expenses</h1>
             <p className="mt-1 text-secondary/70">
-              Revenue from real gym data; expense buckets are estimated ratios.
+              Operating expense buckets estimated from gym revenue.
             </p>
           </div>
         </div>
@@ -52,8 +52,6 @@ const FinanceExpenses = () => {
           <StatCard label="Subscriptions" value={formatCurrency(data?.subscriptionRevenue)} icon="card_membership" />
           <StatCard label="Store Sales" value={formatCurrency(data?.storeRevenue)} icon="shopping_bag" />
         </div>
-
-        <StatCard label="Net Profit Margin (est.)" value={`${data?.netMargin || 0}%`} icon="monitoring" accent />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {items.map((item) => (

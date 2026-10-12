@@ -81,9 +81,9 @@ const FinanceReports = () => {
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <h1 className="font-display text-3xl font-bold md:text-4xl">Ledger Reports</h1>
+            <h1 className="font-display text-3xl font-bold md:text-4xl">Reports &amp; Exports</h1>
             <p className="mt-1 text-secondary/70">
-              Revenue summary with exportable CSV and PDF in standard ledger format.
+              Revenue summary with exportable CSV and PDF reports.
             </p>
           </div>
           <FinanceExportActions

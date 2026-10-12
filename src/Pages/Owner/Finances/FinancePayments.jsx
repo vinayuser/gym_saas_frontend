@@ -65,7 +65,7 @@ const FinancePayments = () => {
   return (
     <OwnerPageShell showSearch={false}>
       <TableShell
-        title="Payment Ledger"
+        title="Payments"
         search={search}
         onSearch={setSearch}
         searchPlaceholder="Search payments..."

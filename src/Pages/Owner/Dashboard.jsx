@@ -9,19 +9,17 @@ import OwnerPageShell from '../../components/fitsphere/OwnerPageShell';
 import SectionLoader from '../../components/Loader/SectionLoader';
 import DashboardOverview from './Dashboard/DashboardOverview';
 import DashboardAnalytics from './Dashboard/DashboardAnalytics';
-import DashboardReports from './Dashboard/DashboardReports';
 
-const TABS = ['Overview', 'Analytics', 'Reports'];
+const TABS = ['Overview', 'Analytics'];
 
 const TAB_ROUTES = {
   Overview: '/owner/dashboard',
   Analytics: '/owner/dashboard/analytics',
-  Reports: '/owner/dashboard/reports',
 };
 
 const routeToTab = (pathname) => {
   if (pathname.endsWith('/analytics')) return 'Analytics';
-  if (pathname.endsWith('/reports')) return 'Reports';
+  if (pathname.endsWith('/reports')) return 'Overview';
   return 'Overview';
 };
 
@@ -34,7 +32,6 @@ const OwnerDashboard = () => {
   const [heatmapPeriod, setHeatmapPeriod] = useState('day');
   const [overviewData, setOverviewData] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
-  const [reportsData, setReportsData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -46,7 +43,6 @@ const OwnerDashboard = () => {
     const endpointByTab = {
       Overview: ENDPOINTS.GYMS.DASHBOARD(currentGym.id),
       Analytics: ENDPOINTS.GYMS.DASHBOARD_ANALYTICS(currentGym.id),
-      Reports: ENDPOINTS.GYMS.DASHBOARD_REPORTS(currentGym.id),
     };
 
     getRequest(endpointByTab[activeTab], {
@@ -56,7 +52,6 @@ const OwnerDashboard = () => {
         if (cancelled) return;
         if (activeTab === 'Overview') setOverviewData(res.data);
         if (activeTab === 'Analytics') setAnalyticsData(res.data);
-        if (activeTab === 'Reports') setReportsData(res.data);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -92,8 +87,7 @@ const OwnerDashboard = () => {
   const showLoader =
     loading &&
     ((activeTab === 'Overview' && !overviewData) ||
-      (activeTab === 'Analytics' && !analyticsData) ||
-      (activeTab === 'Reports' && !reportsData));
+      (activeTab === 'Analytics' && !analyticsData));
 
   return (
     <>
@@ -113,7 +107,6 @@ const OwnerDashboard = () => {
             />
           )}
           {activeTab === 'Analytics' && analyticsData && <DashboardAnalytics data={analyticsData} />}
-          {activeTab === 'Reports' && reportsData && <DashboardReports data={reportsData} />}
         </SectionLoader>
       </OwnerPageShell>
 

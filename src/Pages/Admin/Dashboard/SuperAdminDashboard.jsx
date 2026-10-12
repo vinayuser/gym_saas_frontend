@@ -141,7 +141,9 @@ const SuperAdminDashboard = () => {
             <GlassCard className="p-4 lg:col-span-4">
               <h3 className="text-sm font-semibold">Invite pipeline</h3>
               <p className="mb-2 text-xs text-secondary">All invites by status</p>
-              <PlanPieChart data={inviteStatus} emptyLabel="No invites yet." />
+              <div className="h-[220px]">
+                <PlanPieChart data={inviteStatus} emptyLabel="No invites yet." />
+              </div>
             </GlassCard>
 
             <GlassCard className="p-4 lg:col-span-4">
@@ -192,7 +194,7 @@ const SuperAdminDashboard = () => {
                 </Link>
               </div>
               {tickets.length ? (
-                <div className="mb-3 max-w-xs">
+                <div className="mb-3 h-[220px] max-w-xs">
                   <PlanPieChart data={tickets} emptyLabel="No tickets yet." />
                 </div>
               ) : null}

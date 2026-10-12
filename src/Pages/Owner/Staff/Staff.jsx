@@ -257,13 +257,22 @@ const Staff = () => {
                           </div>
                         </td>
                         <td className={`relative ${TD} text-right`}>
-                          <button
-                            type="button"
-                            onClick={() => setMenuOpenId(menuOpenId === row.id ? null : row.id)}
-                            className="p-1 text-secondary hover:text-primary-fixed"
-                          >
-                            <Icon name="more_vert" size={22} />
-                          </button>
+                          <div className="inline-flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/owner/staff/${row.id}`)}
+                              className="rounded-lg border border-white/10 px-2.5 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary-fixed/40 hover:text-primary-fixed"
+                            >
+                              View
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMenuOpenId(menuOpenId === row.id ? null : row.id)}
+                              className="p-1 text-secondary hover:text-primary-fixed"
+                            >
+                              <Icon name="more_vert" size={22} />
+                            </button>
+                          </div>
                           {menuOpenId === row.id && (
                             <div className="absolute right-3 top-full z-20 mt-1 min-w-[140px] overflow-hidden rounded-lg border border-white/10 bg-surface-container shadow-xl">
                               <button

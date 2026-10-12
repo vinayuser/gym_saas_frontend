@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Icon from '../../components/fitsphere/Icon';
 import OwnerProfileMenu from '../../components/fitsphere/OwnerProfileMenu';
-import { AppLauncher, NotificationMenu } from '../../components/fitsphere/HeaderMenus';
+import { NotificationMenu } from '../../components/fitsphere/HeaderMenus';
 import BroadcastBar from '../../components/fitsphere/BroadcastBar';
 import BroadcastModal from '../../components/fitsphere/BroadcastModal';
 import { setCurrentGym } from '../../store/slices/gymSlice';
@@ -32,6 +32,7 @@ const OwnerHeader = ({
   const broadcast = useSelector((state) => state.broadcast.current);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [removingBroadcast, setRemovingBroadcast] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
   const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN;
   const isPlatformAdmin = user?.role === ROLES.PLATFORM_ADMIN;
   const isPlatform = isSuperAdmin || isPlatformAdmin;
@@ -71,28 +72,44 @@ const OwnerHeader = ({
           </div>
         )}
 
-        {!useSearchFirst && !hideBranchPicker && !isPlatformAdmin && gyms.length > 0 && (
-          <div className="group relative hidden shrink-0 lg:block">
+        {!useSearchFirst && !hideBranchPicker && !isPlatform && gyms.length > 0 && (
+          <div className="relative hidden shrink-0 lg:block">
             <button
               type="button"
+              onClick={() => setBranchOpen((open) => !open)}
               className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-bold transition-colors hover:bg-white/10"
             >
               <Icon name="location_on" size={18} className="text-primary-fixed" />
               {currentGym?.name || 'Branch'}
               <Icon name="expand_more" size={18} className="text-secondary" />
             </button>
-            <div className="absolute left-0 top-full z-50 mt-2 hidden w-56 overflow-hidden rounded-xl border border-white/10 bg-surface-container shadow-2xl group-hover:block">
-              {gyms.map((gym) => (
+            {branchOpen ? (
+              <>
                 <button
-                  key={gym.id}
                   type="button"
-                  onClick={() => dispatch(setCurrentGym(gym))}
-                  className="block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-primary-fixed hover:text-on-primary-fixed"
-                >
-                  {gym.name}
-                </button>
-              ))}
-            </div>
+                  className="fixed inset-0 z-40 cursor-default"
+                  aria-label="Close branch menu"
+                  onClick={() => setBranchOpen(false)}
+                />
+                <div className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/10 bg-surface-container shadow-2xl">
+                  {gyms.map((gym) => (
+                    <button
+                      key={gym.id}
+                      type="button"
+                      onClick={() => {
+                        dispatch(setCurrentGym(gym));
+                        setBranchOpen(false);
+                      }}
+                      className={`block w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-primary-fixed hover:text-on-primary-fixed ${
+                        currentGym?.id === gym.id ? 'bg-white/5 font-semibold' : ''
+                      }`}
+                    >
+                      {gym.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
           </div>
         )}
 
@@ -151,7 +168,6 @@ const OwnerHeader = ({
           </button>
         ) : null}
         <NotificationMenu />
-        <AppLauncher />
 
         <OwnerProfileMenu
           roleLabel={

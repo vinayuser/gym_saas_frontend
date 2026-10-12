@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ENDPOINTS from '../../../config/apiUrls';
 import { getRequest } from '../../../config/dataApi';
@@ -18,6 +18,7 @@ import TableShell, {
 import useDebouncedValue from '../../../hooks/useDebouncedValue';
 
 const Trainers = () => {
+  const navigate = useNavigate();
   const { currentGym } = useSelector((s) => s.gym);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,12 +92,13 @@ const Trainers = () => {
                 <th className={TH}>Clients</th>
                 <th className={TH}>Rating</th>
                 <th className={TH}>Status</th>
+                <th className={`${TH} text-right`}>Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {trainers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={`${TD} py-12 text-center text-secondary`}>
+                  <td colSpan={7} className={`${TD} py-12 text-center text-secondary`}>
                     No trainers yet. Click Add Trainer to onboard your first coach.
                   </td>
                 </tr>
@@ -117,6 +119,15 @@ const Trainers = () => {
                       <span className="rounded-full bg-primary-container/20 px-2 py-0.5 text-xs font-semibold text-primary-container">
                         {t.status}
                       </span>
+                    </td>
+                    <td className={`${TD} text-right`}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/owner/trainers/${t.id}`)}
+                        className="rounded-lg border border-white/10 px-2.5 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary-fixed/40 hover:text-primary-fixed"
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))

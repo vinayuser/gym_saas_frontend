@@ -158,6 +158,7 @@ const ENDPOINTS = {
   },
   TRAINERS: {
     PERFORMANCE: (gymId) => `${API_PREFIX}/gyms/${gymId}/trainers/performance`,
+    BY_ID: (gymId, trainerId) => `${API_PREFIX}/gyms/${gymId}/trainers/${trainerId}`,
   },
   CHAT: {
     MESSAGES: (gymId) => `${API_PREFIX}/gyms/${gymId}/chat/messages`,
