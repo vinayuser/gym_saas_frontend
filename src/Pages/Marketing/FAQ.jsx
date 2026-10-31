@@ -54,14 +54,14 @@ const FAQ = () => {
         <section className="mb-14 md:mb-16">
           <div className="mx-auto max-w-3xl text-center">
             <span className="text-xs font-semibold uppercase tracking-widest text-primary-container">
-              Knowledge base
+              FAQ
             </span>
             <h1 className="mt-4 font-display text-4xl font-bold leading-[1.15] tracking-tight text-balance md:text-5xl lg:text-6xl">
-              Frequently asked{' '}
-              <span className="text-primary-container">questions</span>
+              Questions gym owners ask
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-secondary md:text-lg md:leading-8">
-              Pricing, extra gyms, check-in, and your team—search or browse by category.
+              Price, extra gyms, team logins, QR, WhatsApp, and the shop. What we offer is on the
+              home page. The calculator is on pricing.
             </p>
           </div>
 
@@ -75,7 +75,7 @@ const FAQ = () => {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search onboarding, billing, technical..."
+              placeholder="Search price, team, QR, store, branches…"
               className="w-full rounded-full border border-white/10 bg-surface-container-low py-3.5 pl-12 pr-4 text-base outline-none transition focus:border-primary-container"
             />
           </div>
@@ -226,14 +226,14 @@ const FAQ = () => {
             Still have questions?
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-secondary md:text-lg md:leading-8">
-            Book a walkthrough with our team—we&apos;ll map FitSphere Pro to your exact workflow.
+            Still unsure? Tell us the gym name and city. We will answer for your floor.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
             <Link
               to="/contact"
               className="neon-glow inline-flex min-w-[180px] items-center justify-center rounded-lg bg-primary-container px-8 py-3.5 text-sm font-bold text-on-primary-container transition hover:scale-[1.02]"
             >
-              Contact us
+              Talk to us
             </Link>
             <Link
               to="/pricing"

@@ -83,6 +83,8 @@ const ENDPOINTS = {
     MEASUREMENTS: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/measurements`,
     MEASUREMENT: (gymId, memberId, measurementId) =>
       `${API_PREFIX}/gyms/${gymId}/members/${memberId}/measurements/${measurementId}`,
+    BILLING: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/billing`,
+    RENEW: (gymId, memberId) => `${API_PREFIX}/gyms/${gymId}/members/${memberId}/renew`,
   },
   STAFF: {
     LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/staff`,
@@ -155,6 +157,18 @@ const ENDPOINTS = {
     PAYMENTS: (gymId) => `${API_PREFIX}/gyms/${gymId}/finance/payments`,
     EXPENSES: (gymId) => `${API_PREFIX}/gyms/${gymId}/finance/expenses`,
     REPORTS: (gymId) => `${API_PREFIX}/gyms/${gymId}/finance/reports`,
+    DUES: (gymId) => `${API_PREFIX}/gyms/${gymId}/finance/dues`,
+    COLLECTIONS: (gymId) => `${API_PREFIX}/gyms/${gymId}/finance/collections`,
+    REFUNDS: (gymId) => `${API_PREFIX}/gyms/${gymId}/finance/refunds`,
+    REFUND: (gymId, paymentId) => `${API_PREFIX}/gyms/${gymId}/finance/payments/${paymentId}/refund`,
+    COLLECT: (gymId, membershipId) => `${API_PREFIX}/gyms/${gymId}/memberships/${membershipId}/collect`,
+    EXPENSE_LIST: (gymId) => `${API_PREFIX}/gyms/${gymId}/expenses`,
+    EXPENSE: (gymId, expenseId) => `${API_PREFIX}/gyms/${gymId}/expenses/${expenseId}`,
+    INVOICES: (gymId) => `${API_PREFIX}/gyms/${gymId}/invoices`,
+    INVOICE: (gymId, invoiceId) => `${API_PREFIX}/gyms/${gymId}/invoices/${invoiceId}`,
+    INVOICE_SEND: (gymId, invoiceId) => `${API_PREFIX}/gyms/${gymId}/invoices/${invoiceId}/send`,
+    REMINDERS: (gymId) => `${API_PREFIX}/gyms/${gymId}/reminders`,
+    REMINDERS_RUN: (gymId) => `${API_PREFIX}/gyms/${gymId}/reminders/run`,
   },
   TRAINERS: {
     PERFORMANCE: (gymId) => `${API_PREFIX}/gyms/${gymId}/trainers/performance`,

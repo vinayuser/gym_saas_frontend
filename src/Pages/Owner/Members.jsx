@@ -15,6 +15,7 @@ import TableShell, {
   tableRowNumber,
 } from '../../components/fitsphere/TableShell';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
+import { formatCurrency, formatDate } from '../../helpers/formatUtils';
 
 const MemberStatusBadge = ({ member }) => {
   if (!member.isActive) {
@@ -188,14 +189,15 @@ const Members = () => {
                 <th className={TH}>Member Name</th>
                 <th className={TH}>Status</th>
                 <th className={TH}>Current Plan</th>
-                <th className={TH}>Last Check-in</th>
+                <th className={TH}>Expires</th>
+                <th className={TH}>Due</th>
                 <th className={`${TH} text-right`}>Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={`${TD} py-16 text-center text-secondary`}>
+                    <td colSpan={7} className={`${TD} py-16 text-center text-secondary`}>
                     {loading ? (
                       <p>Loading members…</p>
                     ) : (
@@ -243,9 +245,23 @@ const Members = () => {
                       <MemberStatusBadge member={m} />
                     </td>
                     <td className={TD}>{m.memberships?.[0]?.plan?.name || '—'}</td>
-                    <td className={`${TD} text-secondary`}>—</td>
+                    <td className={`${TD} text-secondary`}>
+                      {m.memberships?.[0]?.endDate ? formatDate(m.memberships[0].endDate) : '—'}
+                    </td>
+                    <td className={`${TD} ${m.memberships?.[0]?.balance > 0 ? 'font-semibold text-error' : 'text-secondary'}`}>
+                      {m.memberships?.[0]?.balance > 0 ? formatCurrency(m.memberships[0].balance) : '—'}
+                    </td>
                     <td className={`relative ${TD} text-right`}>
                       <div className="inline-flex items-center">
+                        {m.memberships?.[0]?.balance > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/owner/members/${m.id}`)}
+                            className="mr-1 rounded-lg bg-primary-fixed px-2.5 py-1 text-xs font-bold text-on-primary-fixed"
+                          >
+                            Collect
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => navigate(`/owner/members/${m.id}`)}

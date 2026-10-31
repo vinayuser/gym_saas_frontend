@@ -96,10 +96,13 @@ const FinanceReports = () => {
 
         <FinanceCategoryFilter value={category} onChange={setCategory} />
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-6">
           <StatCard label="Total Revenue" value={formatCurrency(data?.totalRevenue)} icon="payments" accent />
           <StatCard label="Subscriptions" value={formatCurrency(data?.subscriptionRevenue)} icon="card_membership" />
           <StatCard label="Store Sales" value={formatCurrency(data?.storeRevenue)} icon="shopping_bag" />
+          <StatCard label="Recorded expenses" value={formatCurrency(data?.totalExpenses)} icon="receipt_long" />
+          <StatCard label="GST on invoices" value={formatCurrency(data?.vat)} icon="receipt" />
+          <StatCard label="Net" value={formatCurrency(data?.netProfit)} icon="monitoring" />
         </div>
 
         <GlassCard className="p-6">
@@ -125,7 +128,7 @@ const FinanceReports = () => {
             )}
           </div>
           <p className="mt-6 text-sm text-secondary">
-            GST collected (est. 18%): {formatCurrency(data?.vat)}
+            GST is the tax split from tax invoices (plan prices are tax-inclusive). Receipts without a GSTIN have ₹0 tax.
           </p>
         </GlassCard>
       </div>

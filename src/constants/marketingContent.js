@@ -157,18 +157,17 @@ export const PRICING_FAQ = [
 ];
 
 export const CONTACT_CHANNELS = [
-  { icon: 'mail', label: 'Sales & demos', value: 'sales@gymsaas.com', sub: 'New gym owners & partnerships' },
-  { icon: 'support_agent', label: 'Support', value: 'support@gymsaas.com', sub: 'Existing owner accounts' },
-  { icon: 'admin_panel_settings', label: 'Hello from the team', value: 'hello@fitspherepro.com', sub: 'New gyms and partnerships' },
-  { icon: 'schedule', label: 'Response', value: '1–2 business days', sub: 'Via contact form or email' },
+  { icon: 'mail', label: 'New gyms', value: 'sales@gymsaas.com', sub: 'App, pricing, a walkthrough' },
+  { icon: 'support_agent', label: 'Support', value: 'support@gymsaas.com', sub: 'If you already have a login' },
+  { icon: 'schedule', label: 'Reply time', value: '1–2 business days', sub: 'Form or email' },
 ];
 
 export const FAQ_POPULAR_TOPICS = [
-  'Getting started',
   'Monthly price',
-  'Extra gyms',
-  'Check-in',
-  'Staff roles',
+  'Team logins',
+  'QR check-in',
+  'WhatsApp',
+  'Member store',
 ];
 
 export const MARKETING_NAV = [
@@ -180,6 +179,18 @@ export const MARKETING_NAV = [
 ];
 
 export const MARKETING_IMAGES = {
+  gymAppPhones: '/images/gym-app-two-brands.jpg',
+  gymAppSplash: '/images/gym-app-splash.jpg',
+  memberAppSplash: '/images/member-app-splash.png',
+  memberAppHome: '/images/member-app-home.png',
+  memberAppQr: '/images/member-app-qr.png',
+  memberAppStore: '/images/member-app-store.png',
+  memberAppAttendance: '/images/member-app-attendance.png',
+  memberAppDayPass: '/images/member-app-daypass.png',
+  memberAppEvent: '/images/member-app-event.png',
+  memberAppMembership: '/images/member-app-membership.png',
+  memberAppAlerts: '/images/member-app-alerts.png',
+  memberAppPay: '/images/member-app-pay.png',
   hero:
     'https://lh3.googleusercontent.com/aida-public/AB6AXuDN_DfZMp4oOeHI0xzGO5YGk1gZKoYPNU1rgqGGERN-AW9n9iSBH6NTnYMTvjxK-pR0cNYyj0TObIOU6JrJXwnHzOsMOELKsxQ3KpiO5CcQfAYausBf8nSD3nTY4xnBeruCkhduA1rD4kX4mIaudCqR4WNw9fODFSdvl_LHjRJOPSJT4jflOTVlY6GouOKfQTr0rAzvkuoI2Cr7dJPnjBYdyBz95X0371cyE8mMZre9oxqsKBiEiz7PaWxRuHsIbROnBqnV2Sd4BZE',
   aboutHero:
@@ -203,15 +214,23 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: 'What is FitSphere Pro?',
-        a: 'FitSphere Pro is the app gym owners use to run members, staff, classes, payments, and more than one branch from a single login.',
+        a: 'A desk for your gym and a white-label app for your members. Team logins, members and plans, QR, WhatsApp, events, the shop, day passes, and payments — your name on their phone.',
       },
       {
-        q: 'Who uses the platform?',
-        a: 'Gym owners and their team use it every day. Our team helps new gyms join and looks after the platform.',
+        q: 'Can my staff have team logins?',
+        a: 'Yes. You add a manager, a front-desk person, or a trainer. Each person signs in as themselves. Reception can collect and check people in. A trainer sees their members. Only you open GST, branches, and the monthly bill. There is no extra charge per seat.',
       },
       {
-        q: 'How do I become a gym owner on the platform?',
-        a: 'Request an invite from us. After you finish setup and pay for your first gym, you can sign in and start operating.',
+        q: 'How do I start?',
+        a: 'Tell us the gym name and city on the contact page. We set up your gym and your app. Feature details are on the home page, not here.',
+      },
+      {
+        q: 'Do you send WhatsApp?',
+        a: 'Yes. Expiry, dues, birthdays, and members who have not walked in. SMS and email if you prefer.',
+      },
+      {
+        q: 'What is a day pass?',
+        a: 'A guest trains for one day. You set the price. Optional, ₹499 per gym per month.',
       },
     ],
   },
@@ -254,12 +273,20 @@ export const FAQ_CATEGORIES = [
         a: 'Yes. Add another branch from your account. Each extra gym is billed every month on top of your first gym.',
       },
       {
-        q: 'What staff roles exist?',
-        a: 'Gym owner, manager, receptionist, and trainer—each with access appropriate to operations. Super admin is separate and used only for platform management.',
+        q: 'What can each team login do?',
+        a: 'Owner: members, money, GST, branches, and the team. Manager: the floor, members, leads, events, and staff — not your subscription. Front desk: check-in, collect, renew, walk-ins — not profit & loss. Trainer: their members and sessions. Members use your gym’s app.',
+      },
+      {
+        q: 'Can I sell products to members?',
+        a: 'Yes. The member store is optional: ₹499 per gym per month, only where you turn it on. Categories, stock, and orders sit on the desk. Members order from the app.',
+      },
+      {
+        q: 'How do walk-in leads work?',
+        a: 'Take a name and phone when someone asks about a plan. The desk keeps them until they join or go cold. Included with the first gym.',
       },
       {
         q: 'How do member QR codes work?',
-        a: 'Members can be issued QR codes for attendance check-in. Attendance is recorded per gym and visible on the owner dashboard and attendance screens.',
+        a: 'Each member carries a QR pass on the gym app. The desk scans it. Attendance is optional and billed only on gyms where you turn it on.',
       },
     ],
   },
@@ -273,7 +300,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: 'When do I pay?',
-        a: 'You pay for the first gym when you accept your invite. After that, your monthly bill follows the gyms you run and the extras you turn on. You can see the breakdown under Subscription after you sign in.',
+        a: 'You pay for the first gym when you start. After that the bill follows the gyms you run and the extras you turn on. The breakdown is under Subscription after you sign in.',
       },
       {
         q: 'Where do I see my bill?',

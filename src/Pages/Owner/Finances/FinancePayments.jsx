@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { fetchFinancePayments } from '../../../helpers/financeApi';
+import ENDPOINTS from '../../../config/apiUrls';
+import { getRequest } from '../../../config/dataApi';
+import GlassCard from '../../../components/fitsphere/GlassCard';
 import OwnerPageShell from '../../../components/fitsphere/OwnerPageShell';
 import FinanceExportActions from '../../../components/fitsphere/FinanceExportActions';
 import TableShell, {
@@ -26,8 +30,16 @@ const FinancePayments = () => {
   const [pagination, setPagination] = useState({ total: 0 });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [dues, setDues] = useState([]);
   const debouncedSearch = useDebouncedValue(search, 350);
   const limit = 10;
+
+  useEffect(() => {
+    if (!currentGym?.id) return;
+    getRequest(ENDPOINTS.FINANCE.DUES(currentGym.id), { params: { limit: 8 } }).then((res) =>
+      setDues(res.data || [])
+    );
+  }, [currentGym?.id]);
 
   useEffect(() => {
     if (!currentGym?.id) return;
@@ -64,6 +76,29 @@ const FinancePayments = () => {
 
   return (
     <OwnerPageShell showSearch={false}>
+      {dues.length > 0 ? (
+        <GlassCard className="mb-4 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Outstanding dues</h3>
+            <span className="text-xs text-secondary">{dues.length} open</span>
+          </div>
+          <div className="space-y-2">
+            {dues.map((row) => (
+              <Link
+                key={row.id}
+                to={`/owner/members/${row.memberId}`}
+                className="flex items-center justify-between rounded-lg px-2 py-2 text-sm hover:bg-white/5"
+              >
+                <span>
+                  {row.member ? `${row.member.firstName} ${row.member.lastName}` : 'Member'}
+                  <span className="ml-2 text-xs text-secondary">{row.plan?.name}</span>
+                </span>
+                <span className="font-semibold text-error">{formatCurrency(row.balance)}</span>
+              </Link>
+            ))}
+          </div>
+        </GlassCard>
+      ) : null}
       <TableShell
         title="Payments"
         search={search}

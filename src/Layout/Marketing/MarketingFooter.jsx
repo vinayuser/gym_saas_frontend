@@ -1,37 +1,51 @@
 import { Link } from 'react-router-dom';
-import Icon from '../../components/fitsphere/Icon';
 
 const MarketingFooter = () => (
   <footer className="border-t border-white/5 bg-surface-container-low">
-    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-16 sm:grid-cols-2 lg:grid-cols-5 md:px-12">
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4 md:px-12">
       <div className="space-y-4">
         <p className="font-display text-lg font-bold text-primary-container">FitSphere Pro</p>
         <p className="text-sm text-secondary">
-          One place for members, staff, check-in, payments, and every branch you open.
+          Your gym’s app. Team logins, QR, WhatsApp, the shop, and money.
         </p>
       </div>
       <div>
-        <h5 className="mb-4 text-xs font-semibold uppercase tracking-widest text-on-surface">Solutions</h5>
+        <h5 className="mb-4 text-xs font-semibold uppercase tracking-widest text-on-surface">What we offer</h5>
         <ul className="space-y-2 text-sm text-secondary">
           <li>
-            <Link to="/pricing" className="hover:text-primary-container">
-              Boutique studios
+            <Link to="/#app" className="hover:text-primary-container">
+              White-label app
             </Link>
           </li>
           <li>
-            <Link to="/contact" className="hover:text-primary-container">
-              Multi-location chains
+            <Link to="/#team" className="hover:text-primary-container">
+              Team logins
             </Link>
           </li>
           <li>
-            <Link to="/about" className="hover:text-primary-container">
-              Franchise networks
+            <Link to="/#members" className="hover:text-primary-container">
+              Members & plans
+            </Link>
+          </li>
+          <li>
+            <Link to="/#attendance" className="hover:text-primary-container">
+              QR & attendance
+            </Link>
+          </li>
+          <li>
+            <Link to="/#store" className="hover:text-primary-container">
+              Member store
+            </Link>
+          </li>
+          <li>
+            <Link to="/#payments" className="hover:text-primary-container">
+              Payments
             </Link>
           </li>
         </ul>
       </div>
       <div>
-        <h5 className="mb-4 text-xs font-semibold uppercase tracking-widest text-on-surface">Platform</h5>
+        <h5 className="mb-4 text-xs font-semibold uppercase tracking-widest text-on-surface">Pages</h5>
         <ul className="space-y-2 text-sm text-secondary">
           <li>
             <Link to="/pricing" className="hover:text-primary-container">
@@ -48,19 +62,9 @@ const MarketingFooter = () => (
               Contact
             </Link>
           </li>
-        </ul>
-      </div>
-      <div>
-        <h5 className="mb-4 text-xs font-semibold uppercase tracking-widest text-on-surface">Company</h5>
-        <ul className="space-y-2 text-sm text-secondary">
           <li>
             <Link to="/about" className="hover:text-primary-container">
-              About us
-            </Link>
-          </li>
-          <li>
-            <Link to="/auth/login" className="hover:text-primary-container">
-              Owner login
+              About
             </Link>
           </li>
         </ul>
@@ -78,15 +82,16 @@ const MarketingFooter = () => (
               Terms of service
             </Link>
           </li>
+          <li>
+            <Link to="/auth/login" className="hover:text-primary-container">
+              Owner login
+            </Link>
+          </li>
         </ul>
       </div>
     </div>
-    <div className="flex flex-col items-center justify-between gap-4 border-t border-white/5 px-4 py-6 text-sm text-secondary md:flex-row md:px-12">
-      <span>© {new Date().getFullYear()} FitSphere Pro. Kinetic Performance Systems.</span>
-      <div className="flex gap-4">
-        <Icon name="public" size={20} className="cursor-pointer hover:text-primary-container" />
-        <Icon name="share" size={20} className="cursor-pointer hover:text-primary-container" />
-      </div>
+    <div className="border-t border-white/5 px-4 py-6 text-sm text-secondary md:px-12">
+      © {new Date().getFullYear()} FitSphere Pro
     </div>
   </footer>
 );

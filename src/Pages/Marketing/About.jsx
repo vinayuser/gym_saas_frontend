@@ -1,207 +1,125 @@
 import { Link } from 'react-router-dom';
 import Icon from '../../components/fitsphere/Icon';
 import MarketingCta from '../../components/marketing/MarketingCta';
-import MarketingSectionHeader from '../../components/marketing/MarketingSectionHeader';
-import StatsBar from '../../components/marketing/StatsBar';
-import {
-  ABOUT_VALUES,
-  MARKETING_IMAGES,
-  MARKETING_STATS,
-  OWNER_ONBOARDING_STEPS,
-  PLATFORM_ROLES,
-  PRODUCT_NAME,
-  PRODUCT_TAGLINE,
-  SUPER_ADMIN_FEATURES,
-} from '../../constants/marketingContent';
+import { MARKETING_IMAGES, PRODUCT_NAME } from '../../constants/marketingContent';
+
+const WHO = [
+  {
+    title: 'One gym',
+    text: 'A single floor that still needs a desk, a due list, and an app members will actually open.',
+  },
+  {
+    title: 'A second branch',
+    text: 'Same login. Its own members, staff, and look. You see both gyms without a second system.',
+  },
+  {
+    title: 'A small chain',
+    text: 'Add locations as you open them. You do not buy a bigger “package” to grow.',
+  },
+];
+
 
 const About = () => (
   <>
-    <header className="relative min-h-[60vh] overflow-hidden pt-20">
-      <div className="absolute inset-0">
-        <img
-          src={MARKETING_IMAGES.aboutHero}
-          alt=""
-          className="h-full w-full object-cover opacity-40 grayscale"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-      </div>
-      <div className="relative z-10 mx-auto max-w-4xl px-4 py-20 md:px-12">
-        <span className="mb-4 inline-block rounded-full border border-primary-container/30 bg-primary-container/5 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary-container">
-          About the platform
-        </span>
-        <h1 className="font-display text-4xl font-bold md:text-6xl">
-          {PRODUCT_NAME}
-        </h1>
-        <p className="mt-4 text-xl text-primary-container">{PRODUCT_TAGLINE}</p>
-        <p className="mt-6 max-w-2xl text-lg text-secondary">
-          FitSphere Pro is built for gym owners in India. Run members, staff, check-ins, classes,
-          and payments in rupees, then add another branch when you are ready. Your records stay with
-          your gym.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-4">
-          <Link
-            to="/pricing"
-            className="neon-glow rounded-lg bg-primary-container px-6 py-2.5 text-sm font-bold text-on-primary-container"
-          >
-            See pricing
-          </Link>
-          <Link
-            to="/auth/login"
-            className="rounded-lg border border-white/20 px-6 py-2.5 text-sm font-medium hover:bg-white/5"
-          >
-            Sign in
-          </Link>
+    <header className="relative overflow-hidden pt-20">
+      <div className="mesh-gradient absolute inset-0" />
+      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:px-12 lg:grid-cols-2 lg:py-20">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary-container">About us</p>
+          <h1 className="mt-3 font-display text-4xl font-bold md:text-5xl">
+            Built for the people who run the gym.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg text-secondary">
+            {PRODUCT_NAME} is for gym owners in India — not for a platform operator, not for a developer.
+            You get a desk for the floor and an app that opens as your gym.
+          </p>
         </div>
+        <img
+          src={MARKETING_IMAGES.gymAppPhones}
+          alt="Two gyms, each with their own branded member app"
+          className="w-full rounded-2xl border border-white/10 object-cover"
+        />
       </div>
     </header>
 
-    <section className="border-b border-white/5 px-4 md:px-12">
-      <StatsBar stats={MARKETING_STATS} />
-    </section>
-
-    <section className="px-4 py-20 md:px-12">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
-        <div className="glass-card rounded-xl p-8">
-          <h2 className="font-display text-2xl font-bold">What we solve</h2>
-          <p className="mt-4 leading-relaxed text-secondary">
-            Independent gyms and small chains often juggle spreadsheets, WhatsApp, and separate
-            billing tools. {PRODUCT_NAME} centralizes the workflows your team already does—member
-            sign-up, renewals, check-ins, staff, money in and out, and promotions—in one place.
-          </p>
-          <p className="mt-4 leading-relaxed text-secondary">
-            Prices are in rupees. Start with one gym, add branches later, and turn on extras such as
-            check-in, a member shop, or day visits only for the locations that need them.
-          </p>
-        </div>
-        <div className="overflow-hidden rounded-xl glass-card p-2">
-          <img
-            src={MARKETING_IMAGES.aboutMission}
-            alt=""
-            className="aspect-square w-full rounded-lg object-cover grayscale transition duration-700 hover:grayscale-0"
-          />
+    <section className="px-4 py-16 md:px-12">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary-container">Who it is for</p>
+        <h2 className="mt-3 font-display text-3xl font-bold">One gym, or the next one you open.</h2>
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {WHO.map((item) => (
+            <div key={item.title} className="rounded-2xl border border-white/10 p-6">
+              <h3 className="font-display text-xl font-bold">{item.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-secondary">{item.text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
 
-    <section className="bg-surface-container-lowest px-4 py-20 md:px-12">
-      <MarketingSectionHeader
-        title="How the product is structured"
-        subtitle="You run your gym. We help new gyms join and keep the service available."
-      />
-      <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-2">
-        <div className="glass-card rounded-xl p-8">
-          <h3 className="flex items-center gap-2 font-display text-xl font-bold">
-            <Icon name="admin_panel_settings" className="text-primary-container" />
-            FitSphere team
-          </h3>
-          <ul className="mt-6 space-y-4">
-            {SUPER_ADMIN_FEATURES.map((f) => (
-              <li key={f.title} className="flex gap-3 text-sm">
-                <Icon name={f.icon} size={20} className="shrink-0 text-primary-container" />
-                <div>
-                  <p className="font-semibold">{f.title}</p>
-                  <p className="text-secondary">{f.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-6 text-xs text-secondary">
-            Already a customer? Sign in and use Support inside the app.
-          </p>
-        </div>
-        <div className="glass-card rounded-xl p-8">
-          <h3 className="flex items-center gap-2 font-display text-xl font-bold">
-            <Icon name="fitness_center" className="text-primary-container" />
-            Gym owner portal
-          </h3>
-          <p className="mt-4 text-sm text-secondary">
-            After you join, you can manage:
-          </p>
-          <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-            {[
-              'Dashboard',
-              'Members',
-              'Staff',
-              'Membership plans',
-              'Attendance',
-              'Events',
-              'Leads',
-              'Inventory',
-              'Member store',
-              'Finances',
-              'Trainers',
-              'Gyms & branches',
-              'Banners',
-              'Community chat',
-              'Subscription',
-              'Settings',
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <Icon name="check" size={16} className="text-primary-container" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+    <section className="bg-surface-container-low px-4 py-16 md:px-12">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary-container">Your people</p>
+        <h2 className="mt-3 font-display text-3xl font-bold">The gym is not one login.</h2>
+        <p className="mt-3 max-w-2xl text-secondary">
+          Owner, manager, front desk, and trainer each have their own sign-in. See what each
+          person can open.
+        </p>
+        <Link
+          to="/#team"
+          className="mt-6 inline-block text-sm font-semibold text-primary-container hover:underline"
+        >
+          See who can sign in
+        </Link>
       </div>
     </section>
 
-    <section className="px-4 py-20 md:px-12">
-      <MarketingSectionHeader title="User roles" subtitle="Role-based access across the platform." />
-      <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {PLATFORM_ROLES.map((r) => (
-          <div
-            key={r.role}
-            className="group glass-card rounded-xl p-6 transition hover:border-primary-container/40"
-          >
-            <Icon
-              name={r.icon}
-              size={32}
-              className="mb-4 text-primary-container transition group-hover:scale-110"
-            />
-            <h4 className="font-semibold text-on-surface">{r.role}</h4>
-            <p className="mt-2 text-sm leading-relaxed text-secondary">{r.desc}</p>
+    <section className="px-4 py-16 md:px-12">
+      <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+        {[
+          {
+            icon: 'lock',
+            title: 'Your gym stays yours',
+            text: 'Members, payments, and staff belong to your gym. Another gym cannot open them.',
+          },
+          {
+            icon: 'smartphone',
+            title: 'The app looks like you',
+            text: 'Logo, colours, photos. Members should see your place, not a generic template.',
+          },
+          {
+            icon: 'verified_user',
+            title: 'Each person has a sign-in',
+            text: 'Log out on a shared desk computer when the shift ends.',
+          },
+        ].map((item) => (
+          <div key={item.title} className="rounded-2xl border border-white/10 p-6">
+            <Icon name={item.icon} className="text-primary-container" />
+            <h3 className="mt-3 font-semibold">{item.title}</h3>
+            <p className="mt-2 text-sm text-secondary">{item.text}</p>
           </div>
         ))}
       </div>
-    </section>
-
-    <section className="bg-surface-container-low px-4 py-20 md:px-12">
-      <MarketingSectionHeader
-        title="Owner onboarding flow"
-        subtitle="Same steps as the /setup/:token wizard in the app."
-      />
-      <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {OWNER_ONBOARDING_STEPS.map((s) => (
-          <div key={s.step} className="glass-card rounded-xl p-6">
-            <span className="text-2xl font-bold text-primary-container/40">{s.step}</span>
-            <h4 className="mt-2 font-semibold">{s.title}</h4>
-            <p className="mt-2 text-sm text-secondary">{s.text}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <section className="px-4 py-20 md:px-12">
-      <MarketingSectionHeader title="Principles" />
-      <div className="mx-auto mt-12 grid max-w-6xl gap-6 md:grid-cols-2">
-        {ABOUT_VALUES.map((v) => (
-          <div key={v.title} className="glass-card rounded-xl p-6">
-            <Icon name={v.icon} size={40} className="mb-4 text-primary-container/60" />
-            <h3 className="text-lg font-semibold text-primary-container">{v.title}</h3>
-            <p className="mt-2 text-sm text-secondary">{v.text}</p>
-          </div>
-        ))}
-      </div>
+      <p className="mx-auto mt-8 max-w-6xl text-sm text-secondary">
+        What the product does — app, team logins, members, QR, WhatsApp, store, payments — is on the{' '}
+        <Link to="/" className="font-semibold text-primary-container hover:underline">
+          home page
+        </Link>
+        . What it costs is on{' '}
+        <Link to="/pricing" className="font-semibold text-primary-container hover:underline">
+          pricing
+        </Link>
+        .
+      </p>
     </section>
 
     <MarketingCta
-      title="Questions about the platform?"
-      description="Ask about invites, plans, or a walkthrough of the owner dashboard."
-      primaryLabel="Contact us"
+      title="Talk about your gym"
+      description="Tell us the gym name and city. We will show you how the desk and the member app look for your place."
+      primaryLabel="Talk to us"
       primaryTo="/contact"
-      secondaryLabel="Read FAQ"
-      secondaryTo="/faq"
+      secondaryLabel="See what we offer"
+      secondaryTo="/"
     />
   </>
 );

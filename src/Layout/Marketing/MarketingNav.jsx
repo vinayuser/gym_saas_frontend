@@ -39,7 +39,7 @@ const MarketingNav = () => {
           to="/contact"
           className="rounded-lg bg-primary-container px-5 py-2 text-sm font-bold text-on-primary-container transition hover:scale-105"
         >
-          Get invite
+          Talk to us
         </Link>
       </div>
 
@@ -73,6 +73,13 @@ const MarketingNav = () => {
             className="mt-2 block px-3 py-2 text-sm text-secondary"
           >
             Sign in
+          </Link>
+          <Link
+            to="/contact"
+            onClick={() => setOpen(false)}
+            className="mt-2 block rounded-lg bg-primary-container px-3 py-2 text-sm font-bold text-on-primary-container"
+          >
+            Talk to us
           </Link>
         </div>
       )}

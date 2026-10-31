@@ -9,14 +9,36 @@ import ActiveSessionsModal from './ActiveSessionsModal';
 import NotificationPreferencesCard from './NotificationPreferencesCard';
 import { fetchCurrentUserProfile } from '../../../store/slices/authSlice';
 import { updateGym } from '../../../store/slices/gymSlice';
+import ENDPOINTS from '../../../config/apiUrls';
+import { getRequest, postRequest } from '../../../config/dataApi';
+import { toast } from 'react-toastify';
+import { formatDateTime } from '../../../helpers/formatUtils';
 
 const Settings = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { currentGym } = useSelector((s) => s.gym);
   const [activeModal, setActiveModal] = useState(null);
-  const [gymForm, setGymForm] = useState({ name: '', email: '', phone: '', city: '' });
+  const [gymForm, setGymForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    city: '',
+    gstNumber: '',
+    taxRate: '18',
+    reminderDays: '7, 3, 1',
+    inactiveAfterDays: '7',
+  });
   const [savingGym, setSavingGym] = useState(false);
+  const [runningReminders, setRunningReminders] = useState(false);
+  const [messages, setMessages] = useState([]);
+
+  const loadMessages = () => {
+    if (!currentGym?.id) return;
+    getRequest(ENDPOINTS.FINANCE.REMINDERS(currentGym.id), { params: { limit: 8 } }).then((res) =>
+      setMessages(res.data || [])
+    );
+  };
 
   useEffect(() => {
     setGymForm({
@@ -24,7 +46,12 @@ const Settings = () => {
       email: currentGym?.email || '',
       phone: currentGym?.phone || '',
       city: currentGym?.city || '',
+      gstNumber: currentGym?.gstNumber || '',
+      taxRate: String(currentGym?.taxRate ?? 18),
+      reminderDays: (currentGym?.reminderDays || [7, 3, 1]).join(', '),
+      inactiveAfterDays: String(currentGym?.inactiveAfterDays || 7),
     });
+    loadMessages();
   }, [currentGym]);
 
   const saveGym = async (e) => {
@@ -39,6 +66,13 @@ const Settings = () => {
           email: gymForm.email || undefined,
           phone: gymForm.phone || undefined,
           city: gymForm.city || undefined,
+          gstNumber: gymForm.gstNumber.trim(),
+          taxRate: gymForm.gstNumber.trim() ? Number(gymForm.taxRate) || 18 : 0,
+          reminderDays: gymForm.reminderDays
+            .split(',')
+            .map((n) => Number(n.trim()))
+            .filter((n) => n > 0),
+          inactiveAfterDays: Number(gymForm.inactiveAfterDays) || 7,
         },
       })
     );
@@ -94,9 +128,11 @@ const Settings = () => {
               Gym Profile
             </h2>
             <form onSubmit={saveGym} className="space-y-3">
-              {['name', 'email', 'phone', 'city'].map((key) => (
+              {['name', 'email', 'phone', 'city', 'gstNumber'].map((key) => (
                 <div key={key}>
-                  <label className="text-xs font-semibold uppercase text-secondary">{key}</label>
+                  <label className="text-xs font-semibold uppercase text-secondary">
+                    {key === 'gstNumber' ? 'GSTIN' : key}
+                  </label>
                   <input
                     value={gymForm[key]}
                     onChange={(e) => setGymForm({ ...gymForm, [key]: e.target.value })}
@@ -104,14 +140,83 @@ const Settings = () => {
                   />
                 </div>
               ))}
-              <button
-                type="submit"
-                disabled={savingGym || !currentGym}
-                className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-bold text-on-primary-fixed disabled:opacity-50"
-              >
-                {savingGym ? 'Saving…' : 'Save gym'}
-              </button>
+              <div>
+                <label className="text-xs font-semibold uppercase text-secondary">GST rate %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={gymForm.taxRate}
+                  onChange={(e) => setGymForm({ ...gymForm, taxRate: e.target.value })}
+                  className="input-cyber mt-1 w-full rounded-lg px-3 py-2 text-sm"
+                />
+                <p className="mt-1 text-xs text-secondary">Used on tax invoices when GSTIN is set. Plan prices are treated as tax-inclusive.</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase text-secondary">Renewal reminder days</label>
+                <input
+                  value={gymForm.reminderDays}
+                  onChange={(e) => setGymForm({ ...gymForm, reminderDays: e.target.value })}
+                  className="input-cyber mt-1 w-full rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase text-secondary">Inactive after (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={gymForm.inactiveAfterDays}
+                  onChange={(e) => setGymForm({ ...gymForm, inactiveAfterDays: e.target.value })}
+                  className="input-cyber mt-1 w-full rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={savingGym || !currentGym}
+                  className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-bold text-on-primary-fixed disabled:opacity-50"
+                >
+                  {savingGym ? 'Saving…' : 'Save gym'}
+                </button>
+                <button
+                  type="button"
+                  disabled={runningReminders || !currentGym}
+                  onClick={async () => {
+                    setRunningReminders(true);
+                    try {
+                      const res = await postRequest(ENDPOINTS.FINANCE.REMINDERS_RUN(currentGym.id), {});
+                      toast.success(`Reminders sent: ${res.data?.sent || 0}`);
+                      loadMessages();
+                    } finally {
+                      setRunningReminders(false);
+                    }
+                  }}
+                  className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold"
+                >
+                  {runningReminders ? 'Sending…' : 'Send reminders now'}
+                </button>
+              </div>
             </form>
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <h3 className="mb-3 text-sm font-semibold">Recent reminders</h3>
+              {messages.length === 0 ? (
+                <p className="text-xs text-secondary">No WhatsApp, SMS, or email reminders logged yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className="rounded-lg border border-white/5 px-3 py-2 text-xs">
+                      <p className="font-medium">
+                        {msg.type} · {msg.channel} · {msg.status}
+                      </p>
+                      <p className="mt-0.5 text-secondary">
+                        {msg.member ? `${msg.member.firstName} ${msg.member.lastName}` : msg.to || '—'} ·{' '}
+                        {formatDateTime(msg.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </GlassCard>
           {profileSections.map((sec) => (
             <GlassCard key={sec.title} className="p-6">

@@ -4,15 +4,13 @@ import ENDPOINTS from '../../config/apiUrls';
 import { getRequest } from '../../config/dataApi';
 import { formatCurrency } from '../../helpers/formatUtils';
 import MarketingCta from '../../components/marketing/MarketingCta';
-import MarketingSectionHeader from '../../components/marketing/MarketingSectionHeader';
-import FaqItem from '../../components/marketing/FaqAccordion';
-import { PRICING_FAQ } from '../../constants/marketingContent';
 
 const FALLBACK = {
   baseName: 'First gym',
   basePriceMonthly: 1999,
   basePriceYearly: 19990,
-  baseDescription: 'Members, staff, classes, finances, and your day-to-day gym tools.',
+  baseDescription:
+    'White-label member app, owner/manager/desk/trainer logins, members and plans, GST bills, events, WhatsApp, and the desk.',
   extraGymPriceMonthly: 999,
   extraGymPriceYearly: 9990,
   addons: [
@@ -166,7 +164,8 @@ const Pricing = () => {
               <span className="text-secondary"> / {period}</span>
             </p>
             <p className="mt-3 text-sm text-secondary">
-              {catalog.baseDescription || 'Members, staff, classes, leads, finances, and chat.'}
+              {catalog.baseDescription ||
+                'White-label member app, desk collections, GST bills, events, WhatsApp follow-up, and your team.'}
             </p>
           </div>
           <div className="rounded-xl border border-white/10 p-6 glass-card">
@@ -260,16 +259,22 @@ const Pricing = () => {
         </div>
       </section>
 
-      <section className="bg-surface-container-lowest px-4 py-16 md:px-12">
-        <MarketingSectionHeader eyebrow="Pricing questions" title="Common questions" />
-        <div className="mx-auto mt-8 max-w-3xl space-y-3">
-          {PRICING_FAQ.map((item) => (
-            <FaqItem key={item.q} question={item.q} answer={item.a} />
-          ))}
-        </div>
-      </section>
+      <p className="px-4 pb-16 text-center text-sm text-secondary md:px-12">
+        Questions about the bill?{' '}
+        <Link to="/faq" className="font-semibold text-primary-container hover:underline">
+          See the FAQ
+        </Link>
+        .
+      </p>
 
-      <MarketingCta description="Want FitSphere Pro for your gym? Tell us about your locations and we will send an invite." />
+      <MarketingCta
+        title="Talk about this total"
+        description="Tell us how many gyms you run. We will walk through the white-label app and the desk."
+        primaryLabel="Talk to us"
+        primaryTo="/contact"
+        secondaryLabel="What we offer"
+        secondaryTo="/"
+      />
     </>
   );
 };

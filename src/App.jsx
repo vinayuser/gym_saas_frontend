@@ -41,6 +41,7 @@ import FinanceExpenses from './Pages/Owner/Finances/FinanceExpenses';
 import FinanceRefunds from './Pages/Owner/Finances/FinanceRefunds';
 import FinancePnL from './Pages/Owner/Finances/FinancePnL';
 import FinanceReports from './Pages/Owner/Finances/FinanceReports';
+import FinanceInvoices from './Pages/Owner/Finances/FinanceInvoices';
 import Trainers from './Pages/Owner/Trainers/Trainers';
 import AddTrainer from './Pages/Owner/Trainers/AddTrainer';
 import TrainerView from './Pages/Owner/Trainers/TrainerView';
@@ -314,6 +315,14 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/dashboard">
                 <FinancePayments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="finances/invoices"
+            element={
+              <ProtectedRoute allowedRoles={OWNER_MANAGER} fallbackPath="/owner/dashboard">
+                <FinanceInvoices />
               </ProtectedRoute>
             }
           />

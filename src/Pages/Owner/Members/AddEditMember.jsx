@@ -41,6 +41,9 @@ const EMPTY_FORM = {
   profileImagePreview: null,
   planId: '',
   membershipStartDate: new Date().toISOString().slice(0, 10),
+  amountPaid: '',
+  paymentMethod: 'CASH',
+  discount: '0',
   autoPay: true,
 };
 
@@ -118,6 +121,9 @@ const AddEditMember = () => {
       membershipStartDate: membership?.startDate
         ? new Date(membership.startDate).toISOString().slice(0, 10)
         : new Date().toISOString().slice(0, 10),
+      amountPaid: membership?.amountPaid != null ? String(membership.amountPaid) : '',
+      paymentMethod: 'CASH',
+      discount: String(membership?.discount || 0),
       autoPay: true,
     });
   }, [currentMember, isEdit]);
@@ -163,7 +169,13 @@ const AddEditMember = () => {
       isActive: form.isActive !== false,
       ...(form.profileImageUrl ? { profileImage: form.profileImageUrl } : {}),
       ...(!isEdit && form.planId
-        ? { planId: form.planId, membershipStartDate: form.membershipStartDate }
+        ? {
+            planId: form.planId,
+            membershipStartDate: form.membershipStartDate,
+            amountPaid: form.amountPaid === '' ? undefined : Number(form.amountPaid),
+            paymentMethod: form.paymentMethod,
+            discount: Number(form.discount) || 0,
+          }
         : {}),
     };
   };
@@ -411,6 +423,43 @@ const AddEditMember = () => {
                 className="input-cyber"
               />
             </FormField>
+
+            {!isEdit && selectedPlan ? (
+              <>
+                <FormField label="Discount (₹)">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.discount}
+                    onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                    className="input-cyber"
+                  />
+                </FormField>
+                <FormField label="Amount collected today (₹)">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder={String(Math.max(0, selectedPlan.price - Number(form.discount || 0)))}
+                    value={form.amountPaid}
+                    onChange={(e) => setForm({ ...form, amountPaid: e.target.value })}
+                    className="input-cyber"
+                  />
+                  <p className="text-xs text-secondary">Leave empty to collect the full plan price. Enter 0 to keep it as due.</p>
+                </FormField>
+                <FormField label="Payment method">
+                  <select
+                    value={form.paymentMethod}
+                    onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
+                    className="input-cyber"
+                  >
+                    <option value="CASH">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="CARD">Card</option>
+                    <option value="BANK_TRANSFER">Bank transfer</option>
+                  </select>
+                </FormField>
+              </>
+            ) : null}
 
             <div className="flex items-center justify-between rounded-lg bg-white/5 p-4">
               <div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Icon from '../../components/fitsphere/Icon';
-import { CONTACT_CHANNELS, MARKETING_IMAGES } from '../../constants/marketingContent';
+import { CONTACT_CHANNELS } from '../../constants/marketingContent';
 import ENDPOINTS from '../../config/apiUrls';
 import { postRequest } from '../../config/dataApi';
 
@@ -21,9 +21,9 @@ const Contact = () => {
         name: fd.get('name'),
         email: fd.get('email'),
         company: fd.get('company'),
-        message: fd.get('message'),
+        message: [fd.get('city') && `City: ${fd.get('city')}`, fd.get('message')].filter(Boolean).join('\n\n'),
       });
-      toast.success('Message received — our team will respond within 1–2 business days.');
+      toast.success('Message received — we will reply within 1–2 business days.');
       e.target.reset();
     } finally {
       setSubmitting(false);
@@ -34,21 +34,17 @@ const Contact = () => {
     <main className="pb-20 pt-28">
       <div className="mx-auto max-w-6xl px-4 md:px-12">
         <header className="mb-12 max-w-2xl">
-          <span className="text-xs font-semibold uppercase tracking-widest text-primary-container">
-            We&apos;re listening
-          </span>
-          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">
-            Elevate your <span className="text-primary-container">connection.</span>
-          </h1>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary-container">Contact</p>
+          <h1 className="mt-3 font-display text-4xl font-bold md:text-5xl">Tell us about your gym.</h1>
           <p className="mt-4 text-lg text-secondary">
-            Tell us about your gym, ask about pricing, or request an invite. If you already have an
-            account, sign in and use Support inside the app.
+            Gym name, city, and what you want to see. We reply in one or two business days. Already
+            set up? Sign in and use Support inside the app.
           </p>
         </header>
 
-        <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-10 grid gap-4 sm:grid-cols-3">
           {CONTACT_CHANNELS.map((ch) => (
-            <div key={ch.label} className="glass-card rounded-xl p-5">
+            <div key={ch.label} className="rounded-xl border border-white/10 p-5">
               <Icon name={ch.icon} className="text-primary-container" />
               <p className="mt-3 text-xs font-semibold uppercase text-secondary">{ch.label}</p>
               <p className="mt-1 font-semibold">{ch.value}</p>
@@ -58,78 +54,54 @@ const Contact = () => {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-12">
-          <div className="glass-card rounded-xl p-8 lg:col-span-7">
+          <div className="rounded-2xl border border-white/10 p-8 lg:col-span-7">
             <h2 className="text-lg font-semibold">Send a message</h2>
-            <p className="mt-1 text-sm text-secondary">
-              Tell us about your studios, member count, and timeline—we&apos;ll route you to the right specialist.
-            </p>
             <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary">
-                    Full name
+                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary" htmlFor="name">
+                    Your name
                   </label>
-                  <input required className={inputClass} name="name" placeholder="John Doe" />
+                  <input required id="name" className={inputClass} name="name" placeholder="Your name" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary">
-                    Work email
+                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary" htmlFor="email">
+                    Email
                   </label>
-                  <input
-                    required
-                    type="email"
-                    className={inputClass}
-                    name="email"
-                    placeholder="john@studio.com"
-                  />
+                  <input required id="email" type="email" className={inputClass} name="email" placeholder="you@gym.com" />
                 </div>
               </div>
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary">
-                    Studio / company
+                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary" htmlFor="company">
+                    Gym name
                   </label>
-                  <input className={inputClass} name="company" placeholder="Pulse Collective" />
+                  <input id="company" className={inputClass} name="company" placeholder="Iron District" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary">
-                    Branches
+                  <label className="mb-1 block text-xs font-semibold uppercase text-secondary" htmlFor="city">
+                    City
                   </label>
-                  <select className={inputClass} name="branches" defaultValue="1">
-                    <option value="1">1 location</option>
-                    <option value="2-5">2–5 locations</option>
-                    <option value="5+">5+ locations</option>
-                  </select>
+                  <input id="city" className={inputClass} name="city" placeholder="Pune" />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold uppercase text-secondary">
-                  Inquiry type
-                </label>
-                <select className={inputClass} name="type" defaultValue="Enterprise Solutions">
-                  <option>Book a demo</option>
-                  <option>Enterprise Solutions</option>
-                  <option>Boutique Partnership</option>
-                  <option>Technical Support</option>
-                  <option>Billing &amp; Accounts</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase text-secondary">
-                  Message
+                <label className="mb-1 block text-xs font-semibold uppercase text-secondary" htmlFor="message">
+                  What do you want to see?
                 </label>
                 <textarea
                   required
+                  id="message"
                   name="message"
                   rows={6}
                   className={`${inputClass} resize-none`}
-                  placeholder="Describe your performance goals, current tools, and go-live timeline..."
+                  placeholder="White-label app, QR at the door, WhatsApp reminders, day pass…"
                 />
               </div>
               <button
                 type="submit"
                 disabled={submitting}
-                className="cyber-glow w-full rounded-lg bg-primary-container py-3 text-sm font-bold text-on-primary-container disabled:opacity-60"
+                className="w-full rounded-lg bg-primary-container py-3 text-sm font-bold text-on-primary-container disabled:opacity-60"
               >
                 {submitting ? 'Sending…' : 'Send message'}
               </button>
@@ -137,68 +109,34 @@ const Contact = () => {
           </div>
 
           <div className="space-y-6 lg:col-span-5">
-            <div className="glass-card space-y-6 rounded-xl p-6">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 animate-pulse rounded-full bg-primary-container" />
-                <span className="text-sm font-semibold uppercase tracking-wide text-primary-container">
-                  Live chat active
-                </span>
-              </div>
-              <p className="text-sm text-secondary">
-                Existing customers: use in-app support from your owner dashboard for fastest resolution.
+            <div className="rounded-2xl border border-white/10 p-6">
+              <p className="text-sm font-semibold">Already a customer?</p>
+              <p className="mt-2 text-sm text-secondary">
+                Sign in and open Support from the desk. That reaches us faster than this form.
               </p>
-              <div className="flex gap-4">
-                <div className="rounded-lg bg-surface-container-high p-3">
-                  <Icon name="encrypted" className="text-primary-container" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase text-secondary">Priority support</p>
-                  <p className="font-semibold text-primary-container">ops@fitspherepro.io</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="rounded-lg bg-surface-container-high p-3">
-                  <Icon name="info" className="text-primary-container" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase text-secondary">Demo accounts</p>
-                  <p className="text-sm text-secondary">
-                    We reply within one or two business days.
-                  </p>
-                </div>
-              </div>
+              <Link to="/auth/login" className="mt-4 inline-block text-sm font-semibold text-primary-container hover:underline">
+                Owner sign in
+              </Link>
             </div>
-
-            <div className="glass-card rounded-xl p-6">
-              <h3 className="text-sm font-semibold">Quick links</h3>
+            <div className="rounded-2xl border border-white/10 p-6">
+              <p className="text-sm font-semibold">Before you write</p>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>
+                  <Link to="/" className="text-primary-container hover:underline">
+                    What we offer
+                  </Link>
+                </li>
+                <li>
                   <Link to="/pricing" className="text-primary-container hover:underline">
-                    View pricing →
+                    Build a monthly total
                   </Link>
                 </li>
                 <li>
                   <Link to="/faq" className="text-primary-container hover:underline">
-                    Browse FAQ →
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/auth/login" className="text-primary-container hover:underline">
-                    Owner sign in →
+                    Common questions
                   </Link>
                 </li>
               </ul>
-            </div>
-
-            <div className="relative h-72 overflow-hidden rounded-xl glass-card">
-              <img
-                src={MARKETING_IMAGES.contactMap}
-                alt="Austin HQ map"
-                className="h-full w-full object-cover brightness-50 grayscale"
-              />
-              <div className="absolute bottom-4 left-4 glass-card rounded-lg px-4 py-2 text-xs text-primary-container">
-                FitSphere Pro
-              </div>
             </div>
           </div>
         </div>

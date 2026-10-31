@@ -8,6 +8,7 @@ import StatCard from '../../../components/fitsphere/StatCard';
 import FinanceCategoryFilter from '../../../components/fitsphere/FinanceCategoryFilter';
 import SectionLoader from '../../../components/Loader/SectionLoader';
 import { formatCurrency } from '../../../helpers/formatUtils';
+import { EXPENSE_CATEGORIES, expenseLabel } from '../../../constants/billing';
 
 const FinancePnL = () => {
   const { currentGym } = useSelector((s) => s.gym);
@@ -34,16 +35,16 @@ const FinancePnL = () => {
         <div className="space-y-8">
           <div>
             <h1 className="font-display text-3xl font-bold md:text-4xl">Profit &amp; Loss</h1>
-            <p className="mt-1 text-secondary/70">Revenue versus estimated operating expenses.</p>
+            <p className="mt-1 text-secondary/70">Revenue versus expenses you have recorded.</p>
           </div>
 
           <FinanceCategoryFilter value={category} onChange={setCategory} />
 
           <div className="grid gap-6 md:grid-cols-3">
             <StatCard label="Revenue" value={formatCurrency(revenue)} icon="payments" accent />
-            <StatCard label="Expenses (est.)" value={formatCurrency(expenses)} icon="receipt_long" />
+            <StatCard label="Expenses" value={formatCurrency(expenses)} icon="receipt_long" />
             <StatCard
-              label="Net profit (est.)"
+              label="Net profit"
               value={formatCurrency(profit)}
               icon="monitoring"
               sub={`${data?.netMargin || 0}% margin`}
@@ -79,16 +80,11 @@ const FinancePnL = () => {
             </div>
           </GlassCard>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              ['Equipment', data?.expenses?.equipment],
-              ['Salaries', data?.expenses?.salaries],
-              ['Rent & Utilities', data?.expenses?.rent],
-              ['Vendors', data?.expenses?.vendors],
-            ].map(([label, amount]) => (
-              <GlassCard key={label} className="p-5">
-                <p className="text-xs font-semibold uppercase tracking-widest text-secondary">{label}</p>
-                <p className="mt-2 text-xl font-bold">{formatCurrency(amount)}</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {EXPENSE_CATEGORIES.map((cat) => (
+              <GlassCard key={cat.value} className="p-5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-secondary">{expenseLabel(cat.value)}</p>
+                <p className="mt-2 text-xl font-bold">{formatCurrency(data?.expenses?.[cat.value])}</p>
               </GlassCard>
             ))}
           </div>

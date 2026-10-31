@@ -24,6 +24,7 @@ export const OWNER_NAV = [
     feature: 'finances',
     children: [
       { label: 'Payments', path: '/owner/finances/payments', icon: 'account_balance_wallet' },
+      { label: 'Invoices', path: '/owner/finances/invoices', icon: 'receipt' },
       { label: 'Expenses', path: '/owner/finances/expenses', icon: 'receipt_long' },
       { label: 'Refunds', path: '/owner/finances/refunds', icon: 'undo' },
       { label: 'Profit & Loss', path: '/owner/finances/pnl', icon: 'monitoring' },
