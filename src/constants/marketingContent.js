@@ -178,19 +178,25 @@ export const MARKETING_NAV = [
   { label: 'Contact', path: '/contact' },
 ];
 
+const publicUrl = (path) => {
+  const base = import.meta.env.BASE_URL || '/';
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  return `${prefix}${String(path).replace(/^\//, '')}`;
+};
+
 export const MARKETING_IMAGES = {
-  gymAppPhones: '/images/gym-app-two-brands.jpg',
-  gymAppSplash: '/images/gym-app-splash.jpg',
-  memberAppSplash: '/images/member-app-splash.png',
-  memberAppHome: '/images/member-app-home.png',
-  memberAppQr: '/images/member-app-qr.png',
-  memberAppStore: '/images/member-app-store.png',
-  memberAppAttendance: '/images/member-app-attendance.png',
-  memberAppDayPass: '/images/member-app-daypass.png',
-  memberAppEvent: '/images/member-app-event.png',
-  memberAppMembership: '/images/member-app-membership.png',
-  memberAppAlerts: '/images/member-app-alerts.png',
-  memberAppPay: '/images/member-app-pay.png',
+  gymAppPhones: publicUrl('images/gym-app-two-brands.jpg'),
+  gymAppSplash: publicUrl('images/gym-app-splash.jpg'),
+  memberAppSplash: publicUrl('images/member-app-splash.png'),
+  memberAppHome: publicUrl('images/member-app-home.png'),
+  memberAppQr: publicUrl('images/member-app-qr.png'),
+  memberAppStore: publicUrl('images/member-app-store.png'),
+  memberAppAttendance: publicUrl('images/member-app-attendance.png'),
+  memberAppDayPass: publicUrl('images/member-app-daypass.png'),
+  memberAppEvent: publicUrl('images/member-app-event.png'),
+  memberAppMembership: publicUrl('images/member-app-membership.png'),
+  memberAppAlerts: publicUrl('images/member-app-alerts.png'),
+  memberAppPay: publicUrl('images/member-app-pay.png'),
   hero:
     'https://lh3.googleusercontent.com/aida-public/AB6AXuDN_DfZMp4oOeHI0xzGO5YGk1gZKoYPNU1rgqGGERN-AW9n9iSBH6NTnYMTvjxK-pR0cNYyj0TObIOU6JrJXwnHzOsMOELKsxQ3KpiO5CcQfAYausBf8nSD3nTY4xnBeruCkhduA1rD4kX4mIaudCqR4WNw9fODFSdvl_LHjRJOPSJT4jflOTVlY6GouOKfQTr0rAzvkuoI2Cr7dJPnjBYdyBz95X0371cyE8mMZre9oxqsKBiEiz7PaWxRuHsIbROnBqnV2Sd4BZE',
   aboutHero:
